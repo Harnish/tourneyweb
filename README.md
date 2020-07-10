@@ -2,12 +2,12 @@ TourneyWeb is an OpenSource project for managing Tournaments.  Initially it is f
 
 Check out the TODO if you want to help out.  
 
-=== Building
+###Building
 ```
 go build
 ```
 
-=== Creating a MySQL users/database
+###Creating a MySQL users/database
 ```
 create database tourneyweb;
 create user tourneyweb1@localhost IDENTIFIED BY 'password';
@@ -15,7 +15,7 @@ GRANT ALL PRIVILEGES ON tourneyweb.* to 'tourneyweb1'@'localhost';
 ```
 use a different username and password for better security.
 
-=== Configuration file
+###Configuration file
 ```
 ---
 port: 8989
