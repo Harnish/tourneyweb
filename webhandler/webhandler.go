@@ -234,8 +234,11 @@ func (me *Env) GamesByDivisionList(did int, withadmin, withscores bool) string {
 	if withadmin {
 		listofgames = listofgames + "<th>Score Game</th>"
 	}
-	if me.DisableDelete {
+	if !me.DisableDelete {
 		listofgames = listofgames + "<th>Delete Game</th>"
+	}
+	if withscores {
+		listofgames = listofgames + "<th>Home Team Score</th><th>Away Team Score</th>"
 	}
 
 	listofgames = listofgames + `<tr>`
@@ -243,11 +246,13 @@ func (me *Env) GamesByDivisionList(did int, withadmin, withscores bool) string {
 		listofgames = listofgames + "<tr><td>" + game.HomeTeam.Name + " " + game.HomeTeam.Coach + "</td><td>" + game.AwayTeam.Name + " " + game.AwayTeam.Coach + "</td><td>" + game.Location + "</td><td>" + game.Start + "</td><td>" + game.Umpire + "</td>"
 		if withadmin {
 			listofgames = listofgames + "<td><a href=/admin/scoregame/" + strconv.Itoa(game.ID) + ">Score Game</a></td>"
-			if me.DisableDelete {
+			if !me.DisableDelete {
 				listofgames = listofgames + "<td><a href=/admin/delgame/" + strconv.Itoa(game.ID) + ">Delete Game</a></td>"
 			}
 		}
-
+		if withscores {
+			listofgames = listofgames + "<td>" + strconv.Itoa(game.HomeScore) + "</td><td>" + strconv.Itoa(game.AwayScore) + "</td>"
+		}
 		listofgames = listofgames + "</tr>"
 	}
 	listofgames = listofgames + "</table>"
@@ -287,29 +292,45 @@ func (me *Env) ReturnTeamsByDivisionIDTable(div int, admin bool) string {
 func (me *Env) ReturnTeamsByDivisionIDRankedTable(div int, admin bool) string {
 	division := me.DB.ReturnDivisionByID(div)
 	out := "<H1>" + division.Name + "</H1>"
-	out = out + "<table><tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th></tr>"
+	out = out + "<table><tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th><th>Games Played</th></tr>"
 	teams := me.DB.ReturnTeamsByDivisionIDWithStats(div)
 	sort.Slice(teams, func(i, j int) bool {
-		if teams[i].Wins > teams[j].Losses {
+		//Wins
+		if teams[i].Wins > teams[j].Wins {
 			return true
-		} else if teams[i].Wins < teams[j].Losses {
+		} else if teams[i].Wins < teams[j].Wins {
 			return false
 		} else {
-			if teams[i].RunsAgainst < teams[j].RunsAgainst {
-				return true
-			} else if teams[i].RunsAgainst > teams[j].RunsAgainst {
-				return false
-			} else {
-				if teams[i].RunsFor > teams[j].RunsFor {
+			// Head to head
+			playedeachother, teamwin := me.DB.DidTeamABeatTeamB(teams[i].ID, teams[j].ID)
+			// Did they play each other
+			if playedeachother {
+				// Did they win?
+				if teamwin {
 					return true
 				} else {
 					return false
+				}
+
+			} else {
+				// Runs against
+				if teams[i].RunsAgainst < teams[j].RunsAgainst {
+					return true
+				} else if teams[i].RunsAgainst > teams[j].RunsAgainst {
+					return false
+				} else {
+					//Runs for
+					if teams[i].RunsFor > teams[j].RunsFor {
+						return true
+					} else {
+						return false
+					}
 				}
 			}
 		}
 	})
 	for idx, team := range teams {
-		out = out + "<tr><td>" + strconv.Itoa(idx+1) + "</td><td>" + team.Name + "</td><td>" + team.Coach + "</td><td>" + strconv.Itoa(team.Wins) + "</td><td>" + strconv.Itoa(team.Losses) + "</td><td>" + strconv.Itoa(team.RunsAgainst) + "</td><td>" + strconv.Itoa(team.RunsFor) + "</td> </tr>\n"
+		out = out + "<tr><td>" + strconv.Itoa(idx+1) + "</td><td>" + team.Name + "</td><td>" + team.Coach + "</td><td>" + strconv.Itoa(team.Wins) + "</td><td>" + strconv.Itoa(team.Losses) + "</td><td>" + strconv.Itoa(team.RunsAgainst) + "</td><td>" + strconv.Itoa(team.RunsFor) + "</td><td>" + strconv.Itoa(me.DB.GamesPlayedByTeam(team.ID)) + "</td></tr>\n"
 	}
 	out = out + "</table>"
 	return out
@@ -323,7 +344,7 @@ func PrintError(w http.ResponseWriter, message string) {
 }
 
 func ReturnFooter() string {
-	out := `</body></html>`
+	out := `<br><hr>Powered by <a href="https://github.com/Harnish/tourneyweb">TourneyWeb</a> </body></html>`
 	return out
 }
 
@@ -335,7 +356,9 @@ func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		PrintError(w, "Bad Game ID")
 		return
 	}
-	me.DB.DelGame(gid)
+	if !me.DisableDelete {
+		me.DB.DelGame(gid)
+	}
 	//FIXME needs to return to a page.
 }
 
@@ -398,7 +421,7 @@ func (me *Env) ReturnAllGamesInTable(admin bool) string {
 	}
 	out = out + `</tr>`
 	for _, game := range games {
-		out = out + "<tr><td>" + game.HomeTeam.Name + "</td><td>" + strconv.Itoa(game.HomeScore) + "</td><td>" + game.AwayTeam.Name + "</td><td>" + strconv.Itoa(game.AwayScore) + "</td><td>" + game.Location + "</td><td>" + game.Start + "</td><td>" + game.Umpire + "</td>"
+		out = out + "<tr><td>" + game.HomeTeam.Name + " - " + game.HomeTeam.Coach + "</td><td>" + strconv.Itoa(game.HomeScore) + "</td><td>" + game.AwayTeam.Name + " - " + game.AwayTeam.Coach + "</td><td>" + strconv.Itoa(game.AwayScore) + "</td><td>" + game.Location + "</td><td>" + game.Start + "</td><td>" + game.Umpire + "</td>"
 		if admin {
 			out = out + "<td><form action=/admin/scoregame/" + strconv.Itoa(game.ID) + "><input type=submit value=\"Score Game\" name=\"Score Game\"></form></b></td>"
 		}

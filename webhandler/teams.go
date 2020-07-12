@@ -25,7 +25,9 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		if err != nil {
 			log.Println("Bad ID", err)
 		} else {
-			me.DB.DelTeam(did)
+			if !me.DisableDelete {
+				me.DB.DelTeam(did)
+			}
 		}
 	}
 
@@ -53,7 +55,7 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		teams := me.DB.ReturnTeamsByDivisionID(div.ID)
 		for _, team := range teams {
 			out2 = out2 + "<tr><td>" + team.Name + "</td><td>" + team.Coach + "</td><td>"
-			if me.DisableDelete {
+			if !me.DisableDelete {
 				out2 = out2 + "<form method=port action=\"/admin/teams\"><input type=hidden name=\"teamid\" value=\"" + strconv.Itoa(team.ID) + "\"><input type=submit name=Delete value=Delete></form>"
 			}
 			out2 = out2 + "</td></tr>"

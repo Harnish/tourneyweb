@@ -17,7 +17,7 @@ func main() {
 
 	cfg := LoadConfig("tourneyweb.conf")
 	spew.Dump(cfg)
-	db := mydb.New(cfg.Database)
+	db := mydb.New(cfg.Database, cfg.Debug)
 	wh := webhandler.New(db, cfg.AdminPassword, cfg.DisableDelete)
 	log.Println(cfg.Port)
 

@@ -15,13 +15,16 @@ import (
 var mysqltables = [...]string{"CREATE TABLE IF NOT EXISTS DIVISIONS (id INTEGER PRIMARY KEY AUTO_INCREMENT, DivisionName Varchar(255), CONSTRAINT divisionname_uniq UNIQUE(DivisionName));",
 	"CREATE TABLE IF NOT EXISTS TEAMS (id INTEGER PRIMARY KEY AUTO_INCREMENT, divisionid INTEGER, TeamName Varchar(255), CoachName Varchar(255));",
 	"CREATE TABLE IF NOT EXISTS GAMESBYTEAM (id INTEGER PRIMARY KEY AUTO_INCREMENT, divisionid INTEGER, primaryteamid INTEGER, oppenentid INTEGER, gameid INTEGER, teamscore INTEGER, oppenentscore INTEGER);",
-	"CREATE TABLE IF NOT EXISTS GAMES (id INTEGER PRIMARY KEY AUTO_INCREMENT, divisionid INTEGER, hometeamid INTEGER, awayteamid INTEGER, location Varchar(255), starttime Varchar(255), primaryumpire Varchar(255), hometeamscore INTEGER, awayteamscore INTEGER);"}
+	"CREATE TABLE IF NOT EXISTS GAMES (id INTEGER PRIMARY KEY AUTO_INCREMENT, divisionid INTEGER, hometeamid INTEGER, awayteamid INTEGER, location Varchar(255), starttime Varchar(255), primaryumpire Varchar(255), hometeamscore INTEGER, awayteamscore INTEGER);",
+	"CREATE TABLE IF NOT EXISTS EVENTNEWS (id INTEGER PRIMARY KEY AUTO_INCREMENT, title Varchar(255), body Varchar(4000));",
+	"CREATE TABLE IF NOT EXISTS LOCATION (id INTEGER PRIMARY KEY AUTO_INCREMENT, name Varchar(255), address Varchar(400));"}
 
 type MyDB struct {
-	DB *sql.DB
+	DB    *sql.DB
+	debug bool
 }
 
-func New(path string) *MyDB {
+func New(path string, debug bool) *MyDB {
 	me := &MyDB{}
 	if strings.HasPrefix(path, "mysql://") {
 		newpath := strings.TrimPrefix(path, "mysql://")

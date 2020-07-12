@@ -49,6 +49,8 @@ func (me *MyDB) AllGamesByDivision(divisionid int) (games []Game) {
 		g.Division = me.ReturnDivisionByID(divisionid)
 		g.HomeTeam = me.ReturnTeamByID(hid)
 		g.AwayTeam = me.ReturnTeamByID(aid)
+		g.HomeScore = me.HomeScore(g.ID)
+		g.AwayScore = me.AwayScore(g.ID)
 		games = append(games, g)
 
 	}
@@ -74,6 +76,8 @@ func (me *MyDB) AllGamesByTeam(teamid int) (games []Game) {
 		g.Division = me.ReturnDivisionByID(did)
 		g.HomeTeam = me.ReturnTeamByID(hid)
 		g.AwayTeam = me.ReturnTeamByID(aid)
+		g.HomeScore = me.HomeScore(g.ID)
+		g.AwayScore = me.AwayScore(g.ID)
 		games = append(games, g)
 
 	}
@@ -99,6 +103,8 @@ func (me *MyDB) ReturnGameByID(gameid int) Game {
 		g.Division = me.ReturnDivisionByID(did)
 		g.HomeTeam = me.ReturnTeamByID(hid)
 		g.AwayTeam = me.ReturnTeamByID(aid)
+		g.HomeScore = me.HomeScore(g.ID)
+		g.AwayScore = me.AwayScore(g.ID)
 		rows.Close()
 		return g
 	}
@@ -164,4 +170,70 @@ func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
 
 func (me *MyDB) DeleteTeamScore(gameid int) {
 	me.DB.Exec("delete from GAMESBYTEAM where gameid=" + strconv.Itoa(gameid) + ";")
+}
+
+// Returns 2 bools, first one is if they played second is if they won.
+func (me *MyDB) DidTeamABeatTeamB(teamaid, teambid int) (bool, bool) {
+	query := "select teamscore, oppenentscore from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(teamaid) + " and oppenentid=" + strconv.Itoa(teambid) + ";"
+	rows, err := me.DB.Query(query)
+
+	if err != nil {
+		log.Println("Error - DidTeamABeatTeamB - Query ", err, query)
+		return false, false
+	}
+	for rows.Next() {
+		var teamascore, teambscore int
+		rows.Scan(&teamascore, &teambscore)
+		rows.Close()
+		if teamascore > teambscore {
+			if me.debug {
+				log.Println(teamaid, teambid, " played ", teamaid, " won ")
+			}
+			return true, true
+
+		}
+		if me.debug {
+			log.Println(teamaid, teambid, " played ", teamaid, " lost ")
+		}
+		return true, false
+	}
+	if me.debug {
+		log.Println(teamaid, teambid, " didn't play")
+	}
+	return false, false
+}
+
+func (me *MyDB) GamesPlayedByTeam(id int) int {
+	query := "select count() from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(id) + ";"
+	rows, err := me.DB.Query(query)
+
+	if err != nil {
+		log.Println("Error - GamesPlayedByTeam - Query ", err, query)
+		return -1
+	}
+	out := 0
+	for rows.Next() {
+		rows.Scan(&out)
+	}
+	rows.Close()
+	return out
+}
+
+func (me *MyDB) IsGameScored(id int) bool {
+	query := "select count() from GAMESBYTEAM where gameid=" + strconv.Itoa(id) + ";"
+	rows, err := me.DB.Query(query)
+
+	if err != nil {
+		log.Println("Error - GamesPlayedByTeam - Query ", err, query)
+		return false
+	}
+	out := 0
+	for rows.Next() {
+		rows.Scan(&out)
+	}
+	rows.Close()
+	if out == 2 {
+		return true
+	}
+	return false
 }

@@ -20,7 +20,9 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 		if err != nil {
 			log.Println("Bad ID", err)
 		} else {
-			me.DB.DelDivision(did)
+			if !me.DisableDelete {
+				me.DB.DelDivision(did)
+			}
 		}
 	}
 	header := ReturnHeader(true)
@@ -35,9 +37,13 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 	footer := ReturnFooter()
 	Divs := me.DB.ReturnDivisions()
 
-	out2 = out2 + "<table>"
+	out2 = out2 + "<table border=1 cellpadding=1 cellspacing=0>"
 	for _, div := range Divs {
-		out2 = out2 + "<tr><td><a href=/admin/divisions/" + strconv.Itoa(div.ID) + ">" + div.Name + "</a></td><td valign=top><form method=post action=\"/admin/deldivision\"> <input type=hidden name=divisionid value=\"" + strconv.Itoa(div.ID) + "\"><input type=submit name=\"delete\" value=\"delete\"></form></td><td valign=top><form action=\"/admin/creategame/" + strconv.Itoa(div.ID) + "\"><input type=Submit name=\"Add Game\" value=\"Add Game\"></td></tr>\n"
+		out2 = out2 + "<tr><td><a href=/admin/divisions/" + strconv.Itoa(div.ID) + ">" + div.Name + "</a></td>"
+		if !me.DisableDelete {
+			out2 = out2 + "<td valign=top><form method=post action=\"/admin/deldivision\"> <input type=hidden name=divisionid value=\"" + strconv.Itoa(div.ID) + "\"><input type=submit name=\"delete\" value=\"delete\"></form></td>"
+		}
+		out2 = out2 + "<td valign=top><form action=\"/admin/creategame/" + strconv.Itoa(div.ID) + "\"><input type=Submit name=\"Add Game\" value=\"Add Game\"></td></tr>\n"
 
 	}
 	out2 = out2 + "</table>"
