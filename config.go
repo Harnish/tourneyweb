@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	Port          string
-	Debug         bool
-	Database      string
-	AdminPassword string
-	DisableDelete bool
+	Port            string
+	Debug           bool
+	Database        string
+	AdminPassword   string
+	DisableDelete   bool
+	BannerImagePath string
 }
 
 // LoadConfig imports the configuration.

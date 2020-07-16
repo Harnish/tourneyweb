@@ -13,6 +13,9 @@ import (
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/webhandler"
 )
 
+var banner []byte
+var favico []byte
+
 func main() {
 
 	cfg := LoadConfig("tourneyweb.conf")
@@ -20,6 +23,7 @@ func main() {
 	db := mydb.New(cfg.Database, cfg.Debug)
 	wh := webhandler.New(db, cfg.AdminPassword, cfg.DisableDelete)
 	log.Println(cfg.Port)
+	LoadBanner(cfg.BannerImagePath)
 
 	router := httprouter.New()
 	router.GET("/", wh.PrintIndex)
@@ -49,22 +53,15 @@ func main() {
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	//FIXME check to see if favicon.ico exists and if not have a prebaked one in code.
-	content, err := ioutil.ReadFile("favicon.ico")
-	if err != nil {
-		log.Println("File doesn't exist", err)
-	}
+
 	w.Header().Set("Content-type", mime.TypeByExtension(".ico"))
-	w.Write(content)
+	w.Write(favico)
 }
 
 func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	content, err := ioutil.ReadFile("dawgpoundlogo.jpg")
-	if err != nil {
-		log.Println("File doesn't exist", err)
-	}
+
 	w.Header().Set("Content-type", mime.TypeByExtension(".jpg"))
-	w.Write(content)
+	w.Write(banner)
 }
 
 func PrintCSS(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -85,4 +82,23 @@ a:hover {
 	`
 	w.Header().Set("Content-type", mime.TypeByExtension(".css"))
 	w.Write([]byte(css))
+}
+
+func LoadBanner(path string) {
+	var err error
+	banner, err = ioutil.ReadFile(path)
+	if err != nil {
+		log.Println("File doesn't exist", err)
+	}
+
+	//if file doesn't exist lets put something here
+}
+
+func LoadFavico() {
+	var err error
+	favico, err = ioutil.ReadFile("favicon.ico")
+	if err != nil {
+		log.Println("File doesn't exist", err)
+	}
+	//if file doesn't exist lets put something here
 }
