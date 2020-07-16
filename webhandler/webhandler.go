@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -32,7 +31,7 @@ func (me *Env) PrintIndex(w http.ResponseWriter, r *http.Request, ps httprouter.
 	Divs := me.DB.ReturnDivisions()
 	header := ReturnHeader(false)
 	var out string
-	out = out + "<h1>This is for informational purposes only.  Final rulings are by event coordinator.</h1>\n"
+	out = out + "<h1>This is being updated for future use.  Information may display differently as we progress development.</h1>\n"
 	out = out + "Click the division for division standings, Click team for Upcoming games and results."
 	for _, div := range Divs {
 		out = out + "<h2><a href=\"/divisions/" + strconv.Itoa(div.ID) + "\">" + div.Name + "</a></h2>\n<ul>"
@@ -294,41 +293,7 @@ func (me *Env) ReturnTeamsByDivisionIDRankedTable(div int, admin bool) string {
 	out := "<H1>" + division.Name + "</H1>"
 	out = out + "<table><tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th><th>Games Played</th></tr>"
 	teams := me.DB.ReturnTeamsByDivisionIDWithStats(div)
-	sort.Slice(teams, func(i, j int) bool {
-		//Wins
-		if teams[i].Wins > teams[j].Wins {
-			return true
-		} else if teams[i].Wins < teams[j].Wins {
-			return false
-		} else {
-			// Head to head
-			playedeachother, teamwin := me.DB.DidTeamABeatTeamB(teams[i].ID, teams[j].ID)
-			// Did they play each other
-			if playedeachother {
-				// Did they win?
-				if teamwin {
-					return true
-				} else {
-					return false
-				}
-
-			} else {
-				// Runs against
-				if teams[i].RunsAgainst < teams[j].RunsAgainst {
-					return true
-				} else if teams[i].RunsAgainst > teams[j].RunsAgainst {
-					return false
-				} else {
-					//Runs for
-					if teams[i].RunsFor > teams[j].RunsFor {
-						return true
-					} else {
-						return false
-					}
-				}
-			}
-		}
-	})
+	teams = me.SortTeams(teams, "WinsRunsAgainstRunsEarnedHead2Head")
 	for idx, team := range teams {
 		out = out + "<tr><td>" + strconv.Itoa(idx+1) + "</td><td>" + team.Name + "</td><td>" + team.Coach + "</td><td>" + strconv.Itoa(team.Wins) + "</td><td>" + strconv.Itoa(team.Losses) + "</td><td>" + strconv.Itoa(team.RunsAgainst) + "</td><td>" + strconv.Itoa(team.RunsFor) + "</td><td>" + strconv.Itoa(me.DB.GamesPlayedByTeam(team.ID)) + "</td></tr>\n"
 	}

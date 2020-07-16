@@ -204,7 +204,7 @@ func (me *MyDB) DidTeamABeatTeamB(teamaid, teambid int) (bool, bool) {
 }
 
 func (me *MyDB) GamesPlayedByTeam(id int) int {
-	query := "select count() from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(id) + ";"
+	query := "select count(*) from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(id) + ";"
 	rows, err := me.DB.Query(query)
 
 	if err != nil {
@@ -220,7 +220,7 @@ func (me *MyDB) GamesPlayedByTeam(id int) int {
 }
 
 func (me *MyDB) IsGameScored(id int) bool {
-	query := "select count() from GAMESBYTEAM where gameid=" + strconv.Itoa(id) + ";"
+	query := "select count(*) from GAMESBYTEAM where gameid=" + strconv.Itoa(id) + ";"
 	rows, err := me.DB.Query(query)
 
 	if err != nil {
