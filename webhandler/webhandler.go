@@ -59,6 +59,7 @@ func (me *Env) ReturnAdminIndex() string {
 	<li><a href="/admin/addteamform">Add Team</a></li>
 	<li><a href="/admin/creategameform">Create Game</a></li>
 	<li><a href="/admin/games">Record Score for a game</a></li>
+	<li><a href="/admin/news">News</a></li>
 	</ul>
 	`
 	if me.DisableDelete {
@@ -149,6 +150,10 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		header = header + "Login Failed"
 		w.Write([]byte(header))
 	}
+}
+
+func (me *Env) Logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
 }
 
 func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

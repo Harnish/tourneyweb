@@ -2,15 +2,19 @@ package mydb
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	//Mysql driver
 	_ "github.com/go-sql-driver/mysql"
 
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/localdb"
 )
+
+var MYQSLTIMEFORMAT = "2006-01-02 15:04:05"
 
 var mysqltables = [...]string{"CREATE TABLE IF NOT EXISTS DIVISIONS (id INTEGER PRIMARY KEY AUTO_INCREMENT, DivisionName Varchar(255), CONSTRAINT divisionname_uniq UNIQUE(DivisionName));",
 	"CREATE TABLE IF NOT EXISTS TEAMS (id INTEGER PRIMARY KEY AUTO_INCREMENT, divisionid INTEGER, TeamName Varchar(255), CoachName Varchar(255));",
@@ -106,3 +110,12 @@ func (me *MyDB) AddTeamScore(divisionid, primaryteamid, oppenentid, gameid, team
 }
 
 //func (me *MyDB)
+
+func ConvertMySQLDateToTime(input string) time.Time {
+	t, err := time.Parse(MYQSLTIMEFORMAT, input)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	return t
+}
