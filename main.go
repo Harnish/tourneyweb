@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/hex"
 	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
@@ -49,7 +51,9 @@ func main() {
 	router.GET("/admin/games", wh.AdminGames)
 	router.POST("/admin/scoregamepost", wh.RecordScore)
 	router.GET("/admin/divisions/:divisionid", wh.AdminDivisionView)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, wh.RequestLogger(router)))
+	csrfKey := decodeCSRFKey(cfg.CSRFKey)
+	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, wh.RequestLogger(csrfMiddleware(router))))
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -101,4 +105,15 @@ func LoadFavico() {
 		log.Println("File doesn't exist", err)
 	}
 	//if file doesn't exist lets put something here
+}
+
+func decodeCSRFKey(hexKey string) []byte {
+	key, err := hex.DecodeString(hexKey)
+	if err != nil {
+		log.Fatalf("csrfkey config: must be a valid hex string: %v", err)
+	}
+	if len(key) != 32 {
+		log.Fatalf("csrfkey config: must decode to exactly 32 bytes (64 hex chars), got %d bytes", len(key))
+	}
+	return key
 }
