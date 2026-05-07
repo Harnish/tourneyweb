@@ -127,7 +127,7 @@ func (me *Env) LoginForm(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		<tr><td>Password</td><td><input type="password" name="password"></td></tr>
 		<tr><td></td><td><input type="submit" name="Login" value="Login"></td></tr>
 		</table>
-		<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
+		` + string(csrf.TemplateField(r)) + `
 		</form>`
 
 	var footer string
@@ -180,7 +180,7 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 		<tr><td>Umpire</td><td><input type=text name="umpire"></td></tr>
 		<tr><td></td><td><input type=submit name=submit></td></tr>
 	</table>
-	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
+	` + string(csrf.TemplateField(r)) + `
 	</form>`
 
 	w.Write([]byte(header))
@@ -235,7 +235,7 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		<tr><td>Umpire</td><td><input type=text name="umpire"></td></tr>
 		<tr><td></td><td><input type=submit name=submit></td></tr>
 	</table>
-	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
+	` + string(csrf.TemplateField(r)) + `
 	</form>`
 
 	w.Write([]byte(header))
@@ -371,7 +371,7 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		<tr><td>Away Team Score</td><td><select name=awayscore>` + scoreoptions + `</select></td></tr>
 		<tr><td></td><td><input type=submit name="Save" value="Save"></td></tr>
 	</table>
-	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
+	` + string(csrf.TemplateField(r)) + `
 	</form>`
 	w.Write([]byte(output))
 	w.Write([]byte(ReturnFooter()))

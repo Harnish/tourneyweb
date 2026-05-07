@@ -45,7 +45,7 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	out2 = out2 + `</select></td></tr>
 	<tr><td></td><td><input type="submit" name="submit"></td></tr>
 	</table>
-	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
+	` + string(csrf.TemplateField(r)) + `
 	</form>
 	`
 
@@ -58,7 +58,7 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		for _, team := range teams {
 			out2 = out2 + "<tr><td>" + team.Name + "</td><td>" + team.Coach + "</td><td>"
 			if !me.DisableDelete {
-				out2 = out2 + "<form method=port action=\"/admin/teams\"><input type=hidden name=\"teamid\" value=\"" + strconv.Itoa(team.ID) + "\"><input type=\"hidden\" name=\"gorilla.csrf.Token\" value=\"" + csrf.Token(r) + "\"><input type=submit name=Delete value=Delete></form>"
+				out2 = out2 + "<form method=port action=\"/admin/teams\"><input type=hidden name=\"teamid\" value=\"" + strconv.Itoa(team.ID) + "\">" + string(csrf.TemplateField(r)) + "<input type=submit name=Delete value=Delete></form>"
 			}
 			out2 = out2 + "</td></tr>"
 		}

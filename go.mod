@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/gorilla/csrf v1.7.3 // indirect
+	github.com/gorilla/csrf v1.7.3
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/rivo/sessions v0.0.0-20180420064926-e18b9ef80f84
