@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rivo/sessions"
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
@@ -120,12 +121,13 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 
 func (me *Env) LoginForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	header := ReturnHeader(false)
-	out := `<form method=post action="/login"> 
+	out := `<form method=post action="/login">
 	    <table>
 		<tr><td>Username</td><td><input type="text" name="username"></td></tr>
 		<tr><td>Password</td><td><input type="password" name="password"></td></tr>
 		<tr><td></td><td><input type="submit" name="Login" value="Login"></td></tr>
 		</table>
+		<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
 		</form>`
 
 	var footer string
@@ -178,6 +180,7 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 		<tr><td>Umpire</td><td><input type=text name="umpire"></td></tr>
 		<tr><td></td><td><input type=submit name=submit></td></tr>
 	</table>
+	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
 	</form>`
 
 	w.Write([]byte(header))
@@ -232,6 +235,7 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		<tr><td>Umpire</td><td><input type=text name="umpire"></td></tr>
 		<tr><td></td><td><input type=submit name=submit></td></tr>
 	</table>
+	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
 	</form>`
 
 	w.Write([]byte(header))
@@ -367,6 +371,7 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		<tr><td>Away Team Score</td><td><select name=awayscore>` + scoreoptions + `</select></td></tr>
 		<tr><td></td><td><input type=submit name="Save" value="Save"></td></tr>
 	</table>
+	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
 	</form>`
 	w.Write([]byte(output))
 	w.Write([]byte(ReturnFooter()))
