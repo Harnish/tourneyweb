@@ -5,3 +5,4 @@ database: mysql://tourneyweb1:CHANGE_ME@tcp(localhost:3306)/tourneyweb
 adminpassword: CHANGE_ME
 disabledelete: false
 bannerimagepath: dawgpoundlogo.jpg
+csrfkey: CHANGE_ME_generate_with_openssl_rand_hex_32

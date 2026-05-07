@@ -16,6 +16,7 @@ type Config struct {
 	AdminPassword   string
 	DisableDelete   bool
 	BannerImagePath string
+	CSRFKey         string
 }
 
 // LoadConfig imports the configuration.
