@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -31,6 +32,7 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 	<tr><td>Division Name</td><td><input type="text" name="divisionname"></td><tr>
 	<tr><td></td><td><input type="submit" name="submit"></td></tr>
 	</table>
+	<input type="hidden" name="gorilla.csrf.Token" value="` + csrf.Token(r) + `">
 	</form>
 	`
 
@@ -41,7 +43,7 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 	for _, div := range Divs {
 		out2 = out2 + "<tr><td><a href=/admin/divisions/" + strconv.Itoa(div.ID) + ">" + div.Name + "</a></td>"
 		if !me.DisableDelete {
-			out2 = out2 + "<td valign=top><form method=post action=\"/admin/deldivision\"> <input type=hidden name=divisionid value=\"" + strconv.Itoa(div.ID) + "\"><input type=submit name=\"delete\" value=\"delete\"></form></td>"
+			out2 = out2 + "<td valign=top><form method=post action=\"/admin/deldivision\"><input type=hidden name=divisionid value=\"" + strconv.Itoa(div.ID) + "\"><input type=\"hidden\" name=\"gorilla.csrf.Token\" value=\"" + csrf.Token(r) + "\"><input type=submit name=\"delete\" value=\"delete\"></form></td>"
 		}
 		out2 = out2 + "<td valign=top><form action=\"/admin/creategame/" + strconv.Itoa(div.ID) + "\"><input type=Submit name=\"Add Game\" value=\"Add Game\"></td></tr>\n"
 
