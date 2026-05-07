@@ -108,6 +108,9 @@ func LoadFavico() {
 }
 
 func decodeCSRFKey(hexKey string) []byte {
+	if hexKey == "" {
+		log.Fatalf("csrfkey config: not set — generate with: openssl rand -hex 32")
+	}
 	key, err := hex.DecodeString(hexKey)
 	if err != nil {
 		log.Fatalf("csrfkey config: must be a valid hex string: %v", err)
