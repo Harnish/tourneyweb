@@ -1,0 +1,7 @@
+---
+port: 8989
+debug: false
+database: mysql://tourneyweb1:CHANGE_ME@tcp(localhost:3306)/tourneyweb
+adminpassword: CHANGE_ME
+disabledelete: false
+bannerimagepath: dawgpoundlogo.jpg

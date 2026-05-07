@@ -16,11 +16,20 @@ GRANT ALL PRIVILEGES ON tourneyweb.* to 'tourneyweb1'@'localhost';
 use a different username and password for better security.
 
 # Configuration file
+
+Copy `tourneyweb.conf.example` to `tourneyweb.conf` and fill in your values. The config file is excluded from git.
+
 ```
+cp tourneyweb.conf.example tourneyweb.conf
+```
+
+```yaml
 ---
 port: 8989
-debug: true
-database: mysql://tourneyweb1:password@tcp(localhost:3306)/tourneyweb
-adminpassword: adminpassword1
+debug: false
+database: mysql://tourneyweb1:yourpassword@tcp(localhost:3306)/tourneyweb
+adminpassword: yourpassword
+disabledelete: false
+bannerimagepath: dawgpoundlogo.jpg
 ```
 
