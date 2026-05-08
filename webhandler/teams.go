@@ -46,9 +46,14 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		http.Error(w, "Bad Team ID", http.StatusBadRequest)
 		return
 	}
+	team := me.DB.ReturnTeamByID(tid)
+	if team.ID == 0 {
+		http.Error(w, "Team not found", http.StatusNotFound)
+		return
+	}
 	me.render(w, "team", teamData{
 		baseData: newBase(r, false),
-		Team:     me.DB.ReturnTeamByID(tid),
+		Team:     team,
 		Games:    me.DB.AllGamesByTeam(tid),
 	})
 }
