@@ -122,5 +122,6 @@ func (me *Env) render(w http.ResponseWriter, name string, data any) {
 		log.Println("template error:", name, err)
 		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	buf.WriteTo(w)
 }
