@@ -17,7 +17,7 @@
 <br>
 <h2>Games</h2>
 <table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not .DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Team Score</th><th>Away Team Score</th></tr>
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Team Score</th><th>Away Team Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
