@@ -12,6 +12,8 @@ import (
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
 
+type contextKey struct{}
+
 type Env struct {
 	DB            *mydb.MyDB
 	AdminPW       string
@@ -32,7 +34,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 			http.Error(w, "Not authorized", http.StatusForbidden)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "uid", userdata.ID)
+		ctx := context.WithValue(r.Context(), contextKey{}, userdata.ID)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -231,11 +233,7 @@ func (me *Env) MySession(w http.ResponseWriter, r *http.Request) TWUser {
 		return user
 	}
 	userid := session.Get("userid", nil)
-	if err != nil {
-		log.Println("Failed to access session", err)
-		return user
-	}
-	if session == nil {
+	if userid == nil {
 		return user
 	}
 	user.ID = 1
