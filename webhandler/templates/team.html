@@ -1,0 +1,17 @@
+{{define "team"}}
+{{template "header" .}}
+<br>{{.Team.Name}} {{.Team.Coach}} {{.Team.Division.Name}}<br>
+<table>
+<tr><th>Home</th><th>Away</th><th>Location</th><th>Start time</th><th>Umpire</th></tr>
+{{range .Games}}
+<tr>
+  <td>{{.HomeTeam.Name}}</td>
+  <td>{{.AwayTeam.Name}}</td>
+  <td>{{.Location}}</td>
+  <td>{{.Start}}</td>
+  <td>{{.Umpire}}</td>
+</tr>
+{{end}}
+</table>
+{{template "footer" .}}
+{{end}}

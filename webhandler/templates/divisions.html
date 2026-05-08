@@ -1,0 +1,36 @@
+{{define "divisions"}}
+{{template "header" .}}
+<H1>{{.Division.Name}}</H1>
+<h2>Teams</h2>
+<table>
+<tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th><th>Games Played</th></tr>
+{{range $i, $row := .Teams}}
+<tr>
+  <td>{{inc $i}}</td>
+  <td>{{$row.Name}}</td>
+  <td>{{$row.Coach}}</td>
+  <td>{{$row.Wins}}</td>
+  <td>{{$row.Losses}}</td>
+  <td>{{$row.RunsAgainst}}</td>
+  <td>{{$row.RunsFor}}</td>
+  <td>{{$row.GamesPlayed}}</td>
+</tr>
+{{end}}
+</table>
+<h2>Games</h2>
+<table>
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Home Team Score</th><th>Away Team Score</th></tr>
+{{range .Games}}
+<tr>
+  <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
+  <td>{{.AwayTeam.Name}} {{.AwayTeam.Coach}}</td>
+  <td>{{.Location}}</td>
+  <td>{{.Start}}</td>
+  <td>{{.Umpire}}</td>
+  <td>{{.HomeScore}}</td>
+  <td>{{.AwayScore}}</td>
+</tr>
+{{end}}
+</table>
+{{template "footer" .}}
+{{end}}

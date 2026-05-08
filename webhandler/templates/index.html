@@ -1,0 +1,14 @@
+{{define "index"}}
+{{template "header" .}}
+<h1>This is being updated for future use.  Information may display differently as we progress development.</h1>
+Click the division for division standings, Click team for Upcoming games and results.
+{{range .Divisions}}
+<h2><a href="/divisions/{{.ID}}">{{.Name}}</a></h2>
+<ul>
+{{range index $.Teams .ID}}
+<li><a href="/teams/{{.ID}}">{{.Name}}</a> {{.Coach}}</li>
+{{end}}
+</ul>
+{{end}}
+{{template "footer" .}}
+{{end}}
