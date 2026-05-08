@@ -139,24 +139,29 @@ GET  /hrderbyinfo                               → unchanged
 ```
 
 ### Admin
+
+Routes are designed to avoid httprouter conflicts (static segments and params cannot coexist at the same path level). Consequences:
+- No `/admin/tournaments/new` route — the create form is inline on `GET /admin/tournaments`
+- Delete division lives at `/:did/delete`, not `/divisions/delete`, to avoid conflicting with `/:did`
+- Create game is under `/:did/games/new` (division context), not under `/games/new/:did`, to avoid conflicting with `/games/:gid`
+
 ```
-GET  /admin/tournaments                         → admin tournament list
-GET  /admin/tournaments/new                     → create tournament form
-POST /admin/tournaments                         → submit new tournament
-GET  /admin/tournaments/:tid                    → tournament admin home
-GET  /admin/tournaments/:tid/divisions          → manage divisions
-POST /admin/tournaments/:tid/divisions          → add division
-POST /admin/tournaments/:tid/divisions/delete   → delete division (posts divisionid)
-GET  /admin/tournaments/:tid/divisions/:did     → division admin view
-GET  /admin/tournaments/:tid/teams              → manage teams
-POST /admin/tournaments/:tid/teams              → add team
-POST /admin/tournaments/:tid/teams/delete       → delete team (posts teamid)
-GET  /admin/tournaments/:tid/games              → list all games
-GET  /admin/tournaments/:tid/games/new/:did     → create game form for a division
-POST /admin/tournaments/:tid/games              → submit new game
-GET  /admin/tournaments/:tid/games/:gid/score   → score game form
-POST /admin/tournaments/:tid/games/:gid/score   → submit score
-GET  /admin/tournaments/:tid/games/:gid/delete  → delete game
+GET  /admin/tournaments                                      → admin tournament list + inline create form
+POST /admin/tournaments                                      → submit new tournament → redirect to /admin/tournaments/:tid
+GET  /admin/tournaments/:tid                                 → tournament admin home
+GET  /admin/tournaments/:tid/divisions                       → manage divisions (list + inline add form)
+POST /admin/tournaments/:tid/divisions                       → add division
+GET  /admin/tournaments/:tid/divisions/:did                  → division admin view
+POST /admin/tournaments/:tid/divisions/:did/delete           → delete division
+GET  /admin/tournaments/:tid/teams                           → manage teams (list + inline add form)
+POST /admin/tournaments/:tid/teams                           → add team
+POST /admin/tournaments/:tid/teams/delete                    → delete team (posts teamid; no /:teamid param route exists)
+GET  /admin/tournaments/:tid/games                           → list all games
+GET  /admin/tournaments/:tid/divisions/:did/games/new        → create game form (division context avoids conflict with /games/:gid)
+POST /admin/tournaments/:tid/games                           → submit new game
+GET  /admin/tournaments/:tid/games/:gid/score                → score game form
+POST /admin/tournaments/:tid/games/:gid/score                → submit score
+GET  /admin/tournaments/:tid/games/:gid/delete               → delete game
 ```
 
 The `RequestLogger` middleware auth check is unchanged — any path under `/admin` requires a valid session.
