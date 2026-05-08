@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"bytes"
 	"embed"
 	"html/template"
 	"log"
@@ -115,8 +116,11 @@ type adminGamesData struct {
 }
 
 func (me *Env) render(w http.ResponseWriter, name string, data any) {
-	if err := tmpl.ExecuteTemplate(w, name, data); err != nil {
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Println("template error:", name, err)
+		return
 	}
+	buf.WriteTo(w)
 }
