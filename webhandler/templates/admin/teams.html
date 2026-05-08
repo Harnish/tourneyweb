@@ -24,7 +24,7 @@
   <td>{{.Coach}}</td>
   <td>
   {{if not $.DisableDelete}}
-  <form method="post" action="/admin/teams">
+  <form method="post" action="/admin/addteam">
     <input type="hidden" name="teamid" value="{{.ID}}">
     {{$.CSRFField}}
     <input type="submit" name="Delete" value="Delete">
