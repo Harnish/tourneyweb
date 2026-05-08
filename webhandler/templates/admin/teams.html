@@ -1,0 +1,39 @@
+{{define "adminTeams"}}
+{{template "header" .}}
+<form method="post" action="/admin/addteam">
+<table>
+<tr><td>Team Name</td><td><input type="text" name="teamname"></td></tr>
+<tr><td>Team Coach</td><td><input type="text" name="teamcoach"></td></tr>
+<tr><td>Division</td><td>
+  <select name="division">
+  {{range .Divisions}}
+  <option value="{{.ID}}">{{.Name}}</option>
+  {{end}}
+  </select>
+</td></tr>
+<tr><td></td><td><input type="submit" name="submit"></td></tr>
+</table>
+{{.CSRFField}}
+</form>
+{{range .Divisions}}
+<h2>{{.Name}}</h2>
+<table>
+{{range index $.TeamsByDivision .ID}}
+<tr>
+  <td>{{.Name}}</td>
+  <td>{{.Coach}}</td>
+  <td>
+  {{if not $.DisableDelete}}
+  <form method="post" action="/admin/teams">
+    <input type="hidden" name="teamid" value="{{.ID}}">
+    {{$.CSRFField}}
+    <input type="submit" name="Delete" value="Delete">
+  </form>
+  {{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+{{end}}
+{{template "footer" .}}
+{{end}}

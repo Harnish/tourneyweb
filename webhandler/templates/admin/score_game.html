@@ -1,0 +1,26 @@
+{{define "scoreGame"}}
+{{template "header" .}}
+<form method="post" action="/admin/scoregamepost">
+<input type="hidden" name="gameid" value="{{.Game.ID}}">
+<table>
+  <tr><td>Home Team</td><td>{{.Game.HomeTeam.Name}}</td></tr>
+  <tr><td>Away Team</td><td>{{.Game.AwayTeam.Name}}</td></tr>
+  <tr><td>Location</td><td>{{.Game.Location}}</td></tr>
+  <tr><td>Start Time</td><td>{{.Game.Start}}</td></tr>
+  <tr><td>Umpire</td><td>{{.Game.Umpire}}</td></tr>
+  <tr><td>Home Team Score</td><td>
+    <select name="homescore">
+      {{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}
+    </select>
+  </td></tr>
+  <tr><td>Away Team Score</td><td>
+    <select name="awayscore">
+      {{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}
+    </select>
+  </td></tr>
+  <tr><td></td><td><input type="submit" name="Save" value="Save"></td></tr>
+</table>
+{{.CSRFField}}
+</form>
+{{template "footer" .}}
+{{end}}
