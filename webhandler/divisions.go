@@ -19,7 +19,10 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 		did, err := strconv.Atoi(divisionid)
 		if err != nil {
 			log.Println("Bad ID", err)
-		} else if !me.DisableDelete {
+			http.Error(w, "Bad Division ID", http.StatusBadRequest)
+			return
+		}
+		if !me.DisableDelete {
 			me.DB.DelDivision(did)
 		}
 	}
