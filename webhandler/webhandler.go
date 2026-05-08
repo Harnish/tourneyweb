@@ -207,13 +207,7 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 	me.DB.AddGame(did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
-	me.render(w, "createGame", createGameData{
-		baseData:      newBase(r, true),
-		DivisionID:    did,
-		Teams:         me.DB.ReturnTeamsByDivisionID(did),
-		Games:         me.DB.AllGamesByDivision(did),
-		DisableDelete: me.DisableDelete,
-	})
+	http.Redirect(w, r, "/admin/creategame/"+strconv.Itoa(did), http.StatusSeeOther)
 }
 
 func (me *Env) PrintHRDerby(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -233,10 +227,11 @@ func (me *Env) MySession(w http.ResponseWriter, r *http.Request) TWUser {
 		return user
 	}
 	userid := session.Get("userid", nil)
-	if userid == nil {
+	s, ok := userid.(string)
+	if !ok || s == "" {
 		return user
 	}
 	user.ID = 1
-	user.UserName = userid.(string)
+	user.UserName = s
 	return user
 }
