@@ -20,7 +20,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 ## Code Quality
 
 - **[P1/S]** Replace deprecated `ioutil.ReadFile` with `os.ReadFile` in `config.go` and `main.go` (deprecated since Go 1.16)
-- **[P1/S]** Wire up `GetEnvironmentConfig()` in `config.go` so the app can be configured via environment variables without a config file on disk — the function exists but `main.go` never calls it
 - **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
 - **[P2/M]** Mock PostgreSQL for testing — introduce a DB interface so unit tests can inject a fake without a real database; use `pgxmock` or a hand-rolled fake
 - **[P2/S]** Fix CSS served inline from `main.go` — move to a real static file or embed with `//go:embed`

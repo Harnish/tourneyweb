@@ -18,27 +18,19 @@ type Config struct {
 	CSRFKey         string
 }
 
-// LoadConfig imports the configuration.
+// LoadConfig imports the configuration from the first config file found,
+// then applies any environment variable overrides on top.
 func LoadConfig(confpath string) (config Config) {
-	if confpath != "" {
-		_, err := os.Stat(confpath)
-		if err == nil {
-			config = ParseConfig(confpath)
-			return
+	for _, path := range []string{confpath, "config.yaml", "/etc/go-periodical-rack/config.yaml"} {
+		if path == "" {
+			continue
+		}
+		if _, err := os.Stat(path); err == nil {
+			config = ParseConfig(path)
+			break
 		}
 	}
-	confpath = "config.yaml"
-	_, err := os.Stat(confpath)
-	if err == nil {
-		config = ParseConfig(confpath)
-		return
-	}
-	confpath = "/etc/go-periodical-rack/config.yaml"
-	_, err = os.Stat(confpath)
-	if err == nil {
-		config = ParseConfig(confpath)
-		return
-	}
+	applyEnvOverrides(&config)
 	return
 }
 
@@ -56,11 +48,32 @@ func ParseConfig(confpath string) (config Config) {
 	return
 }
 
-func GetEnvironmentConfig() (config Config) {
-	config.Port = os.Getenv("TANPORT")
-	tandebug := os.Getenv("TANDEBUG")
-	config.Debug = strings.ToLower(tandebug) == "true"
-	config.Database = os.Getenv("TANDB")
-	config.AdminPassword = os.Getenv("TANADMINPASS")
-	return
+// applyEnvOverrides replaces any Config field with its environment variable
+// value when the variable is non-empty, allowing container deployments to
+// configure the app without a config file on disk.
+//
+// Variables: TANPORT, TANDEBUG, TANDB, TANADMINPASS, TANCSRFKEY,
+// TANDISABLEDELETE, TANBANNER
+func applyEnvOverrides(c *Config) {
+	if v := os.Getenv("TANPORT"); v != "" {
+		c.Port = v
+	}
+	if v := os.Getenv("TANDEBUG"); v != "" {
+		c.Debug = strings.ToLower(v) == "true"
+	}
+	if v := os.Getenv("TANDB"); v != "" {
+		c.Database = v
+	}
+	if v := os.Getenv("TANADMINPASS"); v != "" {
+		c.AdminPassword = v
+	}
+	if v := os.Getenv("TANCSRFKEY"); v != "" {
+		c.CSRFKey = v
+	}
+	if v := os.Getenv("TANDISABLEDELETE"); v != "" {
+		c.DisableDelete = strings.ToLower(v) == "true"
+	}
+	if v := os.Getenv("TANBANNER"); v != "" {
+		c.BannerImagePath = v
+	}
 }
