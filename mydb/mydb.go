@@ -90,8 +90,11 @@ func New(path string, debug bool) *MyDB {
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {
-	me.DB.Exec(
+	_, err := me.DB.Exec(
 		`INSERT INTO games_by_team (tournament_id, division_id, team_id, opponent_id, game_id, team_score, opponent_score) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 		tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore,
 	)
+	if err != nil {
+		log.Println("AddTeamScore:", err)
+	}
 }
