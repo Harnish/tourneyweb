@@ -28,7 +28,7 @@ func main() {
 	LoadBanner(cfg.BannerImagePath)
 
 	router := httprouter.New()
-	router.GET("/", wh.PrintIndex)
+	router.GET("/", wh.TournamentList)
 	router.GET("/login", wh.LoginForm)
 	router.POST("/login", wh.Login)
 	router.GET("/divisions/:id", wh.PrintDivision)
@@ -38,7 +38,7 @@ func main() {
 	router.GET("/favicon.ico", PrintFavIco)
 	router.GET("/img/topimage.jpg", PrintBannerLogo)
 	router.GET("/hrderbyinfo", wh.PrintHRDerby)
-	router.GET("/admin/", wh.AdminIndex)
+	router.GET("/admin/", wh.AdminTournaments)
 	router.GET("/admin/adddivisionform", wh.AddDivisionForm)
 	router.POST("/admin/adddivision", wh.AddDivisionForm)
 	router.POST("/admin/deldivision", wh.AddDivisionForm)

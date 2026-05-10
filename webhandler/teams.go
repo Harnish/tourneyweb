@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,37 +11,57 @@ import (
 )
 
 func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	teamname := r.FormValue("teamname")
-	teamcoach := r.FormValue("teamcoach")
-	teamdivision, err1 := strconv.Atoi(r.FormValue("division"))
-	if teamname != "" && err1 == nil {
-		me.DB.AddTeam(teamname, teamcoach, teamdivision)
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
 	}
-	teamid := r.FormValue("teamid")
-	if teamid != "" {
-		log.Println("Deleting teamid", teamid)
-		did, err := strconv.Atoi(teamid)
-		if err != nil {
-			log.Println("Bad ID", err)
-		} else if !me.DisableDelete {
-			me.DB.DelTeam(did)
+	if r.Method == http.MethodPost {
+		name := r.FormValue("teamname")
+		coach := r.FormValue("teamcoach")
+		divisionID, err := strconv.Atoi(r.FormValue("division"))
+		if err != nil || name == "" {
+			http.Error(w, "Name and valid division required", http.StatusBadRequest)
+			return
 		}
+		me.DB.AddTeam(t.ID, divisionID, name, coach)
+		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/teams", t.ID), http.StatusSeeOther)
+		return
 	}
-
-	divs := me.DB.ReturnDivisions()
+	divs := me.DB.ReturnDivisions(t.ID)
 	byDiv := make(map[int][]mydb.Team)
 	for _, div := range divs {
 		byDiv[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
 	me.render(w, "adminTeams", adminTeamsData{
-		baseData:        newBase(r, true),
+		baseData:        newBaseWithTournament(r, true, t),
 		Divisions:       divs,
 		TeamsByDivision: byDiv,
 		DisableDelete:   me.DisableDelete,
 	})
 }
 
+func (me *Env) DeleteTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	teamID, err := strconv.Atoi(r.FormValue("teamid"))
+	if err != nil {
+		log.Println("DeleteTeam bad ID:", err)
+		http.Error(w, "Bad team ID", http.StatusBadRequest)
+		return
+	}
+	if !me.DisableDelete {
+		me.DB.DelTeam(teamID)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/teams", t.ID), http.StatusSeeOther)
+}
+
 func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
 	tid, err := strconv.Atoi(ps.ByName("teamid"))
 	if err != nil {
 		http.Error(w, "Bad Team ID", http.StatusBadRequest)
@@ -52,7 +73,7 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 	me.render(w, "team", teamData{
-		baseData: newBase(r, false),
+		baseData: newBaseWithTournament(r, false, t),
 		Team:     team,
 		Games:    me.DB.AllGamesByTeam(tid),
 	})

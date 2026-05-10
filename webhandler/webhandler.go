@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -39,26 +40,6 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 	})
 }
 
-func (me *Env) PrintIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	divs := me.DB.ReturnDivisions()
-	teams := make(map[int][]mydb.Team)
-	for _, div := range divs {
-		teams[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
-	}
-	me.render(w, "index", indexData{
-		baseData:  newBase(r, false),
-		Divisions: divs,
-		Teams:     teams,
-	})
-}
-
-func (me *Env) AdminIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	me.render(w, "adminIndex", adminIndexData{
-		baseData:      newBase(r, true),
-		DisableDelete: me.DisableDelete,
-	})
-}
-
 func (me *Env) LoginForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	me.render(w, "login", loginData{baseData: newBase(r, false)})
 }
@@ -72,7 +53,7 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 			log.Println("Session Failed to start", err)
 		}
 		session.Set("userid", username)
-		http.Redirect(w, r, "/admin/", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/tournaments", http.StatusSeeOther)
 		return
 	}
 	me.render(w, "login", loginData{
@@ -84,20 +65,23 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 func (me *Env) Logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {}
 
 func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	did, err := strconv.Atoi(ps.ByName("id"))
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
-		log.Println("bad ID", ps.ByName("id"), err)
 		http.Error(w, "Bad division ID", http.StatusBadRequest)
 		return
 	}
 	rawTeams := me.DB.ReturnTeamsByDivisionIDWithStats(did)
 	rawTeams = me.SortTeams(rawTeams, "WinsRunsAgainstRunsEarnedHead2Head")
 	rows := make([]divisionTeamRow, len(rawTeams))
-	for i, t := range rawTeams {
-		rows[i] = divisionTeamRow{Team: t, GamesPlayed: me.DB.GamesPlayedByTeam(t.ID)}
+	for i, team := range rawTeams {
+		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData: newBase(r, false),
+		baseData: newBaseWithTournament(r, false, t),
 		Division: me.DB.ReturnDivisionByID(did),
 		Teams:    rows,
 		Games:    me.DB.AllGamesByDivision(did),
@@ -105,22 +89,28 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	gid, err := strconv.Atoi(ps.ByName("gameid"))
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	gid, err := strconv.Atoi(ps.ByName("gid"))
 	if err != nil {
-		log.Println("DelGame bad ID", err, ps.ByName("gameid"))
 		http.Error(w, "Bad Game ID", http.StatusBadRequest)
 		return
 	}
 	if !me.DisableDelete {
 		me.DB.DelGame(gid)
 	}
-	http.Redirect(w, r, "/admin/games", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }
 
 func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	gid, err := strconv.Atoi(ps.ByName("gameid"))
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	gid, err := strconv.Atoi(ps.ByName("gid"))
 	if err != nil {
-		log.Println("ScoreGame bad ID", err, ps.ByName("gameid"))
 		http.Error(w, "Bad Game ID", http.StatusBadRequest)
 		return
 	}
@@ -129,14 +119,18 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		options[i] = i
 	}
 	me.render(w, "scoreGame", scoreGameData{
-		baseData:     newBase(r, true),
+		baseData:     newBaseWithTournament(r, true, t),
 		Game:         me.DB.ReturnGameByID(gid),
 		ScoreOptions: options,
 	})
 }
 
 func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	gid, err := strconv.Atoi(r.FormValue("gameid"))
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	gid, err := strconv.Atoi(ps.ByName("gid"))
 	if err != nil {
 		http.Error(w, "Bad game ID", http.StatusBadRequest)
 		return
@@ -152,32 +146,44 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 	me.DB.ScoreGame(gid, hscore, ascore)
-	http.Redirect(w, r, "/admin/games", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }
 
 func (me *Env) Games(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
 	me.render(w, "games", gamesData{
-		baseData: newBase(r, false),
-		Games:    me.DB.AllGames(),
+		baseData: newBaseWithTournament(r, false, t),
+		Games:    me.DB.AllGames(t.ID),
 	})
 }
 
 func (me *Env) AdminGames(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
 	me.render(w, "adminGames", adminGamesData{
-		baseData:      newBase(r, true),
-		Games:         me.DB.AllGames(),
+		baseData:      newBaseWithTournament(r, true, t),
+		Games:         me.DB.AllGames(t.ID),
 		DisableDelete: me.DisableDelete,
 	})
 }
 
 func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	did, err := strconv.Atoi(ps.ByName("divisionid"))
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
 		http.Error(w, "Bad division ID", http.StatusBadRequest)
 		return
 	}
 	me.render(w, "createGame", createGameData{
-		baseData:      newBase(r, true),
+		baseData:      newBaseWithTournament(r, true, t),
 		DivisionID:    did,
 		Teams:         me.DB.ReturnTeamsByDivisionID(did),
 		Games:         me.DB.AllGamesByDivision(did),
@@ -186,10 +192,13 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 }
 
 func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
 	did, err := strconv.Atoi(r.FormValue("divisionid"))
 	if err != nil {
 		http.Error(w, "Bad DivisionID", http.StatusBadRequest)
-		log.Println("Bad divisionid")
 		return
 	}
 	hid, err := strconv.Atoi(r.FormValue("hometeam"))
@@ -206,8 +215,8 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, "Must select a different team as an opponent.", http.StatusBadRequest)
 		return
 	}
-	me.DB.AddGame(did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
-	http.Redirect(w, r, "/admin/creategame/"+strconv.Itoa(did), http.StatusSeeOther)
+	me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
+	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
 }
 
 func (me *Env) PrintHRDerby(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
