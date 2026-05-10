@@ -1,0 +1,29 @@
+{{define "adminTournaments"}}
+{{template "header" .}}
+<h1>Tournaments</h1>
+<h2>Create Tournament</h2>
+<form method="post" action="/admin/tournaments">
+<table>
+<tr><td>Name</td><td><input type="text" name="name" required></td></tr>
+<tr><td>Sport</td><td><input type="text" name="sport" required></td></tr>
+<tr><td>Location</td><td><input type="text" name="location" required></td></tr>
+<tr><td>Start Date</td><td><input type="date" name="start_date" required></td></tr>
+<tr><td>Notes</td><td><input type="text" name="notes"></td></tr>
+<tr><td></td><td><input type="submit" value="Create Tournament"></td></tr>
+</table>
+{{.CSRFField}}
+</form>
+<h2>All Tournaments</h2>
+<table border="1" cellpadding="1" cellspacing="0">
+<tr><th>Name</th><th>Sport</th><th>Location</th><th>Start Date</th></tr>
+{{range .Tournaments}}
+<tr>
+  <td><a href="/admin/tournaments/{{.ID}}">{{.Name}}</a></td>
+  <td>{{.Sport}}</td>
+  <td>{{.Location}}</td>
+  <td>{{.StartDate.Format "Jan 2, 2006"}}</td>
+</tr>
+{{end}}
+</table>
+{{template "footer" .}}
+{{end}}

@@ -1,0 +1,16 @@
+{{define "tournament"}}
+{{template "header" .}}
+<h1>{{.Tournament.Name}}</h1>
+<p>{{.Tournament.Sport}} | {{.Tournament.Location}} | {{.Tournament.StartDate.Format "Jan 2, 2006"}}</p>
+{{if .Tournament.Notes}}<p>{{.Tournament.Notes}}</p>{{end}}
+<p>Click a division for standings. Click a team for their schedule.</p>
+{{range .Divisions}}
+<h2><a href="/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}">{{.Name}}</a></h2>
+<ul>
+{{range index $.Teams .ID}}
+<li><a href="/tournaments/{{$.Tournament.ID}}/teams/{{.ID}}">{{.Name}}</a> {{.Coach}}</li>
+{{end}}
+</ul>
+{{end}}
+{{template "footer" .}}
+{{end}}

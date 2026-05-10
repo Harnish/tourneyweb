@@ -1,0 +1,13 @@
+{{define "adminTournamentView"}}
+{{template "header" .}}
+<h1>{{.Tournament.Name}}</h1>
+<p>{{.Tournament.Sport}} | {{.Tournament.Location}} | {{.Tournament.StartDate.Format "Jan 2, 2006"}}</p>
+<ul>
+  <li><a href="/admin/tournaments/{{.Tournament.ID}}/divisions">Manage Divisions</a></li>
+  <li><a href="/admin/tournaments/{{.Tournament.ID}}/teams">Manage Teams</a></li>
+  <li><a href="/admin/tournaments/{{.Tournament.ID}}/games">Manage Games</a></li>
+</ul>
+{{if .DisableDelete}}<p>Deletes have been disabled during the tournament.</p>{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}">View Public Page</a></p>
+{{template "footer" .}}
+{{end}}

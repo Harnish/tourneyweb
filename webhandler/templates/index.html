@@ -1,14 +1,80 @@
 {{define "index"}}
 {{template "header" .}}
-<h1>This is being updated for future use.  Information may display differently as we progress development.</h1>
-Click the division for division standings, Click team for Upcoming games and results.
-{{range .Divisions}}
-<h2><a href="/divisions/{{.ID}}">{{.Name}}</a></h2>
-<ul>
-{{range index $.Teams .ID}}
-<li><a href="/teams/{{.ID}}">{{.Name}}</a> {{.Coach}}</li>
+<h1>Tournaments</h1>
+
+<form onsubmit="event.preventDefault(); var v=document.getElementById('jump-id').value.trim(); if(v) window.location='/tournaments/'+v;">
+  <div class="form-inline mb-3">
+    <label class="mr-2">Tournament ID:</label>
+    <input id="jump-id" type="number" class="form-control mr-2" style="width:120px">
+    <button type="submit" class="btn btn-secondary">Go</button>
+  </div>
+</form>
+
+{{if and (not .ComingUp) (not .Recent)}}
+<p>No active tournaments.</p>
 {{end}}
-</ul>
+
+{{if .ComingUp}}
+<h2>Coming Up</h2>
+{{range .ComingUp}}
+<div class="card mb-2">
+  <div class="card-body">
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+    <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
+  </div>
+</div>
 {{end}}
+{{end}}
+
+{{if .Recent}}
+<h2>Recently Happened</h2>
+{{range .Recent}}
+<div class="card mb-2">
+  <div class="card-body">
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+    <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
+  </div>
+</div>
+{{end}}
+{{end}}
+
+{{if .Future}}
+<button class="btn btn-outline-secondary mb-2" type="button" data-toggle="collapse" data-target="#future-section">
+  Future ({{.FutureTotal}})
+</button>
+<div class="collapse" id="future-section">
+  {{range .Future}}
+  <div class="card mb-2">
+    <div class="card-body">
+      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+      <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
+    </div>
+  </div>
+  {{end}}
+  <p>Showing {{len .Future}} of {{.FutureTotal}}</p>
+  {{if .FutureHasPrev}}<a href="?future_page={{dec .FuturePage}}&past_page={{.PastPage}}">Prev</a> {{end}}
+  {{if .FutureHasNext}}<a href="?future_page={{inc .FuturePage}}&past_page={{.PastPage}}">Next</a>{{end}}
+</div>
+{{end}}
+
+{{if .Past}}
+<button class="btn btn-outline-secondary mb-2" type="button" data-toggle="collapse" data-target="#past-section">
+  Past ({{.PastTotal}})
+</button>
+<div class="collapse" id="past-section">
+  {{range .Past}}
+  <div class="card mb-2">
+    <div class="card-body">
+      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+      <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
+    </div>
+  </div>
+  {{end}}
+  <p>Showing {{len .Past}} of {{.PastTotal}}</p>
+  {{if .PastHasPrev}}<a href="?future_page={{.FuturePage}}&past_page={{dec .PastPage}}">Prev</a> {{end}}
+  {{if .PastHasNext}}<a href="?future_page={{.FuturePage}}&past_page={{inc .PastPage}}">Next</a>{{end}}
+</div>
+{{end}}
+
 {{template "footer" .}}
 {{end}}
