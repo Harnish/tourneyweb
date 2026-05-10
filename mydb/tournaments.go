@@ -126,3 +126,13 @@ func (me *MyDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 func (me *MyDB) DelTournament(id int) {
 	me.DB.Exec(`DELETE FROM tournaments WHERE id=$1`, id)
 }
+
+func (me *MyDB) UpdateTournament(id int, name, sport, location, notes string, date time.Time) {
+	_, err := me.DB.Exec(
+		`UPDATE tournaments SET name=$1, sport=$2, location=$3, notes=$4, start_date=$5 WHERE id=$6`,
+		name, sport, location, notes, date, id,
+	)
+	if err != nil {
+		log.Println("UpdateTournament:", err)
+	}
+}

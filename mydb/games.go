@@ -90,6 +90,24 @@ func (me *MyDB) DelGame(id int) {
 	me.DB.Exec(`DELETE FROM games WHERE id=$1`, id)
 }
 
+func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+	_, err := me.DB.Exec(
+		`UPDATE games SET division_id=$1, home_team_id=$2, away_team_id=$3, location=$4, start_time=$5, umpire=$6 WHERE id=$7`,
+		divisionID, homeTeamID, awayTeamID, location, startTime, umpire, id,
+	)
+	if err != nil {
+		log.Println("UpdateGame:", err)
+		return
+	}
+	// Re-fetch to get updated team/division references before re-syncing scores.
+	game := me.ReturnGameByID(id)
+	if game.Scored {
+		me.DeleteTeamScore(id)
+		me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, game.HomeScore, game.AwayScore)
+		me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, game.AwayScore, game.HomeScore)
+	}
+}
+
 func (me *MyDB) AllGames(tournamentID int) []Game {
 	rows, err := me.DB.Query(gameSelect+` WHERE tournament_id=$1 ORDER BY start_time`, tournamentID)
 	if err != nil {

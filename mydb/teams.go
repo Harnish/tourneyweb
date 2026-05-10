@@ -31,6 +31,40 @@ func (me *MyDB) DelTeam(id int) {
 	me.DB.Exec(`DELETE FROM teams WHERE id=$1`, id)
 }
 
+func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
+	rows, err := me.DB.Query(
+		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE tournament_id=$1 ORDER BY name`,
+		tournamentID,
+	)
+	if err != nil {
+		log.Println("ReturnTeamsByTournamentID:", err)
+		return nil
+	}
+	var teams []Team
+	for rows.Next() {
+		var t Team
+		var did int
+		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did); err != nil {
+			log.Println("ReturnTeamsByTournamentID scan:", err)
+			continue
+		}
+		t.Division = me.ReturnDivisionByID(did)
+		teams = append(teams, t)
+	}
+	rows.Close()
+	return teams
+}
+
+func (me *MyDB) UpdateTeam(id, divisionID int, name, coach string) {
+	_, err := me.DB.Exec(
+		`UPDATE teams SET division_id=$1, name=$2, coach=$3 WHERE id=$4`,
+		divisionID, name, coach, id,
+	)
+	if err != nil {
+		log.Println("UpdateTeam:", err)
+	}
+}
+
 func (me *MyDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 	rows, err := me.DB.Query(
 		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE division_id=$1`,
