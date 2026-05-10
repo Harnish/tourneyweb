@@ -103,8 +103,8 @@ func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location,
 	game := me.ReturnGameByID(id)
 	if game.Scored {
 		me.DeleteTeamScore(id)
-		me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, game.HomeScore, game.AwayScore)
-		me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, game.AwayScore, game.HomeScore)
+		me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, game.HomeScore, game.AwayScore)
+		me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, game.AwayScore, game.HomeScore)
 	}
 }
 
