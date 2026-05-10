@@ -76,6 +76,7 @@ func (me *Env) EditDivision(w http.ResponseWriter, r *http.Request, ps httproute
 	}
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
+		log.Println("EditDivision bad ID:", err)
 		http.Error(w, "Bad Division ID", http.StatusBadRequest)
 		return
 	}
