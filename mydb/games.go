@@ -1,262 +1,141 @@
 package mydb
 
 import (
+	"database/sql"
 	"log"
-	"strconv"
 )
 
-func (me *MyDB) HomeScore(gid int) int {
-	return me.teamScore(gid, "home")
-}
-
-func (me *MyDB) AwayScore(gid int) int {
-	return me.teamScore(gid, "away")
-}
-
-func (me *MyDB) teamScore(gid int, team string) int {
-	var col string
-	if team == "home" {
-		col = "home_score"
-	} else {
-		col = "away_score"
-	}
-	var score int
-	err := me.DB.QueryRow("SELECT "+col+" FROM games WHERE id=$1", gid).Scan(&score)
-	if err != nil {
-		return -1
-	}
-	return score
-}
-
 type Game struct {
-	ID        int
-	Division  Division
-	HomeTeam  Team
-	AwayTeam  Team
-	Location  string
-	Start     string
-	Umpire    string
-	AwayScore int
-	HomeScore int
-	Scored    bool
+	ID           int
+	TournamentID int
+	Division     Division
+	HomeTeam     Team
+	AwayTeam     Team
+	Location     string
+	Start        string
+	Umpire       string
+	AwayScore    int
+	HomeScore    int
+	Scored       bool
 }
 
-func (me *MyDB) AddGame(divisionid, hometeamid, awayteamid int, location, dt, umpire string) {
-	query := "INSERT INTO GAMES (divisionid, hometeamid, awayteamid, location, starttime, PrimaryUmpire) values (?, ?, ?, ?, ?, ?);"
+const gameSelect = `SELECT id, tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire, home_score, away_score FROM games`
 
-	statement, err := me.DB.Prepare(query)
-	if err != nil {
-		log.Println("Error - AddGame - Prepare ", err)
-		return
-	}
-	_, err = statement.Exec(divisionid, hometeamid, awayteamid, location, dt, umpire)
-	if err != nil {
-		log.Println("Error - AddGame writing ", err)
-		_, err = statement.Exec(divisionid, hometeamid, awayteamid, location, dt, umpire)
-	}
-}
-
-func (me *MyDB) AllGamesByDivision(divisionid int) (games []Game) {
-	query := "SELECT id, hometeamid, awayteamid, location, starttime, primaryumpire from GAMES where divisionid=" + strconv.Itoa(divisionid) + ";"
-	rows, err := me.DB.Query(query)
-
-	if err != nil {
-		log.Println("Error - AllGamesByDivision - Query ", err, query)
-		return
-	}
+func (me *MyDB) scanGames(rows *sql.Rows) []Game {
+	var out []Game
 	for rows.Next() {
 		var g Game
-		var aid int
-		var hid int
-		rows.Scan(&g.ID, &hid, &aid, &g.Location, &g.Start, &g.Umpire)
-		g.Division = me.ReturnDivisionByID(divisionid)
-		g.HomeTeam = me.ReturnTeamByID(hid)
-		g.AwayTeam = me.ReturnTeamByID(aid)
-		g.HomeScore = me.HomeScore(g.ID)
-		g.AwayScore = me.AwayScore(g.ID)
-		games = append(games, g)
-
-	}
-	rows.Close()
-
-	return
-}
-
-func (me *MyDB) AllGamesByTeam(teamid int) (games []Game) {
-	query := "SELECT id, divisionid, hometeamid, awayteamid, location, starttime, primaryumpire from GAMES where hometeamid=" + strconv.Itoa(teamid) + " or awayteamid=" + strconv.Itoa(teamid) + ";"
-	rows, err := me.DB.Query(query)
-
-	if err != nil {
-		log.Println("Error - AllGamesByTeam - Query ", err, query)
-		return
-	}
-	for rows.Next() {
-		var g Game
-		var aid int
-		var hid int
-		var did int
-		rows.Scan(&g.ID, &did, &hid, &aid, &g.Location, &g.Start, &g.Umpire)
-		g.Division = me.ReturnDivisionByID(did)
-		g.HomeTeam = me.ReturnTeamByID(hid)
-		g.AwayTeam = me.ReturnTeamByID(aid)
-		g.HomeScore = me.HomeScore(g.ID)
-		g.AwayScore = me.AwayScore(g.ID)
-		games = append(games, g)
-
-	}
-	rows.Close()
-
-	return
-}
-func (me *MyDB) ReturnGameByID(gameid int) Game {
-	query := "SELECT id, divisionid, hometeamid, awayteamid, location, starttime, primaryumpire from GAMES where id=" + strconv.Itoa(gameid) + ";"
-	rows, err := me.DB.Query(query)
-	var g Game
-	if err != nil {
-		log.Println("Error - ReturnGameByID - Query ", err, query)
-		return g
-	}
-
-	for rows.Next() {
-
-		var aid int
-		var hid int
-		var did int
-		rows.Scan(&g.ID, &did, &hid, &aid, &g.Location, &g.Start, &g.Umpire)
-		g.Division = me.ReturnDivisionByID(did)
-		g.HomeTeam = me.ReturnTeamByID(hid)
-		g.AwayTeam = me.ReturnTeamByID(aid)
-		g.HomeScore = me.HomeScore(g.ID)
-		g.AwayScore = me.AwayScore(g.ID)
-		rows.Close()
-		return g
-	}
-
-	return g
-}
-
-func (me *MyDB) DelGame(id int) {
-
-	me.DB.Exec("delete from GAMES where id=" + strconv.Itoa(id) + ";")
-
-}
-
-func (me *MyDB) AllGames() (games []Game) {
-	query := "SELECT id, divisionid, hometeamid, awayteamid, location, starttime, primaryumpire from GAMES;"
-	rows, err := me.DB.Query(query)
-
-	if err != nil {
-		log.Println("Error - AllGames - Query ", err, query)
-		return
-	}
-	for rows.Next() {
-		var g Game
-		var aid int
-		var hid int
-		var did int
-		rows.Scan(&g.ID, &did, &hid, &aid, &g.Location, &g.Start, &g.Umpire)
-		g.Division = me.ReturnDivisionByID(did)
-		g.HomeTeam = me.ReturnTeamByID(hid)
-		g.AwayTeam = me.ReturnTeamByID(aid)
-		g.HomeScore = me.HomeScore(g.ID)
-		g.AwayScore = me.AwayScore(g.ID)
-		games = append(games, g)
-
-	}
-	rows.Close()
-
-	return
-}
-
-func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
-	query := "update GAMES set hometeamscore=?, awayteamscore=? where id=" + strconv.Itoa(gid) + ";"
-	statement, err := me.DB.Prepare(query)
-	if err != nil {
-		log.Println("Error - ScoreGame - Prepare ", err)
-		return
-	}
-	_, err = statement.Exec(hscore, ascore)
-	if err != nil {
-		log.Println("Error - ScoreGame writing ", err)
-		_, err = statement.Exec(hscore, ascore)
-	}
-	// FIXME need to apply the games to each team.
-	game := me.ReturnGameByID(gid)
-	//Delete any previous game score
-	me.DeleteTeamScore(game.ID)
-	//Score for home team:
-	me.AddTeamScore(0, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
-	//Score for away team:
-	me.AddTeamScore(0, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
-
-}
-
-func (me *MyDB) DeleteTeamScore(gameid int) {
-	me.DB.Exec("delete from GAMESBYTEAM where gameid=" + strconv.Itoa(gameid) + ";")
-}
-
-// Returns 2 bools, first one is if they played second is if they won.
-func (me *MyDB) DidTeamABeatTeamB(teamaid, teambid int) (bool, bool) {
-	query := "select teamscore, oppenentscore from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(teamaid) + " and oppenentid=" + strconv.Itoa(teambid) + ";"
-	rows, err := me.DB.Query(query)
-
-	if err != nil {
-		log.Println("Error - DidTeamABeatTeamB - Query ", err, query)
-		return false, false
-	}
-	for rows.Next() {
-		var teamascore, teambscore int
-		rows.Scan(&teamascore, &teambscore)
-		rows.Close()
-		if teamascore > teambscore {
-			if me.debug {
-				log.Println(teamaid, teambid, " played ", teamaid, " won ")
-			}
-			return true, true
-
+		var hid, aid, did int
+		var homeScore, awayScore sql.NullInt64
+		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &g.Start, &g.Umpire, &homeScore, &awayScore); err != nil {
+			log.Println("scanGames:", err)
+			continue
 		}
-		if me.debug {
-			log.Println(teamaid, teambid, " played ", teamaid, " lost ")
+		g.Division = me.ReturnDivisionByID(did)
+		g.HomeTeam = me.ReturnTeamByID(hid)
+		g.AwayTeam = me.ReturnTeamByID(aid)
+		if homeScore.Valid && awayScore.Valid {
+			g.HomeScore = int(homeScore.Int64)
+			g.AwayScore = int(awayScore.Int64)
+			g.Scored = true
 		}
-		return true, false
-	}
-	if me.debug {
-		log.Println(teamaid, teambid, " didn't play")
-	}
-	return false, false
-}
-
-func (me *MyDB) GamesPlayedByTeam(id int) int {
-	query := "select count(*) from GAMESBYTEAM where  primaryteamid=" + strconv.Itoa(id) + ";"
-	rows, err := me.DB.Query(query)
-
-	if err != nil {
-		log.Println("Error - GamesPlayedByTeam - Query ", err, query)
-		return -1
-	}
-	out := 0
-	for rows.Next() {
-		rows.Scan(&out)
+		out = append(out, g)
 	}
 	rows.Close()
 	return out
 }
 
-func (me *MyDB) IsGameScored(id int) bool {
-	query := "select count(*) from GAMESBYTEAM where gameid=" + strconv.Itoa(id) + ";"
-	rows, err := me.DB.Query(query)
-
+func (me *MyDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+	_, err := me.DB.Exec(
+		`INSERT INTO games (tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+		tournamentID, divisionID, homeTeamID, awayTeamID, location, startTime, umpire,
+	)
 	if err != nil {
-		log.Println("Error - GamesPlayedByTeam - Query ", err, query)
-		return false
+		log.Println("AddGame:", err)
 	}
-	out := 0
-	for rows.Next() {
-		rows.Scan(&out)
+}
+
+func (me *MyDB) AllGamesByDivision(divisionID int) []Game {
+	rows, err := me.DB.Query(gameSelect+` WHERE division_id=$1`, divisionID)
+	if err != nil {
+		log.Println("AllGamesByDivision:", err)
+		return nil
 	}
-	rows.Close()
-	if out == 2 {
-		return true
+	return me.scanGames(rows)
+}
+
+func (me *MyDB) AllGamesByTeam(teamID int) []Game {
+	rows, err := me.DB.Query(gameSelect+` WHERE home_team_id=$1 OR away_team_id=$1`, teamID)
+	if err != nil {
+		log.Println("AllGamesByTeam:", err)
+		return nil
 	}
-	return false
+	return me.scanGames(rows)
+}
+
+func (me *MyDB) ReturnGameByID(gameID int) Game {
+	rows, err := me.DB.Query(gameSelect+` WHERE id=$1`, gameID)
+	if err != nil {
+		log.Println("ReturnGameByID:", err)
+		return Game{}
+	}
+	games := me.scanGames(rows)
+	if len(games) == 0 {
+		return Game{}
+	}
+	return games[0]
+}
+
+func (me *MyDB) DelGame(id int) {
+	me.DB.Exec(`DELETE FROM games WHERE id=$1`, id)
+}
+
+func (me *MyDB) AllGames(tournamentID int) []Game {
+	rows, err := me.DB.Query(gameSelect+` WHERE tournament_id=$1 ORDER BY start_time`, tournamentID)
+	if err != nil {
+		log.Println("AllGames:", err)
+		return nil
+	}
+	return me.scanGames(rows)
+}
+
+func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
+	_, err := me.DB.Exec(
+		`UPDATE games SET home_score=$1, away_score=$2 WHERE id=$3`,
+		hscore, ascore, gid,
+	)
+	if err != nil {
+		log.Println("ScoreGame:", err)
+		return
+	}
+	game := me.ReturnGameByID(gid)
+	me.DeleteTeamScore(game.ID)
+	me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
+	me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
+}
+
+func (me *MyDB) DeleteTeamScore(gameID int) {
+	me.DB.Exec(`DELETE FROM games_by_team WHERE game_id=$1`, gameID)
+}
+
+func (me *MyDB) DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool) {
+	var teamAScore, teamBScore int
+	err := me.DB.QueryRow(
+		`SELECT team_score, opponent_score FROM games_by_team WHERE team_id=$1 AND opponent_id=$2`,
+		teamAID, teamBID,
+	).Scan(&teamAScore, &teamBScore)
+	if err == sql.ErrNoRows {
+		return false, false
+	}
+	if err != nil {
+		log.Println("DidTeamABeatTeamB:", err)
+		return false, false
+	}
+	return true, teamAScore > teamBScore
+}
+
+func (me *MyDB) IsGameScored(id int) bool {
+	var n int
+	me.DB.QueryRow(`SELECT COUNT(*) FROM games_by_team WHERE game_id=$1`, id).Scan(&n)
+	return n == 2
 }
