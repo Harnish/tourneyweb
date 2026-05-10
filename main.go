@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/hex"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
+	"os"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/csrf"
@@ -97,7 +97,7 @@ a:hover {
 
 func LoadBanner(path string) {
 	var err error
-	banner, err = ioutil.ReadFile(path)
+	banner, err = os.ReadFile(path)
 	if err != nil {
 		log.Println("File doesn't exist", err)
 	}
@@ -107,7 +107,7 @@ func LoadBanner(path string) {
 
 func LoadFavico() {
 	var err error
-	favico, err = ioutil.ReadFile("favicon.ico")
+	favico, err = os.ReadFile("favicon.ico")
 	if err != nil {
 		log.Println("File doesn't exist", err)
 	}

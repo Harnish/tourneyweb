@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -45,7 +44,7 @@ func LoadConfig(confpath string) (config Config) {
 
 // ParseConfig does the actual convert into the struct.
 func ParseConfig(confpath string) (config Config) {
-	file, err := ioutil.ReadFile(confpath)
+	file, err := os.ReadFile(confpath)
 	if err != nil {
 		log.Println("open config: ", confpath, " Error", err)
 	}
