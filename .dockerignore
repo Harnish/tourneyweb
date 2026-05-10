@@ -1,0 +1,10 @@
+.git
+.github
+docs
+*.md
+tourneyweb.conf
+config.yaml
+*.jpg
+*.png
+*.ico
+tourneyweb
