@@ -105,3 +105,29 @@ func (me *Env) AdminTournamentView(w http.ResponseWriter, r *http.Request, ps ht
 		DisableDelete: me.DisableDelete,
 	})
 }
+
+func (me *Env) EditTournament(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodPost {
+		name := r.FormValue("name")
+		sport := r.FormValue("sport")
+		location := r.FormValue("location")
+		notes := r.FormValue("notes")
+		date, err := time.Parse("2006-01-02", r.FormValue("start_date"))
+		if err != nil {
+			http.Error(w, "Invalid date format (expected YYYY-MM-DD)", http.StatusBadRequest)
+			return
+		}
+		if name == "" || sport == "" || location == "" {
+			http.Error(w, "Name, sport, and location are required", http.StatusBadRequest)
+			return
+		}
+		me.DB.UpdateTournament(t.ID, name, sport, location, notes, date)
+		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d", t.ID), http.StatusSeeOther)
+		return
+	}
+	me.render(w, "editTournament", newBaseWithTournament(r, true, t))
+}

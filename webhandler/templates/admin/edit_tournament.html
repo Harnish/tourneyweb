@@ -1,0 +1,17 @@
+{{define "editTournament"}}
+{{template "header" .}}
+<h1>Edit Tournament</h1>
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/edit">
+<table>
+  <tr><td>Name</td><td><input type="text" name="name" value="{{.Tournament.Name}}"></td></tr>
+  <tr><td>Sport</td><td><input type="text" name="sport" value="{{.Tournament.Sport}}"></td></tr>
+  <tr><td>Location</td><td><input type="text" name="location" value="{{.Tournament.Location}}"></td></tr>
+  <tr><td>Start Date</td><td><input type="date" name="start_date" value="{{.Tournament.StartDate.Format "2006-01-02"}}"></td></tr>
+  <tr><td>Notes</td><td><textarea name="notes">{{.Tournament.Notes}}</textarea></td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+{{.CSRFField}}
+</form>
+<p><a href="/admin/tournaments/{{.Tournament.ID}}">Cancel</a></p>
+{{template "footer" .}}
+{{end}}

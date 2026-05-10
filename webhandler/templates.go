@@ -146,6 +146,24 @@ type adminGamesData struct {
 	DisableDelete bool
 }
 
+type editDivisionData struct {
+	baseData
+	Division mydb.Division
+}
+
+type editTeamData struct {
+	baseData
+	Team      mydb.Team
+	Divisions []mydb.Division
+}
+
+type editGameData struct {
+	baseData
+	Game      mydb.Game
+	Teams     []mydb.Team
+	Divisions []mydb.Division
+}
+
 func (me *Env) render(w http.ResponseWriter, name string, data any) {
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
