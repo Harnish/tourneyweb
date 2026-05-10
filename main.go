@@ -26,6 +26,7 @@ func main() {
 	wh := webhandler.New(db, cfg.AdminPassword, cfg.DisableDelete)
 	log.Println(cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
+	LoadFavico()
 
 	router := httprouter.New()
 	// Static assets
