@@ -128,8 +128,8 @@ func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
 	}
 	game := me.ReturnGameByID(gid)
 	me.DeleteTeamScore(game.ID)
-	me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
-	me.AddTeamScore(game.Division.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
+	me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
+	me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
 }
 
 func (me *MyDB) DeleteTeamScore(gameID int) {
