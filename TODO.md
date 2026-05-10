@@ -15,8 +15,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 ## Bugs
 
 - **[P1/S]** `LoadFavico()` is defined in `main.go` but never called — the favicon never loads
-- **[P1/S]** `DelGame` has no redirect after deletion — user is left on a blank page after deleting a game
-
 ---
 
 ## Code Quality
