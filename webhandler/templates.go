@@ -19,6 +19,7 @@ var tmpl *template.Template
 func init() {
 	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
 		"inc": func(i int) int { return i + 1 },
+		"dec": func(i int) int { return i - 1 },
 	}).ParseFS(templateFS,
 		"templates/*.html",
 		"templates/admin/*.html",
@@ -26,12 +27,17 @@ func init() {
 }
 
 type baseData struct {
-	IsAdmin   bool
-	CSRFField template.HTML
+	IsAdmin    bool
+	CSRFField  template.HTML
+	Tournament mydb.Tournament
 }
 
 func newBase(r *http.Request, isAdmin bool) baseData {
 	return baseData{IsAdmin: isAdmin, CSRFField: csrf.TemplateField(r)}
+}
+
+func newBaseWithTournament(r *http.Request, isAdmin bool, t mydb.Tournament) baseData {
+	return baseData{IsAdmin: isAdmin, CSRFField: csrf.TemplateField(r), Tournament: t}
 }
 
 type divisionTeamRow struct {
@@ -39,10 +45,40 @@ type divisionTeamRow struct {
 	GamesPlayed int
 }
 
+// Home page: tournament listing
 type indexData struct {
+	baseData
+	ComingUp      []mydb.Tournament
+	Recent        []mydb.Tournament
+	Future        []mydb.Tournament
+	Past          []mydb.Tournament
+	FuturePage    int
+	PastPage      int
+	FutureTotal   int
+	PastTotal     int
+	FutureHasPrev bool
+	FutureHasNext bool
+	PastHasPrev   bool
+	PastHasNext   bool
+}
+
+// Public tournament home: divisions + teams overview
+type tournamentData struct {
 	baseData
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
+}
+
+// Admin tournament list
+type adminTournamentsData struct {
+	baseData
+	Tournaments []mydb.Tournament
+}
+
+// Admin tournament home
+type adminTournamentViewData struct {
+	baseData
+	DisableDelete bool
 }
 
 type divisionData struct {
@@ -66,11 +102,6 @@ type gamesData struct {
 type loginData struct {
 	baseData
 	Error string
-}
-
-type adminIndexData struct {
-	baseData
-	DisableDelete bool
 }
 
 type adminDivisionsData struct {
