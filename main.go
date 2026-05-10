@@ -61,6 +61,8 @@ func main() {
 	router.GET("/admin/tournaments/:tid/games/:gid/delete", wh.DelGame)
 	router.GET("/admin/tournaments/:tid/edit", wh.EditTournament)
 	router.POST("/admin/tournaments/:tid/edit", wh.EditTournament)
+	router.GET("/admin/tournaments/:tid/divisions/:did/edit", wh.EditDivision)
+	router.POST("/admin/tournaments/:tid/divisions/:did/edit", wh.EditDivision)
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, wh.RequestLogger(csrfMiddleware(router))))

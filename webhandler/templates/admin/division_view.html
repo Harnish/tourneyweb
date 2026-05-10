@@ -1,6 +1,7 @@
 {{define "adminDivisionView"}}
 {{template "header" .}}
 <H1>{{.Division.Name}}</H1>
+<p><a href="/admin/tournaments/{{.Tournament.ID}}/divisions/{{.DivisionID}}/edit">Edit Division</a></p>
 <table>
 <tr><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th></tr>
 {{range .Teams}}
@@ -17,7 +18,7 @@
 <br>
 <h2>Games</h2>
 <table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
@@ -26,6 +27,7 @@
   <td>{{.Start}}</td>
   <td>{{.Umpire}}</td>
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/edit">Edit</a></td>
   {{if not $.DisableDelete}}<td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete">Delete Game</a></td>{{end}}
   <td>{{.HomeScore}}</td>
   <td>{{.AwayScore}}</td>

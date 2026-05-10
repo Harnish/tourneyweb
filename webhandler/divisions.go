@@ -68,3 +68,34 @@ func (me *Env) AdminDivisionView(w http.ResponseWriter, r *http.Request, ps http
 		DisableDelete: me.DisableDelete,
 	})
 }
+
+func (me *Env) EditDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
+	if err != nil {
+		http.Error(w, "Bad Division ID", http.StatusBadRequest)
+		return
+	}
+	division := me.DB.ReturnDivisionByID(did)
+	if division.ID == 0 {
+		http.Error(w, "Division not found", http.StatusNotFound)
+		return
+	}
+	if r.Method == http.MethodPost {
+		name := r.FormValue("name")
+		if name == "" {
+			http.Error(w, "Division name required", http.StatusBadRequest)
+			return
+		}
+		me.DB.UpdateDivision(did, name)
+		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d", t.ID, did), http.StatusSeeOther)
+		return
+	}
+	me.render(w, "editDivision", editDivisionData{
+		baseData: newBaseWithTournament(r, true, t),
+		Division: division,
+	})
+}
