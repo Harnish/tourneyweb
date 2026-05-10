@@ -15,10 +15,18 @@
 <img src="/img/topimage.jpg"><br>
 <a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR derby Info</a>
 {{if .IsAdmin}}
-| <a href="/admin">Admin</a> | <a href="/admin/adddivisionform">Divisions</a> | <a href="/admin/teams">Teams</a> | <a href="/admin/games">Games</a>
+  {{if .Tournament.ID}}
+  | <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
+  | <a href="/admin/tournaments/{{.Tournament.ID}}/divisions">Divisions</a>
+  | <a href="/admin/tournaments/{{.Tournament.ID}}/teams">Teams</a>
+  | <a href="/admin/tournaments/{{.Tournament.ID}}/games">Games</a>
+  {{else}}
+  | <a href="/admin/tournaments">Admin</a>
+  {{end}}
 {{else}}
 | <a href="/login">Login</a>
 {{end}}
+{{if .Tournament.ID}}<br><strong>{{.Tournament.Name}}</strong> — {{.Tournament.Sport}}{{end}}
 <br><hr>
 {{end}}
 

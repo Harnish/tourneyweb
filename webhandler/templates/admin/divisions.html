@@ -1,6 +1,7 @@
 {{define "adminDivisions"}}
 {{template "header" .}}
-<form method="post" action="/admin/adddivision">
+<h2>Add Division</h2>
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/divisions">
 <table>
 <tr><td>Division Name</td><td><input type="text" name="divisionname"></td></tr>
 <tr><td></td><td><input type="submit" name="submit"></td></tr>
@@ -10,19 +11,18 @@
 <table border="1" cellpadding="1" cellspacing="0">
 {{range .Divisions}}
 <tr>
-  <td><a href="/admin/divisions/{{.ID}}">{{.Name}}</a></td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}">{{.Name}}</a></td>
   {{if not $.DisableDelete}}
   <td valign="top">
-    <form method="post" action="/admin/deldivision">
-      <input type="hidden" name="divisionid" value="{{.ID}}">
+    <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}/delete">
       {{$.CSRFField}}
       <input type="submit" name="delete" value="delete">
     </form>
   </td>
   {{end}}
   <td valign="top">
-    <form action="/admin/creategame/{{.ID}}">
-      <input type="submit" name="Add Game" value="Add Game">
+    <form action="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}/games/new">
+      <input type="submit" value="Add Game">
     </form>
   </td>
 </tr>

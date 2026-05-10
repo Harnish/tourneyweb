@@ -1,7 +1,7 @@
 {{define "adminGames"}}
 {{template "header" .}}
 <table border="1" cellpadding="1" cellspacing="0">
-<tr><th>Home Team</th><th>Home Team Score</th><th>Away Team</th><th>Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th><th>Score Game</th></tr>
+<tr><th>Home Team</th><th>Home Score</th><th>Away Team</th><th>Away Score</th><th>Location</th><th>Start Time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} - {{.HomeTeam.Coach}}</td>
@@ -11,11 +11,8 @@
   <td>{{.Location}}</td>
   <td>{{.Start}}</td>
   <td>{{.Umpire}}</td>
-  <td>
-    <form action="/admin/scoregame/{{.ID}}">
-      <input type="submit" value="Score Game" name="Score Game">
-    </form>
-  </td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
+  {{if not $.DisableDelete}}<td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete">Delete</a></td>{{end}}
 </tr>
 {{end}}
 </table>

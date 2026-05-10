@@ -1,6 +1,7 @@
 {{define "adminTeams"}}
 {{template "header" .}}
-<form method="post" action="/admin/addteam">
+<h2>Add Team</h2>
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/teams">
 <table>
 <tr><td>Team Name</td><td><input type="text" name="teamname"></td></tr>
 <tr><td>Team Coach</td><td><input type="text" name="teamcoach"></td></tr>
@@ -24,7 +25,7 @@
   <td>{{.Coach}}</td>
   <td>
   {{if not $.DisableDelete}}
-  <form method="post" action="/admin/addteam">
+  <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/teams/delete">
     <input type="hidden" name="teamid" value="{{.ID}}">
     {{$.CSRFField}}
     <input type="submit" name="Delete" value="Delete">

@@ -1,7 +1,6 @@
 {{define "scoreGame"}}
 {{template "header" .}}
-<form method="post" action="/admin/scoregamepost">
-<input type="hidden" name="gameid" value="{{.Game.ID}}">
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/games/{{.Game.ID}}/score">
 <table>
   <tr><td>Home Team</td><td>{{.Game.HomeTeam.Name}}</td></tr>
   <tr><td>Away Team</td><td>{{.Game.AwayTeam.Name}}</td></tr>

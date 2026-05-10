@@ -1,13 +1,13 @@
 {{define "createGame"}}
 {{template "header" .}}
-<form method="post" action="/admin/addgame">
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/games">
 <input type="hidden" name="divisionid" value="{{.DivisionID}}">
 <table>
   <tr><td>Home Team</td><td><select name="hometeam">
-    {{range .Teams}}<option id="{{.ID}}" value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
+    {{range .Teams}}<option value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
   </select></td></tr>
   <tr><td>Away Team</td><td><select name="awayteam">
-    {{range .Teams}}<option id="{{.ID}}" value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
+    {{range .Teams}}<option value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
   </select></td></tr>
   <tr><td>Location</td><td><input type="text" name="location"></td></tr>
   <tr><td>Date/Time</td><td><input type="text" name="datetime"></td></tr>
@@ -17,7 +17,7 @@
 {{.CSRFField}}
 </form>
 <table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Team Score</th><th>Away Team Score</th></tr>
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
@@ -25,8 +25,8 @@
   <td>{{.Location}}</td>
   <td>{{.Start}}</td>
   <td>{{.Umpire}}</td>
-  <td><a href="/admin/scoregame/{{.ID}}">Score Game</a></td>
-  {{if not $.DisableDelete}}<td><a href="/admin/delgame/{{.ID}}">Delete Game</a></td>{{end}}
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
+  {{if not $.DisableDelete}}<td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete">Delete Game</a></td>{{end}}
   <td>{{.HomeScore}}</td>
   <td>{{.AwayScore}}</td>
 </tr>
