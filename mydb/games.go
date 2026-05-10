@@ -5,6 +5,29 @@ import (
 	"strconv"
 )
 
+func (me *MyDB) HomeScore(gid int) int {
+	return me.teamScore(gid, "home")
+}
+
+func (me *MyDB) AwayScore(gid int) int {
+	return me.teamScore(gid, "away")
+}
+
+func (me *MyDB) teamScore(gid int, team string) int {
+	var col string
+	if team == "home" {
+		col = "home_score"
+	} else {
+		col = "away_score"
+	}
+	var score int
+	err := me.DB.QueryRow("SELECT "+col+" FROM games WHERE id=$1", gid).Scan(&score)
+	if err != nil {
+		return -1
+	}
+	return score
+}
+
 type Game struct {
 	ID        int
 	Division  Division
@@ -162,9 +185,9 @@ func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
 	//Delete any previous game score
 	me.DeleteTeamScore(game.ID)
 	//Score for home team:
-	me.AddTeamScore(game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
+	me.AddTeamScore(0, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
 	//Score for away team:
-	me.AddTeamScore(game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
+	me.AddTeamScore(0, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
 
 }
 

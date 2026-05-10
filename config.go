@@ -58,25 +58,10 @@ func ParseConfig(confpath string) (config Config) {
 }
 
 func GetEnvironmentConfig() (config Config) {
-
 	config.Port = os.Getenv("TANPORT")
 	tandebug := os.Getenv("TANDEBUG")
-	if strings.ToLower(tandebug) == "true" {
-		config.Debug = true
-	} else {
-		config.Debug = false
-	}
-	dbtype := os.Getenv("TANDBTYPE")
-	if dbtype == "mysql" {
-		dbhost := os.Getenv("TANDBHOST")
-		dbuser := os.Getenv("TANDBUSER")
-		dbpass := os.Getenv("TANDBPASSWORD")
-		dbport := os.Getenv("TANDBPORT")
-		dbdb := os.Getenv("TANDBDATABASE")
-		config.Database = "mysql://" + dbuser + ":" + dbpass + "@tcp(" + dbhost + ":" + dbport + ")/" + dbdb
-	} else {
-		config.Database = os.Getenv("TANDB")
-	}
+	config.Debug = strings.ToLower(tandebug) == "true"
+	config.Database = os.Getenv("TANDB")
 	config.AdminPassword = os.Getenv("TANADMINPASS")
 	return
 }
