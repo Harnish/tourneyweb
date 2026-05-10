@@ -19,7 +19,10 @@ func scanTournaments(rows *sql.Rows) []Tournament {
 	var out []Tournament
 	for rows.Next() {
 		var t Tournament
-		rows.Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes)
+		if err := rows.Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes); err != nil {
+			log.Println("scanTournaments:", err)
+			continue
+		}
 		out = append(out, t)
 	}
 	rows.Close()
@@ -87,7 +90,9 @@ func (me *MyDB) ReturnTournamentsFuture(page int) ([]Tournament, int) {
 		page = 1
 	}
 	var total int
-	me.DB.QueryRow(`SELECT COUNT(*) FROM tournaments WHERE start_date > CURRENT_DATE + INTERVAL '7 days'`).Scan(&total)
+	if err := me.DB.QueryRow(`SELECT COUNT(*) FROM tournaments WHERE start_date > CURRENT_DATE + INTERVAL '7 days'`).Scan(&total); err != nil {
+		log.Println("ReturnTournamentsFuture count:", err)
+	}
 	rows, err := me.DB.Query(
 		`SELECT id, name, sport, location, start_date, notes FROM tournaments WHERE start_date > CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
@@ -104,7 +109,9 @@ func (me *MyDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 		page = 1
 	}
 	var total int
-	me.DB.QueryRow(`SELECT COUNT(*) FROM tournaments WHERE start_date < CURRENT_DATE - INTERVAL '7 days'`).Scan(&total)
+	if err := me.DB.QueryRow(`SELECT COUNT(*) FROM tournaments WHERE start_date < CURRENT_DATE - INTERVAL '7 days'`).Scan(&total); err != nil {
+		log.Println("ReturnTournamentsPast count:", err)
+	}
 	rows, err := me.DB.Query(
 		`SELECT id, name, sport, location, start_date, notes FROM tournaments WHERE start_date < CURRENT_DATE - INTERVAL '7 days' ORDER BY start_date DESC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
