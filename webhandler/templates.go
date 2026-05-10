@@ -146,6 +146,10 @@ type adminGamesData struct {
 	DisableDelete bool
 }
 
+type editTournamentData struct {
+	baseData
+}
+
 type editDivisionData struct {
 	baseData
 	Division mydb.Division

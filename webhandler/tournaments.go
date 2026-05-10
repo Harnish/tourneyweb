@@ -129,5 +129,7 @@ func (me *Env) EditTournament(w http.ResponseWriter, r *http.Request, ps httprou
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d", t.ID), http.StatusSeeOther)
 		return
 	}
-	me.render(w, "editTournament", newBaseWithTournament(r, true, t))
+	me.render(w, "editTournament", editTournamentData{
+		baseData: newBaseWithTournament(r, true, t),
+	})
 }

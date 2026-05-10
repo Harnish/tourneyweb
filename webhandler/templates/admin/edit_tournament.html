@@ -9,8 +9,8 @@
   <tr><td>Start Date</td><td><input type="date" name="start_date" value="{{.Tournament.StartDate.Format "2006-01-02"}}"></td></tr>
   <tr><td>Notes</td><td><textarea name="notes">{{.Tournament.Notes}}</textarea></td></tr>
   <tr><td></td><td><input type="submit" value="Save"></td></tr>
+  <tr><td>{{.CSRFField}}</td></tr>
 </table>
-{{.CSRFField}}
 </form>
 <p><a href="/admin/tournaments/{{.Tournament.ID}}">Cancel</a></p>
 {{template "footer" .}}
