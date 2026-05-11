@@ -92,6 +92,10 @@ func (me *Env) CreateTournament(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 	id := me.DB.AddTournament(name, sport, location, notes, date)
+	user := userFromContext(r.Context())
+	if user.LoggedIn() {
+		me.DB.AssignRole(user.ID, id, "director", 0)
+	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d", id), http.StatusSeeOther)
 }
 

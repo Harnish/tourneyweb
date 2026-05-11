@@ -86,7 +86,6 @@ cp tourneyweb.conf.example tourneyweb.conf
 port: 8989
 debug: false
 database: postgres://tourneyweb1:CHANGE_ME@localhost:5432/tourneyweb?sslmode=disable
-adminpassword: CHANGE_ME
 csrfkey: CHANGE_ME_generate_with_openssl_rand_hex_32
 disabledelete: false
 bannerimagepath: dawgpoundlogo.jpg
@@ -109,10 +108,16 @@ All config values can be overridden with environment variables (useful for conta
 | `PORT` | `port` |
 | `DEBUG` | `debug` |
 | `DATABASE_URL` | `database` |
-| `ADMIN_PASSWORD` | `adminpassword` |
 | `CSRF_KEY` | `csrfkey` |
 | `DISABLE_DELETE` | `disabledelete` |
 | `BANNER_IMAGE_PATH` | `bannerimagepath` |
+| `SMTP_HOST` | `smtphost` |
+| `SMTP_PORT` | `smtpport` |
+| `SMTP_USERNAME` | `smtpusername` |
+| `SMTP_PASSWORD` | `smtppassword` |
+| `FROM_EMAIL` | `fromemail` |
+| `BASE_URL` | `baseurl` |
+| `DISABLE_EMAIL_VERIFICATION` | `disableemailverification` |
 
 ---
 
@@ -140,7 +145,6 @@ docker build -t tourneyweb .
 docker run -d \
   -p 8989:8989 \
   -e DATABASE_URL="postgres://tourneyweb1:CHANGE_ME@db:5432/tourneyweb?sslmode=disable" \
-  -e ADMIN_PASSWORD="CHANGE_ME" \
   -e CSRF_KEY="$(openssl rand -hex 32)" \
   -v /path/to/banner.jpg:/app/banner.jpg \
   -e BANNER_IMAGE_PATH=/app/banner.jpg \
