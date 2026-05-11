@@ -30,7 +30,7 @@ func main() {
 		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
 		cfg.FromEmail, cfg.BaseURL,
 	)
-	wh := webhandler.New(db, email, cfg.DisableDelete)
+	wh := webhandler.New(db, email, cfg.DisableDelete, cfg.DisableEmailVerification)
 	log.Println("Listening on port:", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
 	LoadFavico()

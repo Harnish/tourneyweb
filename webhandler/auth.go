@@ -47,7 +47,7 @@ func (me *Env) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	isFirst := me.DB.CountUsers() == 0
 
 	var token string
-	emailVerified := isFirst || (me.Email != nil && me.Email.smtpHost == "")
+	emailVerified := isFirst || me.DisableEmailVerification || (me.Email != nil && me.Email.smtpHost == "")
 	if !emailVerified {
 		token, err = GenerateToken()
 		if err != nil {

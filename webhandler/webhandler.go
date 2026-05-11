@@ -79,19 +79,21 @@ type loginAttempt struct {
 }
 
 type Env struct {
-	DB            *mydb.MyDB
-	Email         *EmailService
-	DisableDelete bool
-	loginMu       sync.Mutex
-	loginAttempts map[string]*loginAttempt
+	DB                       *mydb.MyDB
+	Email                    *EmailService
+	DisableDelete            bool
+	DisableEmailVerification bool
+	loginMu                  sync.Mutex
+	loginAttempts            map[string]*loginAttempt
 }
 
-func New(db *mydb.MyDB, email *EmailService, dd bool) *Env {
+func New(db *mydb.MyDB, email *EmailService, dd, disableEmailVerification bool) *Env {
 	return &Env{
-		DB:            db,
-		Email:         email,
-		DisableDelete: dd,
-		loginAttempts: make(map[string]*loginAttempt),
+		DB:                       db,
+		Email:                    email,
+		DisableDelete:            dd,
+		DisableEmailVerification: disableEmailVerification,
+		loginAttempts:            make(map[string]*loginAttempt),
 	}
 }
 
