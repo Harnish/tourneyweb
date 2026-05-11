@@ -87,7 +87,7 @@ func main() {
 	router.POST("/admin/tournaments/:tid/games", wh.CreateGameSubmit)
 	router.GET("/admin/tournaments/:tid/games/:gid/score", wh.ScoreGame)
 	router.POST("/admin/tournaments/:tid/games/:gid/score", wh.RecordScore)
-	router.GET("/admin/tournaments/:tid/games/:gid/delete", wh.DelGame)
+	router.POST("/admin/tournaments/:tid/games/:gid/delete", wh.DelGame)
 	router.GET("/admin/tournaments/:tid/edit", wh.EditTournament)
 	router.POST("/admin/tournaments/:tid/edit", wh.EditTournament)
 	router.GET("/admin/tournaments/:tid/divisions/:did/edit", wh.EditDivision)

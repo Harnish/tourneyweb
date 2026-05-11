@@ -13,7 +13,12 @@
   <td>{{.Umpire}}</td>
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/edit">Edit</a></td>
-  {{if not $.DisableDelete}}<td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete">Delete</a></td>{{end}}
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete" onsubmit="return confirm('Delete this game?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
 </tr>
 {{end}}
 </table>

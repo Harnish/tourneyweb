@@ -14,9 +14,9 @@
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}">{{.Name}}</a></td>
   {{if not $.DisableDelete}}
   <td valign="top">
-    <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}/delete">
+    <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}/delete" onsubmit="return confirm('Delete this division and all its games?')">
       {{$.CSRFField}}
-      <input type="submit" name="delete" value="delete">
+      <input type="submit" value="Delete">
     </form>
   </td>
   {{end}}
