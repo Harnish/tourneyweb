@@ -1,9 +1,10 @@
 {{define "games"}}
 {{template "header" .}}
 <table border="1" cellpadding="1" cellspacing="0">
-<tr><th>Home Team</th><th>Home Team Score</th><th>Away Team</th><th>Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th></tr>
+<tr><th>Division</th><th>Home Team</th><th>Home Team Score</th><th>Away Team</th><th>Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th></tr>
 {{range .Games}}
 <tr>
+  <td>{{.Division.Name}}</td>
   <td>{{.HomeTeam.Name}} - {{.HomeTeam.Coach}}</td>
   <td>{{.HomeScore}}</td>
   <td>{{.AwayTeam.Name}} - {{.AwayTeam.Coach}}</td>

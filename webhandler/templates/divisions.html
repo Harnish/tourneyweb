@@ -7,7 +7,7 @@
 {{range $i, $row := .Teams}}
 <tr>
   <td>{{inc $i}}</td>
-  <td>{{$row.Name}}</td>
+  <td><a href="/tournaments/{{$.Tournament.ID}}/teams/{{$row.ID}}">{{$row.Name}}</a></td>
   <td>{{$row.Coach}}</td>
   <td>{{$row.Wins}}</td>
   <td>{{$row.Losses}}</td>

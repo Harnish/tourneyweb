@@ -23,10 +23,8 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
-- **[P1/S]** Show division in the all-games table (`/tournaments/:tid/games`) — the games table stores `division_id` but the public games view omits it
 - **[P2/M]** Fields/Locations UI — the `locations` table is defined in the schema but there are no routes, forms, or display pages for it
 - **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display
-- **[P2/S]** Make teams clickable links from the division standings view — team names appear as plain text but `ShowTeam` route already exists at `/tournaments/:tid/teams/:teamid`
 - **[P2/S]** Make the HR Derby info page content configurable — it is entirely hardcoded in `webhandler/webhandler.go` with event-specific text, Venmo links, and signup URLs; should come from the DB or config
 - **[P2/M]** Use a proper datetime type for game start times — `start_time` is stored as TEXT; a real timestamp enables sorting, calendar view, and validation
 - **[P2/M]** Add delete confirmation — currently clicking delete on a game or team immediately executes with no "are you sure?" step
@@ -76,6 +74,5 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Ops / Deployment
 
-- **[P2/S]** Add `/healthz` endpoint — needed for container orchestration liveness/readiness probes (the `HEALTHCHECK` in the Dockerfile currently hits `/` which renders a full page)
 - **[P2/S]** Add graceful shutdown — `log.Fatal(http.ListenAndServe(...))` has no cleanup path; use `http.Server` with context cancellation on `SIGTERM`/`SIGINT`
 - **[P3/S]** Structured logging — replace scattered `log.Println` with `log/slog` to make log output parseable in production

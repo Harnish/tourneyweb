@@ -29,6 +29,10 @@ func main() {
 	LoadFavico()
 
 	router := httprouter.New()
+	// Health check
+	router.GET("/healthz", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		w.WriteHeader(http.StatusOK)
+	})
 	// Static assets
 	router.GET("/style.css", PrintCSS)
 	router.GET("/favicon.ico", PrintFavIco)
