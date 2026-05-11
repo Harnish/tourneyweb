@@ -23,11 +23,14 @@ var banner []byte
 var favico []byte
 
 func main() {
-
 	cfg := LoadConfig("tourneyweb.conf")
 	spew.Dump(cfg)
 	db := mydb.New(cfg.Database, cfg.Debug)
-	wh := webhandler.New(db, cfg.AdminPassword, cfg.DisableDelete)
+	email := webhandler.NewEmailService(
+		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
+		cfg.FromEmail, cfg.BaseURL,
+	)
+	wh := webhandler.New(db, email, cfg.DisableDelete)
 	log.Println("Listening on port:", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
 	LoadFavico()
@@ -41,15 +44,33 @@ func main() {
 	router.GET("/style.css", PrintCSS)
 	router.GET("/favicon.ico", PrintFavIco)
 	router.GET("/img/topimage.jpg", PrintBannerLogo)
-	// Public routes
-	router.GET("/", wh.TournamentList)
+	// Auth routes
 	router.GET("/login", wh.LoginForm)
 	router.POST("/login", wh.Login)
+	router.GET("/register", wh.RegisterForm)
+	router.POST("/register", wh.Register)
+	router.GET("/verify", wh.VerifyEmail)
+	router.POST("/resend-verification", wh.ResendVerification)
+	router.GET("/password-reset", wh.PasswordResetForm)
+	router.POST("/password-reset", wh.PasswordReset)
+	router.GET("/password-reset/confirm", wh.PasswordResetConfirmForm)
+	router.POST("/password-reset/confirm", wh.PasswordResetConfirm)
+	router.POST("/logout", wh.Logout)
+	// Public routes
+	router.GET("/", wh.TournamentList)
 	router.GET("/hrderbyinfo", wh.PrintHRDerby)
 	router.GET("/tournaments/:tid", wh.TournamentHome)
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
 	router.GET("/tournaments/:tid/games", wh.Games)
+	// Score routes (directors + staff)
+	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
+	router.POST("/tournaments/:tid/score/games/:gid", wh.RecordScore)
+	// Director manage routes
+	router.GET("/tournaments/:tid/manage/roles", wh.ManageRoles)
+	router.POST("/tournaments/:tid/manage/roles", wh.AssignRole)
+	router.POST("/tournaments/:tid/manage/invite", wh.InviteUser)
+	router.POST("/tournaments/:tid/manage/roles/:uid/remove", wh.RemoveRole)
 	// Admin routes
 	router.GET("/admin/tournaments", wh.AdminTournaments)
 	router.POST("/admin/tournaments", wh.CreateTournament)
@@ -75,6 +96,7 @@ func main() {
 	router.POST("/admin/tournaments/:tid/teams/:teamid/edit", wh.EditTeam)
 	router.GET("/admin/tournaments/:tid/games/:gid/edit", wh.EditGame)
 	router.POST("/admin/tournaments/:tid/games/:gid/edit", wh.EditGame)
+
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, wh.RequestLogger(csrfMiddleware(router))))
@@ -96,19 +118,9 @@ func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 func PrintCSS(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	css := `
-a {
-	color:#2a2a2a;
-	text-decoration:none;
-}
-a, img {
-	border:none;
-	outline:none
-	
-}
-a:hover {
-	color:#2a2a2a;
-	
-}
+a { color:#2a2a2a; text-decoration:none; }
+a, img { border:none; outline:none }
+a:hover { color:#2a2a2a; }
 	`
 	w.Header().Set("Content-type", mime.TypeByExtension(".css"))
 	w.Write([]byte(css))
