@@ -17,30 +17,84 @@ import (
 
 type contextKey struct{}
 
+// TWUser is the authenticated user injected into every request context.
+// ID == 0 means unauthenticated.
+type TWUser struct {
+	ID      int
+	Email   string
+	Name    string
+	IsAdmin bool
+	Roles   []TournamentRole
+}
+
+type TournamentRole struct {
+	TournamentID int
+	Role         string // "director", "staff", "coach"
+	TeamID       int    // non-zero for coach only
+}
+
+func (u TWUser) LoggedIn() bool { return u.ID > 0 }
+
+func (u TWUser) IsDirectorFor(tid int) bool {
+	for _, r := range u.Roles {
+		if r.TournamentID == tid && r.Role == "director" {
+			return true
+		}
+	}
+	return false
+}
+
+func (u TWUser) IsStaffFor(tid int) bool {
+	for _, r := range u.Roles {
+		if r.TournamentID == tid && r.Role == "staff" {
+			return true
+		}
+	}
+	return false
+}
+
+func (u TWUser) IsCoachFor(tid int) bool {
+	for _, r := range u.Roles {
+		if r.TournamentID == tid && r.Role == "coach" {
+			return true
+		}
+	}
+	return false
+}
+
+func (u TWUser) CanManage(tid int) bool { return u.IsAdmin || u.IsDirectorFor(tid) }
+func (u TWUser) CanScore(tid int) bool {
+	return u.IsAdmin || u.IsDirectorFor(tid) || u.IsStaffFor(tid)
+}
+
+func userFromContext(ctx context.Context) TWUser {
+	user, _ := ctx.Value(contextKey{}).(TWUser)
+	return user
+}
+
+// loginAttempt tracks failed login attempts per IP.
 type loginAttempt struct {
-	count    int
+	count     int
 	lockUntil time.Time
 }
 
 type Env struct {
 	DB            *mydb.MyDB
-	AdminPW       string
+	Email         *EmailService
 	DisableDelete bool
 	loginMu       sync.Mutex
 	loginAttempts map[string]*loginAttempt
 }
 
-func New(db *mydb.MyDB, adminpw string, dd bool) *Env {
+func New(db *mydb.MyDB, email *EmailService, dd bool) *Env {
 	return &Env{
 		DB:            db,
-		AdminPW:       adminpw,
+		Email:         email,
 		DisableDelete: dd,
 		loginAttempts: make(map[string]*loginAttempt),
 	}
 }
 
-// loginDelay blocks until the lockout for ip has expired, then returns whether
-// the IP is currently locked out (more than 10 consecutive failures).
 func (me *Env) loginDelay(ip string) bool {
 	me.loginMu.Lock()
 	a := me.loginAttempts[ip]
@@ -51,7 +105,6 @@ func (me *Env) loginDelay(ip string) bool {
 	until := a.lockUntil
 	locked := a.count > 10
 	me.loginMu.Unlock()
-
 	if wait := time.Until(until); wait > 0 {
 		time.Sleep(wait)
 	}
@@ -67,7 +120,6 @@ func (me *Env) loginFailed(ip string) {
 		me.loginAttempts[ip] = a
 	}
 	a.count++
-	// Exponential backoff: 2^count seconds, capped at 5 minutes.
 	delay := time.Duration(1<<min(a.count, 8)) * time.Second
 	a.lockUntil = time.Now().Add(delay)
 }
@@ -78,62 +130,89 @@ func (me *Env) loginSucceeded(ip string) {
 	delete(me.loginAttempts, ip)
 }
 
-
+// RequestLogger logs every request, loads the authenticated user into context,
+// and enforces prefix-level route guards.
 func (me *Env) RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userdata := me.MySession(w, r)
 		forwardedip := r.Header.Get("X-Forwarded-For")
 		log.Println(r.Method, r.URL.Path, r.Proto, forwardedip)
-		if strings.HasPrefix(r.URL.Path, "/admin") && userdata.ID < 1 {
-			log.Println(r.RemoteAddr, r.Method, r.URL.Path, userdata.UserName, "Permission Denied")
+
+		user := me.loadUser(w, r)
+		ctx := context.WithValue(r.Context(), contextKey{}, user)
+		r = r.WithContext(ctx)
+
+		// /admin/* requires global admin.
+		if strings.HasPrefix(r.URL.Path, "/admin") && !user.IsAdmin {
+			log.Println(r.RemoteAddr, r.Method, r.URL.Path, user.Email, "Permission Denied")
 			http.Error(w, "Not authorized", http.StatusForbidden)
 			return
 		}
-		ctx := context.WithValue(r.Context(), contextKey{}, userdata.ID)
-		h.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
 
-func (me *Env) LoginForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	me.render(w, "login", loginData{baseData: newBase(r, false)})
-}
-
-func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ip := r.Header.Get("X-Forwarded-For")
-	if ip == "" {
-		ip = r.RemoteAddr
-	}
-
-	if me.loginDelay(ip) {
-		http.Error(w, "Too many failed attempts — try again later", http.StatusTooManyRequests)
-		return
-	}
-
-	password := r.FormValue("password")
-	username := r.FormValue("username")
-	if password == me.AdminPW {
-		me.loginSucceeded(ip)
-		session, err := sessions.Start(w, r, true)
-		if err != nil {
-			log.Println("Session Failed to start", err)
+		// /tournaments/:tid/manage/* requires CanManage for that tournament.
+		if strings.Contains(r.URL.Path, "/manage/") {
+			tidStr := extractTID(r.URL.Path)
+			if tidStr != "" {
+				tid, err := strconv.Atoi(tidStr)
+				if err != nil || !user.CanManage(tid) {
+					http.Error(w, "Not authorized", http.StatusForbidden)
+					return
+				}
+			}
 		}
-		session.Set("userid", username)
-		http.Redirect(w, r, "/admin/tournaments", http.StatusSeeOther)
-		return
-	}
 
-	me.loginFailed(ip)
-	log.Println("login failed for", ip)
-	me.render(w, "login", loginData{
-		baseData: newBase(r, false),
-		Error:    "Login Failed",
+		// /tournaments/:tid/score/* requires CanScore for that tournament.
+		if strings.Contains(r.URL.Path, "/score/") {
+			tidStr := extractTID(r.URL.Path)
+			if tidStr != "" {
+				tid, err := strconv.Atoi(tidStr)
+				if err != nil || !user.CanScore(tid) {
+					http.Error(w, "Not authorized", http.StatusForbidden)
+					return
+				}
+			}
+		}
+
+		h.ServeHTTP(w, r)
 	})
 }
 
-func (me *Env) Logout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {}
+// extractTID pulls the tournament ID string from paths like /tournaments/42/...
+func extractTID(path string) string {
+	parts := strings.Split(path, "/")
+	for i, p := range parts {
+		if p == "tournaments" && i+1 < len(parts) {
+			return parts[i+1]
+		}
+	}
+	return ""
+}
+
+// loadUser reads the session, fetches user + roles from DB, returns TWUser.
+// Returns zero TWUser if not authenticated.
+func (me *Env) loadUser(w http.ResponseWriter, r *http.Request) TWUser {
+	session, err := sessions.Start(w, r, false)
+	if err != nil || session == nil {
+		return TWUser{}
+	}
+	raw := session.Get("user_id", nil)
+	userID, ok := raw.(int)
+	if !ok || userID == 0 {
+		return TWUser{}
+	}
+	u, err := me.DB.GetUserByID(userID)
+	if err != nil || u.ID == 0 {
+		return TWUser{}
+	}
+	dbRoles := me.DB.GetRolesForUser(u.ID)
+	roles := make([]TournamentRole, len(dbRoles))
+	for i, r := range dbRoles {
+		roles[i] = TournamentRole{TournamentID: r.TournamentID, Role: r.Role, TeamID: r.TeamID}
+	}
+	return TWUser{ID: u.ID, Email: u.Email, Name: u.Name, IsAdmin: u.IsAdmin, Roles: roles}
+}
 
 func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	_, ok := me.tournamentFromRoute(w, ps)
 	if !ok {
 		return
 	}
@@ -149,7 +228,7 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData: newBaseWithTournament(r, false, t),
+		baseData: newBase(r),
 		Division: me.DB.ReturnDivisionByID(did),
 		Teams:    rows,
 		Games:    me.DB.AllGamesByDivision(did),
@@ -173,7 +252,7 @@ func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 }
 
 func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	_, ok := me.tournamentFromRoute(w, ps)
 	if !ok {
 		return
 	}
@@ -187,7 +266,7 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		options[i] = i
 	}
 	me.render(w, "scoreGame", scoreGameData{
-		baseData:     newBaseWithTournament(r, true, t),
+		baseData:     newBase(r),
 		Game:         me.DB.ReturnGameByID(gid),
 		ScoreOptions: options,
 	})
@@ -223,7 +302,7 @@ func (me *Env) Games(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		return
 	}
 	me.render(w, "games", gamesData{
-		baseData: newBaseWithTournament(r, false, t),
+		baseData: newBase(r),
 		Games:    me.DB.AllGames(t.ID),
 	})
 }
@@ -234,14 +313,14 @@ func (me *Env) AdminGames(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 	me.render(w, "adminGames", adminGamesData{
-		baseData:      newBaseWithTournament(r, true, t),
+		baseData:      newBase(r),
 		Games:         me.DB.AllGames(t.ID),
 		DisableDelete: me.DisableDelete,
 	})
 }
 
 func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	_, ok := me.tournamentFromRoute(w, ps)
 	if !ok {
 		return
 	}
@@ -251,7 +330,7 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 	me.render(w, "createGame", createGameData{
-		baseData:      newBaseWithTournament(r, true, t),
+		baseData:      newBase(r),
 		DivisionID:    did,
 		Teams:         me.DB.ReturnTeamsByDivisionID(did),
 		Games:         me.DB.AllGamesByDivision(did),
@@ -343,7 +422,7 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 	me.render(w, "editGame", editGameData{
-		baseData:  newBaseWithTournament(r, true, t),
+		baseData:  newBase(r),
 		Game:      game,
 		Teams:     me.DB.ReturnTeamsByTournamentID(t.ID),
 		Divisions: me.DB.ReturnDivisions(t.ID),
@@ -351,27 +430,5 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 }
 
 func (me *Env) PrintHRDerby(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	me.render(w, "hrderby", newBase(r, false))
-}
-
-type TWUser struct {
-	ID       int
-	UserName string
-}
-
-func (me *Env) MySession(w http.ResponseWriter, r *http.Request) TWUser {
-	var user TWUser
-	user.ID = -1
-	session, err := sessions.Start(w, r, false)
-	if err != nil || session == nil {
-		return user
-	}
-	userid := session.Get("userid", nil)
-	s, ok := userid.(string)
-	if !ok || s == "" {
-		return user
-	}
-	user.ID = 1
-	user.UserName = s
-	return user
+	me.render(w, "hrderby", newBase(r))
 }
