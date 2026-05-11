@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<title>Battle at the Dawg Pound</title>
+<title>TourneyWeb</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link rel="stylesheet" href="/style.css">
@@ -13,7 +13,7 @@
 </head>
 <body>
 <img src="/img/topimage.jpg"><br>
-<a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR derby Info</a>
+<a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR Derby Info</a>
 {{if .IsAdmin}}
   {{if .Tournament.ID}}
   | <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
@@ -23,8 +23,20 @@
   {{else}}
   | <a href="/admin/tournaments">Admin</a>
   {{end}}
+{{else if .User.LoggedIn}}
+  {{if .Tournament.ID}}
+    {{if .User.IsDirectorFor .Tournament.ID}}
+    | <a href="/tournaments/{{.Tournament.ID}}/manage/roles">Manage Roles</a>
+    {{end}}
+    {{if .User.CanScore .Tournament.ID}}
+    | Score Games
+    {{end}}
+  {{end}}
+{{end}}
+{{if .User.LoggedIn}}
+| {{.User.Name}} (<form method="post" action="/logout" style="display:inline">{{.CSRFField}}<input type="submit" value="Log out"></form>)
 {{else}}
-| <a href="/login">Login</a>
+| <a href="/login">Log in</a> | <a href="/register">Register</a>
 {{end}}
 {{if .Tournament.ID}}<br><strong>{{.Tournament.Name}}</strong> — {{.Tournament.Sport}}{{end}}
 <br><hr>
