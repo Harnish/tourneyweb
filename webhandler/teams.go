@@ -45,7 +45,7 @@ func (me *Env) DeleteTeam(w http.ResponseWriter, r *http.Request, ps httprouter.
 	if !ok {
 		return
 	}
-	teamID, err := strconv.Atoi(r.FormValue("teamid"))
+	teamID, err := strconv.Atoi(ps.ByName("teamid"))
 	if err != nil {
 		log.Println("DeleteTeam bad ID:", err)
 		http.Error(w, "Bad team ID", http.StatusBadRequest)
