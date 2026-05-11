@@ -255,6 +255,21 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 			http.Error(w, "Home and away team must be different", http.StatusBadRequest)
 			return
 		}
+		div := me.DB.ReturnDivisionByID(did)
+		if div.ID == 0 || div.TournamentID != t.ID {
+			http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
+		homeTeam := me.DB.ReturnTeamByID(hid)
+		if homeTeam.ID == 0 || homeTeam.TournamentID != t.ID {
+			http.Error(w, "Home team does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
+		awayTeam := me.DB.ReturnTeamByID(aid)
+		if awayTeam.ID == 0 || awayTeam.TournamentID != t.ID {
+			http.Error(w, "Away team does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 		return

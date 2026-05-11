@@ -12,14 +12,8 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ---
 
-## Bugs
-
-- **[P1/S]** `LoadFavico()` is defined in `main.go` but never called — the favicon never loads
----
-
 ## Code Quality
 
-- **[P1/S]** Replace deprecated `ioutil.ReadFile` with `os.ReadFile` in `config.go` and `main.go` (deprecated since Go 1.16)
 - **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
 - **[P2/M]** Mock PostgreSQL for testing — introduce a DB interface so unit tests can inject a fake without a real database; use `pgxmock` or a hand-rolled fake
 - **[P2/S]** Fix CSS served inline from `main.go` — move to a real static file or embed with `//go:embed`
@@ -28,7 +22,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
-- **[P1/M]** Edit support — no entity can be edited after creation; need edit forms for Tournaments, Divisions, Teams, and Games
 - **[P1/S]** Show division in the all-games table (`/tournaments/:tid/games`) — the games table stores `division_id` but the public games view omits it
 - **[P2/M]** Fields/Locations UI — the `locations` table is defined in the schema but there are no routes, forms, or display pages for it
 - **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display

@@ -57,6 +57,46 @@ func (me *Env) DeleteTeam(w http.ResponseWriter, r *http.Request, ps httprouter.
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/teams", t.ID), http.StatusSeeOther)
 }
 
+func (me *Env) EditTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	teamID, err := strconv.Atoi(ps.ByName("teamid"))
+	if err != nil {
+		log.Println("EditTeam bad ID:", err)
+		http.Error(w, "Bad Team ID", http.StatusBadRequest)
+		return
+	}
+	team := me.DB.ReturnTeamByID(teamID)
+	if team.ID == 0 {
+		http.Error(w, "Team not found", http.StatusNotFound)
+		return
+	}
+	if r.Method == http.MethodPost {
+		name := r.FormValue("teamname")
+		coach := r.FormValue("teamcoach")
+		divisionID, err := strconv.Atoi(r.FormValue("division"))
+		if err != nil || name == "" {
+			http.Error(w, "Name and valid division required", http.StatusBadRequest)
+			return
+		}
+		div := me.DB.ReturnDivisionByID(divisionID)
+		if div.ID == 0 || div.TournamentID != t.ID {
+			http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
+		me.DB.UpdateTeam(teamID, divisionID, name, coach)
+		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/teams", t.ID), http.StatusSeeOther)
+		return
+	}
+	me.render(w, "editTeam", editTeamData{
+		baseData:  newBaseWithTournament(r, true, t),
+		Team:      team,
+		Divisions: me.DB.ReturnDivisions(t.ID),
+	})
+}
+
 func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	t, ok := me.tournamentFromRoute(w, ps)
 	if !ok {
