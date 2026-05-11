@@ -72,13 +72,13 @@ func userFromContext(ctx context.Context) TWUser {
 }
 
 type Env struct {
-	DB                       *mydb.MyDB
+	DB                       mydb.DB
 	Email                    *EmailService
 	DisableDelete            bool
 	DisableEmailVerification bool
 }
 
-func New(db *mydb.MyDB, email *EmailService, dd, disableEmailVerification bool) *Env {
+func New(db mydb.DB, email *EmailService, dd, disableEmailVerification bool) *Env {
 	db.PruneLoginAttempts()
 	return &Env{
 		DB:                       db,

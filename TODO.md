@@ -10,7 +10,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 ## Code Quality
 
 - **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
-- **[P2/M]** Mock PostgreSQL for testing — introduce a DB interface so unit tests can inject a fake without a real database; use `pgxmock` or a hand-rolled fake
 
 ---
 
@@ -67,6 +66,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **DB interface + FakeDB** — `mydb.DB` interface lets handlers accept either `*MyDB` or `*FakeDB`; in-memory fake covers all 50 methods with 6 passing tests
 - **Static asset embeds** — `Banner.png`, `favicon.ico`, and `style.css` all embedded with `//go:embed`; no disk files required at runtime
 - **Login rate limiting** — DB-backed per-IP exponential lockout (2s–256s cap), persists across restarts, prunes stale records on startup
 - **Authentication system** — email-based accounts with bcrypt passwords, email verification link, password reset flow; first registered user is auto-admin
