@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	_ "embed"
 	"log"
 	"mime"
 	"net/http"
@@ -14,6 +15,9 @@ import (
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/webhandler"
 )
+
+//go:embed Banner.png
+var defaultBanner []byte
 
 var banner []byte
 var favico []byte
@@ -86,11 +90,7 @@ func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if len(banner) == 0 {
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-type", mime.TypeByExtension(".jpg"))
+	w.Header().Set("Content-Type", http.DetectContentType(banner))
 	w.Write(banner)
 }
 
@@ -115,14 +115,16 @@ a:hover {
 }
 
 func LoadBanner(path string) {
+	banner = defaultBanner
 	if path == "" {
 		return
 	}
-	var err error
-	banner, err = os.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Println("banner: could not load", path, err)
+		return
 	}
+	banner = data
 }
 
 func LoadFavico() {
