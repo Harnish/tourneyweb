@@ -63,6 +63,36 @@ var pgtables = []string{
 		name    TEXT NOT NULL,
 		address TEXT NOT NULL
 	)`,
+	`CREATE TABLE IF NOT EXISTS users (
+		id                  SERIAL PRIMARY KEY,
+		email               TEXT UNIQUE NOT NULL,
+		name                TEXT NOT NULL,
+		password_hash       TEXT NOT NULL,
+		email_verified      BOOLEAN NOT NULL DEFAULT false,
+		verification_token  TEXT,
+		reset_token         TEXT,
+		reset_expires       TIMESTAMPTZ,
+		is_admin            BOOLEAN NOT NULL DEFAULT false,
+		created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`,
+	`CREATE TABLE IF NOT EXISTS tournament_roles (
+		id             SERIAL PRIMARY KEY,
+		user_id        INTEGER NOT NULL REFERENCES users(id),
+		tournament_id  INTEGER NOT NULL REFERENCES tournaments(id),
+		role           TEXT NOT NULL CHECK (role IN ('director','staff','coach')),
+		team_id        INTEGER REFERENCES teams(id),
+		UNIQUE(user_id, tournament_id)
+	)`,
+	`CREATE TABLE IF NOT EXISTS invitations (
+		id             SERIAL PRIMARY KEY,
+		email          TEXT NOT NULL,
+		tournament_id  INTEGER NOT NULL REFERENCES tournaments(id),
+		role           TEXT NOT NULL CHECK (role IN ('director','staff','coach')),
+		team_id        INTEGER REFERENCES teams(id),
+		token          TEXT NOT NULL UNIQUE,
+		expires_at     TIMESTAMPTZ NOT NULL,
+		created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`,
 }
 
 type MyDB struct {
