@@ -24,7 +24,7 @@ func main() {
 	spew.Dump(cfg)
 	db := mydb.New(cfg.Database, cfg.Debug)
 	wh := webhandler.New(db, cfg.AdminPassword, cfg.DisableDelete)
-	log.Println(cfg.Port)
+	log.Println("Listening on port:", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
 	LoadFavico()
 

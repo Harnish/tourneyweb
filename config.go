@@ -21,7 +21,7 @@ type Config struct {
 // LoadConfig imports the configuration from the first config file found,
 // then applies any environment variable overrides on top.
 func LoadConfig(confpath string) (config Config) {
-	for _, path := range []string{confpath, "config.yaml", "/etc/go-periodical-rack/config.yaml"} {
+	for _, path := range []string{confpath, "config.yaml", "/config/config.yaml"} {
 		if path == "" {
 			continue
 		}
@@ -31,6 +31,9 @@ func LoadConfig(confpath string) (config Config) {
 		}
 	}
 	applyEnvOverrides(&config)
+	if config.Port == "" {
+		config.Port = "8989"
+	}
 	return
 }
 
@@ -55,25 +58,25 @@ func ParseConfig(confpath string) (config Config) {
 // Variables: TANPORT, TANDEBUG, DATABASE_URL, TANADMINPASS, TANCSRFKEY,
 // TANDISABLEDELETE, TANBANNER
 func applyEnvOverrides(c *Config) {
-	if v := os.Getenv("TANPORT"); v != "" {
+	if v := os.Getenv("PORT"); v != "" {
 		c.Port = v
 	}
-	if v := os.Getenv("TANDEBUG"); v != "" {
+	if v := os.Getenv("DEBUG"); v != "" {
 		c.Debug = strings.ToLower(v) == "true"
 	}
 	if v := os.Getenv("DATABASE_URL"); v != "" {
 		c.Database = v
 	}
-	if v := os.Getenv("TANADMINPASS"); v != "" {
+	if v := os.Getenv("ADMIN_PASSWORD"); v != "" {
 		c.AdminPassword = v
 	}
-	if v := os.Getenv("TANCSRFKEY"); v != "" {
+	if v := os.Getenv("CSRF_KEY"); v != "" {
 		c.CSRFKey = v
 	}
-	if v := os.Getenv("TANDISABLEDELETE"); v != "" {
+	if v := os.Getenv("DISABLE_DELETE"); v != "" {
 		c.DisableDelete = strings.ToLower(v) == "true"
 	}
-	if v := os.Getenv("TANBANNER"); v != "" {
+	if v := os.Getenv("BANNER_IMAGE_PATH"); v != "" {
 		c.BannerImagePath = v
 	}
 }
