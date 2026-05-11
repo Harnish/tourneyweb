@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -72,64 +71,40 @@ func userFromContext(ctx context.Context) TWUser {
 	return user
 }
 
-// loginAttempt tracks failed login attempts per IP.
-type loginAttempt struct {
-	count     int
-	lockUntil time.Time
-}
-
 type Env struct {
 	DB                       *mydb.MyDB
 	Email                    *EmailService
 	DisableDelete            bool
 	DisableEmailVerification bool
-	loginMu                  sync.Mutex
-	loginAttempts            map[string]*loginAttempt
 }
 
 func New(db *mydb.MyDB, email *EmailService, dd, disableEmailVerification bool) *Env {
+	db.PruneLoginAttempts()
 	return &Env{
 		DB:                       db,
 		Email:                    email,
 		DisableDelete:            dd,
 		DisableEmailVerification: disableEmailVerification,
-		loginAttempts:            make(map[string]*loginAttempt),
 	}
 }
 
-func (me *Env) loginDelay(ip string) bool {
-	me.loginMu.Lock()
-	a := me.loginAttempts[ip]
-	if a == nil {
-		me.loginMu.Unlock()
+// loginBlocked returns true if ip is currently in a lockout window.
+func (me *Env) loginBlocked(ip string) bool {
+	a, err := me.DB.GetLoginAttempt(ip)
+	if err != nil {
 		return false
 	}
-	until := a.lockUntil
-	locked := a.count > 10
-	me.loginMu.Unlock()
-	if wait := time.Until(until); wait > 0 {
-		time.Sleep(wait)
-	}
-	return locked
+	return time.Now().Before(a.LockedUntil)
 }
 
 func (me *Env) loginFailed(ip string) {
-	me.loginMu.Lock()
-	defer me.loginMu.Unlock()
-	a := me.loginAttempts[ip]
-	if a == nil {
-		a = &loginAttempt{}
-		me.loginAttempts[ip] = a
+	if err := me.DB.RecordLoginFailure(ip); err != nil {
+		log.Println("loginFailed: record attempt:", err)
 	}
-	a.count++
-	delay := time.Duration(1<<min(a.count, 8)) * time.Second
-	a.lockUntil = time.Now().Add(delay)
 }
 
 func (me *Env) loginSucceeded(ip string) {
-	me.loginMu.Lock()
-	defer me.loginMu.Unlock()
-	delete(me.loginAttempts, ip)
+	me.DB.ClearLoginAttempts(ip)
 }
 
 // RequestLogger logs every request, loads the authenticated user into context,

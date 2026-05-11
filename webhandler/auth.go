@@ -131,7 +131,7 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if ip == "" {
 		ip = r.RemoteAddr
 	}
-	if me.loginDelay(ip) {
+	if me.loginBlocked(ip) {
 		http.Error(w, "Too many failed attempts — try again later", http.StatusTooManyRequests)
 		return
 	}

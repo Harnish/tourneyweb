@@ -5,10 +5,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ---
 
-## Security
-
-- **[P2/S]** Rate limiting on login is in-process memory only — concurrent instances or restarts reset the counter; use Redis or a DB-backed counter for production multi-instance deployments
-
 ---
 
 ## Code Quality
@@ -73,6 +69,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Login rate limiting** — DB-backed per-IP exponential lockout (2s–256s cap), persists across restarts, prunes stale records on startup
 - **Authentication system** — email-based accounts with bcrypt passwords, email verification link, password reset flow; first registered user is auto-admin
 - **Role-based access control** — `admin` (site-wide), `director` (per-tournament full management), `staff` (score entry only), `coach` (reserved); middleware enforces roles on `/admin/*`, `/tournaments/:tid/manage/*`, and `/tournaments/:tid/score/*`
 - **Invitations** — directors invite unregistered users by email; pending invitation auto-applied on registration

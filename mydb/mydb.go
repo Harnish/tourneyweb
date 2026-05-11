@@ -93,6 +93,12 @@ var pgtables = []string{
 		expires_at     TIMESTAMPTZ NOT NULL,
 		created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	)`,
+	`CREATE TABLE IF NOT EXISTS login_attempts (
+		ip           VARCHAR(45) PRIMARY KEY,
+		count        INTEGER NOT NULL DEFAULT 0,
+		locked_until TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		last_attempt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`,
 }
 
 type MyDB struct {
