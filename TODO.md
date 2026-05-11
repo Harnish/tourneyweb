@@ -17,6 +17,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 - **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
 - **[P2/M]** Mock PostgreSQL for testing — introduce a DB interface so unit tests can inject a fake without a real database; use `pgxmock` or a hand-rolled fake
 - **[P2/S]** Fix CSS served inline from `main.go` — move to a real static file or embed with `//go:embed`
+- **[P2/S]** Embed default favicon and banner image in the binary with `//go:embed` — currently the app logs nothing and returns 404 for both when the files aren't present on disk; shipping a generic default avoids broken images in fresh deployments
 
 ---
 
