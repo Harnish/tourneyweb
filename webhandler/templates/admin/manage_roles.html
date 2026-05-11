@@ -1,0 +1,74 @@
+{{define "manageRoles"}}
+{{template "header" .}}
+<h2>Manage Roles — {{.Tournament.Name}}</h2>
+
+<h3>Current Role Holders</h3>
+{{if .Roles}}
+<table border="1" cellpadding="4">
+<tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
+{{range .Roles}}
+{{$u := index $.Users .UserID}}
+<tr>
+  <td>{{$u.Name}}</td>
+  <td>{{$u.Email}}</td>
+  <td>{{.Role}}</td>
+  <td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/roles/{{.UserID}}/remove">
+      {{$.CSRFField}}
+      <input type="submit" value="Remove">
+    </form>
+  </td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No roles assigned yet.</p>
+{{end}}
+
+<h3>Assign Role to Registered User</h3>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/roles">
+{{.CSRFField}}
+<table>
+<tr><td>Email</td><td><input type="email" name="email" required></td></tr>
+<tr><td>Role</td><td>
+  <select name="role">
+    <option value="director">Director</option>
+    <option value="staff">Staff (score entry)</option>
+    <option value="coach">Coach</option>
+  </select>
+</td></tr>
+<tr><td>Team (coach only)</td><td>
+  <select name="team_id">
+    <option value="0">— none —</option>
+    {{range .Teams}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+</td></tr>
+<tr><td></td><td><input type="submit" value="Assign Role"></td></tr>
+</table>
+</form>
+
+<h3>Invite Unregistered User</h3>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/invite">
+{{.CSRFField}}
+<table>
+<tr><td>Email</td><td><input type="email" name="email" required></td></tr>
+<tr><td>Role</td><td>
+  <select name="role">
+    <option value="director">Director</option>
+    <option value="staff">Staff (score entry)</option>
+    <option value="coach">Coach</option>
+  </select>
+</td></tr>
+<tr><td>Team (coach only)</td><td>
+  <select name="team_id">
+    <option value="0">— none —</option>
+    {{range .Teams}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+</td></tr>
+<tr><td></td><td><input type="submit" value="Send Invitation"></td></tr>
+</table>
+</form>
+
+<p><a href="/tournaments/{{.Tournament.ID}}">Back to tournament</a></p>
+{{template "footer" .}}
+{{end}}
