@@ -25,7 +25,7 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 	me.render(w, "adminDivisions", adminDivisionsData{
-		baseData:      newBaseWithTournament(r, true, t),
+		baseData:      newBaseWithTournament(r, t),
 		Divisions:     me.DB.ReturnDivisions(t.ID),
 		DisableDelete: me.DisableDelete,
 	})
@@ -60,7 +60,7 @@ func (me *Env) AdminDivisionView(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 	me.render(w, "adminDivisionView", adminDivisionViewData{
-		baseData:      newBaseWithTournament(r, true, t),
+		baseData:      newBaseWithTournament(r, t),
 		Division:      me.DB.ReturnDivisionByID(did),
 		DivisionID:    did,
 		Teams:         me.DB.ReturnTeamsByDivisionIDWithStats(did),
@@ -96,7 +96,7 @@ func (me *Env) EditDivision(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 	me.render(w, "editDivision", editDivisionData{
-		baseData: newBaseWithTournament(r, true, t),
+		baseData: newBaseWithTournament(r, t),
 		Division: division,
 	})
 }

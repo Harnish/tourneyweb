@@ -36,7 +36,7 @@ func (me *Env) TournamentList(w http.ResponseWriter, r *http.Request, ps httprou
 	future, futureTotal := me.DB.ReturnTournamentsFuture(futurePage)
 	past, pastTotal := me.DB.ReturnTournamentsPast(pastPage)
 	me.render(w, "index", indexData{
-		baseData:      newBase(r, false),
+		baseData:      newBase(r),
 		ComingUp:      me.DB.ReturnTournamentsComingUp(),
 		Recent:        me.DB.ReturnTournamentsRecent(),
 		Future:        future,
@@ -63,7 +63,7 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 		teams[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
 	me.render(w, "tournament", tournamentData{
-		baseData:  newBaseWithTournament(r, false, t),
+		baseData:  newBaseWithTournament(r, t),
 		Divisions: divs,
 		Teams:     teams,
 	})
@@ -71,7 +71,7 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 
 func (me *Env) AdminTournaments(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	me.render(w, "adminTournaments", adminTournamentsData{
-		baseData:    newBase(r, true),
+		baseData:    newBase(r),
 		Tournaments: me.DB.ReturnTournaments(),
 	})
 }
@@ -101,7 +101,7 @@ func (me *Env) AdminTournamentView(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 	me.render(w, "adminTournamentView", adminTournamentViewData{
-		baseData:      newBaseWithTournament(r, true, t),
+		baseData:      newBaseWithTournament(r, t),
 		DisableDelete: me.DisableDelete,
 	})
 }
@@ -130,6 +130,6 @@ func (me *Env) EditTournament(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 	me.render(w, "editTournament", editTournamentData{
-		baseData: newBaseWithTournament(r, true, t),
+		baseData: newBaseWithTournament(r, t),
 	})
 }

@@ -33,7 +33,7 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		byDiv[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
 	me.render(w, "adminTeams", adminTeamsData{
-		baseData:        newBaseWithTournament(r, true, t),
+		baseData:        newBaseWithTournament(r, t),
 		Divisions:       divs,
 		TeamsByDivision: byDiv,
 		DisableDelete:   me.DisableDelete,
@@ -91,7 +91,7 @@ func (me *Env) EditTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 	me.render(w, "editTeam", editTeamData{
-		baseData:  newBaseWithTournament(r, true, t),
+		baseData:  newBaseWithTournament(r, t),
 		Team:      team,
 		Divisions: me.DB.ReturnDivisions(t.ID),
 	})
@@ -113,7 +113,7 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 	me.render(w, "team", teamData{
-		baseData: newBaseWithTournament(r, false, t),
+		baseData: newBaseWithTournament(r, t),
 		Team:     team,
 		Games:    me.DB.AllGamesByTeam(tid),
 	})

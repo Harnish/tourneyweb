@@ -23,21 +23,32 @@ func init() {
 	}).ParseFS(templateFS,
 		"templates/*.html",
 		"templates/admin/*.html",
+		"templates/auth/*.html",
 	))
 }
 
 type baseData struct {
-	IsAdmin    bool
 	CSRFField  template.HTML
 	Tournament mydb.Tournament
+	User       TWUser
 }
 
-func newBase(r *http.Request, isAdmin bool) baseData {
-	return baseData{IsAdmin: isAdmin, CSRFField: csrf.TemplateField(r)}
+// IsAdmin is callable from templates as {{if .IsAdmin}}.
+func (b baseData) IsAdmin() bool { return b.User.IsAdmin }
+
+func newBase(r *http.Request) baseData {
+	return baseData{
+		CSRFField: csrf.TemplateField(r),
+		User:      userFromContext(r.Context()),
+	}
 }
 
-func newBaseWithTournament(r *http.Request, isAdmin bool, t mydb.Tournament) baseData {
-	return baseData{IsAdmin: isAdmin, CSRFField: csrf.TemplateField(r), Tournament: t}
+func newBaseWithTournament(r *http.Request, t mydb.Tournament) baseData {
+	return baseData{
+		CSRFField:  csrf.TemplateField(r),
+		Tournament: t,
+		User:       userFromContext(r.Context()),
+	}
 }
 
 type divisionTeamRow struct {
@@ -45,7 +56,6 @@ type divisionTeamRow struct {
 	GamesPlayed int
 }
 
-// Home page: tournament listing
 type indexData struct {
 	baseData
 	ComingUp      []mydb.Tournament
@@ -62,20 +72,17 @@ type indexData struct {
 	PastHasNext   bool
 }
 
-// Public tournament home: divisions + teams overview
 type tournamentData struct {
 	baseData
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
 }
 
-// Admin tournament list
 type adminTournamentsData struct {
 	baseData
 	Tournaments []mydb.Tournament
 }
 
-// Admin tournament home
 type adminTournamentViewData struct {
 	baseData
 	DisableDelete bool
@@ -166,6 +173,40 @@ type editGameData struct {
 	Game      mydb.Game
 	Teams     []mydb.Team
 	Divisions []mydb.Division
+}
+
+// Auth template data types
+type registerData struct {
+	baseData
+	Error string
+}
+
+type verifyData struct {
+	baseData
+	Success bool
+	Error   string
+}
+
+type passwordResetData struct {
+	baseData
+	Error   string
+	Success bool
+}
+
+type passwordResetConfirmData struct {
+	baseData
+	Token string
+	Error string
+}
+
+// Role management
+type manageRolesData struct {
+	baseData
+	Roles   []mydb.TournamentRole
+	Users   map[int]mydb.User
+	Teams   []mydb.Team
+	Error   string
+	Success string
 }
 
 func (me *Env) render(w http.ResponseWriter, name string, data any) {
