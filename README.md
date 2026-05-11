@@ -106,13 +106,13 @@ All config values can be overridden with environment variables (useful for conta
 
 | Variable | Config key |
 |---|---|
-| `TANPORT` | `port` |
-| `TANDEBUG` | `debug` |
+| `PORT` | `port` |
+| `DEBUG` | `debug` |
 | `DATABASE_URL` | `database` |
-| `TANADMINPASS` | `adminpassword` |
-| `TANCSRFKEY` | `csrfkey` |
-| `TANDISABLEDELETE` | `disabledelete` |
-| `TANBANNER` | `bannerimagepath` |
+| `ADMIN_PASSWORD` | `adminpassword` |
+| `CSRF_KEY` | `csrfkey` |
+| `DISABLE_DELETE` | `disabledelete` |
+| `BANNER_IMAGE_PATH` | `bannerimagepath` |
 
 ---
 
