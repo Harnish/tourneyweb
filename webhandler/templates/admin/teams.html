@@ -23,6 +23,7 @@
 <tr>
   <td>{{.Name}}</td>
   <td>{{.Coach}}</td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/teams/{{.ID}}/edit">Edit</a></td>
   <td>
   {{if not $.DisableDelete}}
   <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/teams/delete">

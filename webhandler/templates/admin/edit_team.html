@@ -1,0 +1,21 @@
+{{define "editTeam"}}
+{{template "header" .}}
+<h1>Edit Team</h1>
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/edit">
+<table>
+  <tr><td>Name</td><td><input type="text" name="teamname" value="{{.Team.Name}}"></td></tr>
+  <tr><td>Coach</td><td><input type="text" name="teamcoach" value="{{.Team.Coach}}"></td></tr>
+  <tr><td>Division</td><td>
+    <select name="division">
+    {{range .Divisions}}
+    <option value="{{.ID}}"{{if eq .ID $.Team.Division.ID}} selected{{end}}>{{.Name}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>{{.CSRFField}}</td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+</form>
+<p><a href="/admin/tournaments/{{.Tournament.ID}}/teams">Cancel</a></p>
+{{template "footer" .}}
+{{end}}
