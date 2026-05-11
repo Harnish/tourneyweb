@@ -108,7 +108,7 @@ All config values can be overridden with environment variables (useful for conta
 |---|---|
 | `TANPORT` | `port` |
 | `TANDEBUG` | `debug` |
-| `TANDB` | `database` |
+| `DATABASE_URL` | `database` |
 | `TANADMINPASS` | `adminpassword` |
 | `TANCSRFKEY` | `csrfkey` |
 | `TANDISABLEDELETE` | `disabledelete` |
@@ -139,7 +139,7 @@ docker build -t tourneyweb .
 ```bash
 docker run -d \
   -p 8989:8989 \
-  -e TANDB="postgres://tourneyweb1:CHANGE_ME@db:5432/tourneyweb?sslmode=disable" \
+  -e DATABASE_URL="postgres://tourneyweb1:CHANGE_ME@db:5432/tourneyweb?sslmode=disable" \
   -e TANADMINPASS="CHANGE_ME" \
   -e TANCSRFKEY="$(openssl rand -hex 32)" \
   -v /path/to/banner.jpg:/app/banner.jpg \

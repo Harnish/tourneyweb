@@ -52,7 +52,7 @@ func ParseConfig(confpath string) (config Config) {
 // value when the variable is non-empty, allowing container deployments to
 // configure the app without a config file on disk.
 //
-// Variables: TANPORT, TANDEBUG, TANDB, TANADMINPASS, TANCSRFKEY,
+// Variables: TANPORT, TANDEBUG, DATABASE_URL, TANADMINPASS, TANCSRFKEY,
 // TANDISABLEDELETE, TANBANNER
 func applyEnvOverrides(c *Config) {
 	if v := os.Getenv("TANPORT"); v != "" {
@@ -61,7 +61,7 @@ func applyEnvOverrides(c *Config) {
 	if v := os.Getenv("TANDEBUG"); v != "" {
 		c.Debug = strings.ToLower(v) == "true"
 	}
-	if v := os.Getenv("TANDB"); v != "" {
+	if v := os.Getenv("DATABASE_URL"); v != "" {
 		c.Database = v
 	}
 	if v := os.Getenv("TANADMINPASS"); v != "" {
