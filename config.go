@@ -9,17 +9,21 @@ import (
 )
 
 type Config struct {
-	Port            string
-	Debug           bool
-	Database        string
-	AdminPassword   string
-	DisableDelete   bool
-	BannerImagePath string
-	CSRFKey         string
+	Port                     string
+	Debug                    bool
+	Database                 string
+	DisableDelete            bool
+	BannerImagePath          string
+	CSRFKey                  string
+	SMTPHost                 string
+	SMTPPort                 string
+	SMTPUsername             string
+	SMTPPassword             string
+	FromEmail                string
+	BaseURL                  string
+	DisableEmailVerification bool
 }
 
-// LoadConfig imports the configuration from the first config file found,
-// then applies any environment variable overrides on top.
 func LoadConfig(confpath string) (config Config) {
 	for _, path := range []string{confpath, "config.yaml", "/config/config.yaml"} {
 		if path == "" {
@@ -34,29 +38,29 @@ func LoadConfig(confpath string) (config Config) {
 	if config.Port == "" {
 		config.Port = "8989"
 	}
+	if config.SMTPPort == "" {
+		config.SMTPPort = "587"
+	}
 	return
 }
 
-// ParseConfig does the actual convert into the struct.
 func ParseConfig(confpath string) (config Config) {
 	file, err := os.ReadFile(confpath)
 	if err != nil {
-		log.Println("open config: ", confpath, " Error", err)
+		log.Println("open config:", confpath, "Error", err)
 	}
-
 	if err = yaml.Unmarshal(file, &config); err != nil {
-		log.Println("parse config: ", err)
-
+		log.Println("parse config:", err)
 	}
 	return
 }
 
 // applyEnvOverrides replaces any Config field with its environment variable
-// value when the variable is non-empty, allowing container deployments to
-// configure the app without a config file on disk.
+// value when the variable is non-empty.
 //
-// Variables: TANPORT, TANDEBUG, DATABASE_URL, TANADMINPASS, TANCSRFKEY,
-// TANDISABLEDELETE, TANBANNER
+// Variables: PORT, DEBUG, DATABASE_URL, CSRF_KEY, DISABLE_DELETE, BANNER_IMAGE_PATH,
+// SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, FROM_EMAIL, BASE_URL,
+// DISABLE_EMAIL_VERIFICATION
 func applyEnvOverrides(c *Config) {
 	if v := os.Getenv("PORT"); v != "" {
 		c.Port = v
@@ -67,9 +71,6 @@ func applyEnvOverrides(c *Config) {
 	if v := os.Getenv("DATABASE_URL"); v != "" {
 		c.Database = v
 	}
-	if v := os.Getenv("ADMIN_PASSWORD"); v != "" {
-		c.AdminPassword = v
-	}
 	if v := os.Getenv("CSRF_KEY"); v != "" {
 		c.CSRFKey = v
 	}
@@ -78,5 +79,26 @@ func applyEnvOverrides(c *Config) {
 	}
 	if v := os.Getenv("BANNER_IMAGE_PATH"); v != "" {
 		c.BannerImagePath = v
+	}
+	if v := os.Getenv("SMTP_HOST"); v != "" {
+		c.SMTPHost = v
+	}
+	if v := os.Getenv("SMTP_PORT"); v != "" {
+		c.SMTPPort = v
+	}
+	if v := os.Getenv("SMTP_USERNAME"); v != "" {
+		c.SMTPUsername = v
+	}
+	if v := os.Getenv("SMTP_PASSWORD"); v != "" {
+		c.SMTPPassword = v
+	}
+	if v := os.Getenv("FROM_EMAIL"); v != "" {
+		c.FromEmail = v
+	}
+	if v := os.Getenv("BASE_URL"); v != "" {
+		c.BaseURL = v
+	}
+	if v := os.Getenv("DISABLE_EMAIL_VERIFICATION"); v != "" {
+		c.DisableEmailVerification = strings.ToLower(v) == "true"
 	}
 }

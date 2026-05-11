@@ -1,8 +1,13 @@
----
 port: 8989
 debug: false
-database: mysql://tourneyweb1:CHANGE_ME@tcp(localhost:3306)/tourneyweb
-adminpassword: CHANGE_ME
-disabledelete: false
-bannerimagepath: dawgpoundlogo.jpg
+database: postgres://tourneyweb1:CHANGE_ME@localhost:5432/tourneyweb?sslmode=disable
 csrfkey: CHANGE_ME_generate_with_openssl_rand_hex_32
+disabledelete: false
+bannerimagepath: ""
+smtphost: smtp.mail.me.com
+smtpport: "587"
+smtpusername: your@email.com
+smtppassword: CHANGE_ME
+fromemail: tourneyweb@yourdomain.com
+baseurl: https://tourneyweb.example.com
+disableemailverification: false
