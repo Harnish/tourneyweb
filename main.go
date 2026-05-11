@@ -67,6 +67,7 @@ func main() {
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
 	router.GET("/tournaments/:tid/games", wh.Games)
+	router.GET("/map", wh.MapView)
 	// Score routes (directors + staff)
 	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
 	router.POST("/tournaments/:tid/score/games/:gid", wh.RecordScore)
@@ -100,6 +101,12 @@ func main() {
 	router.POST("/admin/tournaments/:tid/teams/:teamid/edit", wh.EditTeam)
 	router.GET("/admin/tournaments/:tid/games/:gid/edit", wh.EditGame)
 	router.POST("/admin/tournaments/:tid/games/:gid/edit", wh.EditGame)
+	// Admin location routes
+	router.GET("/admin/locations", wh.Locations)
+	router.POST("/admin/locations", wh.Locations)
+	router.GET("/admin/locations/:lid/edit", wh.EditLocation)
+	router.POST("/admin/locations/:lid/edit", wh.EditLocation)
+	router.POST("/admin/locations/:lid/delete", wh.DeleteLocation)
 
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))

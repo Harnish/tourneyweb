@@ -209,6 +209,25 @@ type manageRolesData struct {
 	Success string
 }
 
+type adminLocationsData struct {
+	baseData
+	Locations     []mydb.Location
+	LocationsJSON template.JS
+	DisableDelete bool
+}
+
+type editLocationData struct {
+	baseData
+	Location     mydb.Location
+	LocationJSON template.JS
+}
+
+type mapViewData struct {
+	baseData
+	Locations     []mydb.Location
+	LocationsJSON template.JS
+}
+
 type errorData struct {
 	baseData
 	Title   string

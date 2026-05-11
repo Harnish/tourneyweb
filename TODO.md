@@ -15,7 +15,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
-- **[P2/M]** Fields/Locations UI — the `locations` table is defined in the schema but there are no routes, forms, or display pages for it
 - **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display
 - **[P2/S]** Make the HR Derby info page content configurable — it is entirely hardcoded in `webhandler/webhandler.go` with event-specific text, Venmo links, and signup URLs; should come from the DB or config
 - **[P2/M]** Use a proper datetime type for game start times — `start_time` is stored as TEXT; a real timestamp enables sorting, calendar view, and validation
@@ -66,6 +65,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Fields/Locations UI** — CRUD admin at `/admin/locations`, public map at `/map`; Leaflet + OpenStreetMap, click-to-place pin on add/edit forms; `latitude`/`longitude` added to `locations` table via migration
 - **DB interface + FakeDB** — `mydb.DB` interface lets handlers accept either `*MyDB` or `*FakeDB`; in-memory fake covers all 50 methods with 6 passing tests
 - **Static asset embeds** — `Banner.png`, `favicon.ico`, and `style.css` all embedded with `//go:embed`; no disk files required at runtime
 - **Login rate limiting** — DB-backed per-IP exponential lockout (2s–256s cap), persists across restarts, prunes stale records on startup

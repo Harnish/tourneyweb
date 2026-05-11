@@ -1,0 +1,35 @@
+{{define "mapView"}}
+{{template "header" .}}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<h2>Field Locations</h2>
+{{if .Locations}}
+<div id="map" style="height:500px;width:100%;margin-bottom:1em;"></div>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Name</th><th>Address</th></tr>
+{{range .Locations}}
+<tr><td>{{.Name}}</td><td>{{.Address}}</td></tr>
+{{end}}
+</table>
+{{else}}
+<p>No field locations have been added yet.</p>
+{{end}}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
+<script>
+var locs = {{.LocationsJSON}};
+if (locs && locs.length > 0) {
+  var map = L.map('map').setView([39, -98], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+  var bounds = [];
+  locs.forEach(function(l) {
+    L.marker([l.lat, l.lng]).addTo(map)
+     .bindPopup('<strong>' + l.name + '</strong><br>' + l.address);
+    bounds.push([l.lat, l.lng]);
+  });
+  map.fitBounds(bounds, {padding: [40, 40]});
+}
+</script>
+{{template "footer" .}}
+{{end}}

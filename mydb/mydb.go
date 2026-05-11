@@ -122,7 +122,18 @@ func New(path string, debug bool) *MyDB {
 			log.Fatalf("database: create table: %v\n%s", err, ddl)
 		}
 	}
+	for _, m := range pgmigrations {
+		if _, err := db.Exec(m); err != nil {
+			log.Println("migration:", err)
+		}
+	}
 	return &MyDB{DB: db, debug: debug}
+}
+
+// pgmigrations are idempotent ALTER TABLE statements run after table creation.
+var pgmigrations = []string{
+	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS latitude  DOUBLE PRECISION NOT NULL DEFAULT 0`,
+	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION NOT NULL DEFAULT 0`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {

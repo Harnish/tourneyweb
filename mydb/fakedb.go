@@ -19,6 +19,7 @@ type FakeDB struct {
 	users         map[int]User
 	roles         []TournamentRole
 	invitations   map[int]Invitation
+	locations     map[int]Location
 	loginAttempts map[string]LoginAttempt
 }
 
@@ -42,6 +43,7 @@ func NewFakeDB() *FakeDB {
 		games:         make(map[int]Game),
 		users:         make(map[int]User),
 		invitations:   make(map[int]Invitation),
+		locations:     make(map[int]Location),
 		loginAttempts: make(map[string]LoginAttempt),
 	}
 }
@@ -737,6 +739,50 @@ func (f *FakeDB) DeleteInvitation(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.invitations, id)
+}
+
+// --- Locations ---
+
+func (f *FakeDB) AddLocation(name, address string, lat, lng float64) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	f.locations[id] = Location{ID: id, Name: name, Address: address, Latitude: lat, Longitude: lng}
+	return id
+}
+
+func (f *FakeDB) GetLocations() []Location {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([]Location, 0, len(f.locations))
+	for _, l := range f.locations {
+		out = append(out, l)
+	}
+	return out
+}
+
+func (f *FakeDB) GetLocationByID(id int) Location {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.locations[id]
+}
+
+func (f *FakeDB) UpdateLocation(id int, name, address string, lat, lng float64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if l, ok := f.locations[id]; ok {
+		l.Name = name
+		l.Address = address
+		l.Latitude = lat
+		l.Longitude = lng
+		f.locations[id] = l
+	}
+}
+
+func (f *FakeDB) DelLocation(id int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.locations, id)
 }
 
 // --- Login rate limiting ---

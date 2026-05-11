@@ -13,7 +13,7 @@
 </head>
 <body>
 <img src="/img/topimage.jpg"><br>
-<a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR Derby Info</a>
+<a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR Derby Info</a> | <a href="/map">Field Map</a>
 {{if .IsAdmin}}
   {{if .Tournament.ID}}
   | <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
@@ -22,6 +22,7 @@
   | <a href="/admin/tournaments/{{.Tournament.ID}}/games">Games</a>
   {{else}}
   | <a href="/admin/tournaments">Admin</a>
+  | <a href="/admin/locations">Locations</a>
   {{end}}
 {{else if .User.LoggedIn}}
   {{if .Tournament.ID}}

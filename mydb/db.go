@@ -72,6 +72,13 @@ type DB interface {
 	GetInvitationByToken(token string) (Invitation, bool)
 	DeleteInvitation(id int)
 
+	// Locations
+	AddLocation(name, address string, lat, lng float64) int
+	GetLocations() []Location
+	GetLocationByID(id int) Location
+	UpdateLocation(id int, name, address string, lat, lng float64)
+	DelLocation(id int)
+
 	// Login rate limiting
 	GetLoginAttempt(ip string) (LoginAttempt, error)
 	RecordLoginFailure(ip string) error

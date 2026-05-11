@@ -1,0 +1,79 @@
+{{define "adminLocations"}}
+{{template "header" .}}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<h2>Add Location</h2>
+<form method="post" action="/admin/locations">
+{{.CSRFField}}
+<table>
+<tr><td>Name</td><td><input type="text" name="name" required></td></tr>
+<tr><td>Address</td><td><input type="text" name="address" size="40"></td></tr>
+<tr><td>Latitude</td><td><input type="text" name="latitude" id="lat_add" value="0"></td></tr>
+<tr><td>Longitude</td><td><input type="text" name="longitude" id="lng_add" value="0"></td></tr>
+</table>
+<p>Click the map to place a pin:</p>
+<div id="add-map" style="height:300px;width:600px;margin-bottom:0.5em;"></div>
+<input type="submit" value="Add Location">
+</form>
+
+<h2>Locations</h2>
+{{if .Locations}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Name</th><th>Address</th><th>Lat</th><th>Lng</th><th>Edit</th>{{if not .DisableDelete}}<th>Delete</th>{{end}}</tr>
+{{range .Locations}}
+<tr>
+  <td>{{.Name}}</td>
+  <td>{{.Address}}</td>
+  <td>{{.Latitude}}</td>
+  <td>{{.Longitude}}</td>
+  <td><a href="/admin/locations/{{.ID}}/edit">Edit</a></td>
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/admin/locations/{{.ID}}/delete" onsubmit="return confirm('Delete this location?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
+</tr>
+{{end}}
+</table>
+<h3>Map</h3>
+<div id="all-map" style="height:400px;width:100%;"></div>
+{{else}}
+<p>No locations yet.</p>
+{{end}}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
+<script>
+var osm = {
+  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+};
+
+// Add-location picker
+var addMap = L.map('add-map').setView([39, -98], 4);
+L.tileLayer(osm.url, {attribution: osm.attr}).addTo(addMap);
+var addMarker = null;
+addMap.on('click', function(e) {
+  if (addMarker) addMap.removeLayer(addMarker);
+  addMarker = L.marker(e.latlng).addTo(addMap);
+  document.getElementById('lat_add').value = e.latlng.lat.toFixed(6);
+  document.getElementById('lng_add').value = e.latlng.lng.toFixed(6);
+});
+
+// Overview map
+{{if .Locations}}
+var allMap = L.map('all-map').setView([39, -98], 4);
+L.tileLayer(osm.url, {attribution: osm.attr}).addTo(allMap);
+var locs = {{.LocationsJSON}};
+var bounds = [];
+locs.forEach(function(l) {
+  if (l.lat !== 0 || l.lng !== 0) {
+    L.marker([l.lat, l.lng]).addTo(allMap)
+     .bindPopup('<strong>' + l.name + '</strong><br>' + l.address);
+    bounds.push([l.lat, l.lng]);
+  }
+});
+if (bounds.length > 0) allMap.fitBounds(bounds, {padding: [40, 40]});
+{{end}}
+</script>
+{{template "footer" .}}
+{{end}}
