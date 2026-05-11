@@ -65,9 +65,10 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 - **[P2/M]** Per-division rules editor — Tournament Director can author rules for each division using a rich-text editor; stored as HTML in a TEXT column. Public division page renders rules below the standings.
 
-### QR Codes
+### Roster & QR Codes
 
-- **[P3/S]** Team QR code — generate a QR code per team linking to their schedule/score page; display on the team detail page and on a printable team sheet. Use `github.com/skip2/go-qrcode` server-side.
+- **[P2/M]** Player roster management — coaches can manage their team's roster (player name, number, date of birth) via a coach-role UI. Public views show only first initial + last name and omit DOB. Requires auth+roles to ship first.
+- **[P2/S]** Team QR code — coaches can upload a custom QR code image or generate one server-side (via `github.com/skip2/go-qrcode`) linking to the team's public page. Displayed on the team detail page and a printable team sheet. Requires roster feature.
 
 ---
 
