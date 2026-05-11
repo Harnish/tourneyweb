@@ -8,4 +8,6 @@ config.yaml
 *.ico
 *.png
 !Banner.png
+*.css
+!style.css
 tourneyweb

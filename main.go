@@ -19,6 +19,9 @@ import (
 //go:embed Banner.png
 var defaultBanner []byte
 
+//go:embed style.css
+var defaultCSS []byte
+
 var banner []byte
 var favico []byte
 
@@ -117,13 +120,8 @@ func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 }
 
 func PrintCSS(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	css := `
-a { color:#2a2a2a; text-decoration:none; }
-a, img { border:none; outline:none }
-a:hover { color:#2a2a2a; }
-	`
 	w.Header().Set("Content-type", mime.TypeByExtension(".css"))
-	w.Write([]byte(css))
+	w.Write(defaultCSS)
 }
 
 func LoadBanner(path string) {
