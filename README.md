@@ -1,35 +1,206 @@
-TourneyWeb is an OpenSource project for managing Tournaments.  Initially it is for baseball but should work just fine for other types of tournaments.
+# TourneyWeb
 
-Check out the TODO if you want to help out.  
+TourneyWeb is an open-source Go web application for managing sports tournaments. Initially built for baseball, it works for any sport with scheduled games between two teams. It tracks divisions, teams, games, and standings with configurable tiebreaker rankings.
 
-# Building
-```
+Check out [TODO.md](TODO.md) if you want to help out.
+
+---
+
+## Features
+
+- **Multi-tournament** — manage multiple tournaments simultaneously, each with their own divisions, teams, and schedule
+- **Division standings** — automatic win/loss/runs standings with two configurable tiebreaker algorithms
+- **Game scheduling** — create and edit games with location, date/time, and umpire fields
+- **Score entry** — score games with 0–40 per-team run counts; standings update immediately
+- **Full edit support** — edit tournaments, divisions, teams, and games after creation
+- **Admin protection** — single shared admin password guards all write operations; read views are fully public
+- **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
+- **Delete lock** — optional `disabledelete` flag prevents accidental deletions during live tournaments
+- **Container-ready** — Docker image with multi-stage build, non-root user, and health check
+
+---
+
+## Building
+
+```bash
 go build
 ```
 
-# Creating a MySQL users/database
-```
-create database tourneyweb;
-create user tourneyweb1@localhost IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON tourneyweb.* to 'tourneyweb1'@'localhost';
-```
-use a different username and password for better security.
+Requires Go 1.21+. All dependencies are managed with Go modules.
 
-# Configuration file
+---
 
-Copy `tourneyweb.conf.example` to `tourneyweb.conf` and fill in your values. The config file is excluded from git.
+## Database Setup
 
+TourneyWeb uses **PostgreSQL**. Tables are created automatically on first startup — you only need to provision the database and user.
+
+Use [homelab_db_provisioner](https://github.com/Harnish/homelab_db_provisioner) to provision the database via a JSON config:
+
+```json
+{
+  "servers": [
+    {
+      "name": "local",
+      "connection": "postgres://postgres:rootpassword@localhost:5432/postgres?sslmode=disable",
+      "databases": [
+        {
+          "database": "tourneyweb",
+          "username": "tourneyweb1",
+          "password": "CHANGE_ME"
+        }
+      ]
+    }
+  ]
+}
 ```
+
+Run the provisioner (Docker example):
+
+```bash
+docker run --rm \
+  -v $(pwd)/config.json:/config/config.json \
+  ghcr.io/harnish/homelab_db_provisioner
+```
+
+Or manually:
+
+```sql
+CREATE DATABASE tourneyweb;
+CREATE USER tourneyweb1 WITH PASSWORD 'CHANGE_ME';
+GRANT ALL PRIVILEGES ON DATABASE tourneyweb TO tourneyweb1;
+-- PostgreSQL 15+: also grant schema ownership
+ALTER DATABASE tourneyweb OWNER TO tourneyweb1;
+```
+
+---
+
+## Configuration
+
+Copy the example config and fill in your values:
+
+```bash
 cp tourneyweb.conf.example tourneyweb.conf
 ```
 
 ```yaml
----
 port: 8989
 debug: false
-database: mysql://tourneyweb1:yourpassword@tcp(localhost:3306)/tourneyweb
-adminpassword: yourpassword
+database: postgres://tourneyweb1:CHANGE_ME@localhost:5432/tourneyweb?sslmode=disable
+adminpassword: CHANGE_ME
+csrfkey: CHANGE_ME_generate_with_openssl_rand_hex_32
 disabledelete: false
 bannerimagepath: dawgpoundlogo.jpg
 ```
 
+Generate a CSRF key:
+
+```bash
+openssl rand -hex 32
+```
+
+Config is loaded from `tourneyweb.conf`, then `config.yaml`, then `/etc/go-periodical-rack/config.yaml` — first file found wins.
+
+### Environment Variable Overrides
+
+All config values can be overridden with environment variables (useful for containers):
+
+| Variable | Config key |
+|---|---|
+| `TANPORT` | `port` |
+| `TANDEBUG` | `debug` |
+| `TANDB` | `database` |
+| `TANADMINPASS` | `adminpassword` |
+| `TANCSRFKEY` | `csrfkey` |
+| `TANDISABLEDELETE` | `disabledelete` |
+| `TANBANNER` | `bannerimagepath` |
+
+---
+
+## Running
+
+```bash
+./tourneyweb
+```
+
+The app listens on the configured port (default `8989`). All tables are created automatically if they don't exist.
+
+---
+
+## Docker
+
+### Build
+
+```bash
+docker build -t tourneyweb .
+```
+
+### Run
+
+```bash
+docker run -d \
+  -p 8989:8989 \
+  -e TANDB="postgres://tourneyweb1:CHANGE_ME@db:5432/tourneyweb?sslmode=disable" \
+  -e TANADMINPASS="CHANGE_ME" \
+  -e TANCSRFKEY="$(openssl rand -hex 32)" \
+  -v /path/to/banner.jpg:/app/banner.jpg \
+  -e TANBANNER=/app/banner.jpg \
+  tourneyweb
+```
+
+Pre-built images are published to GitHub Container Registry on every push to `master`:
+
+```bash
+docker pull ghcr.io/harnish/tourneyweb:latest
+```
+
+---
+
+## URL Structure
+
+### Public
+
+| Path | Description |
+|---|---|
+| `/` | Tournament list |
+| `/tournaments/:tid` | Tournament home / division standings |
+| `/tournaments/:tid/divisions/:did` | Division standings detail |
+| `/tournaments/:tid/teams/:teamid` | Team schedule and results |
+| `/tournaments/:tid/games` | Full game schedule |
+
+### Admin (requires login)
+
+| Path | Description |
+|---|---|
+| `/admin/tournaments` | List / create tournaments |
+| `/admin/tournaments/:tid` | Tournament overview |
+| `/admin/tournaments/:tid/edit` | Edit tournament |
+| `/admin/tournaments/:tid/divisions` | Add division |
+| `/admin/tournaments/:tid/divisions/:did` | Division admin view |
+| `/admin/tournaments/:tid/divisions/:did/edit` | Edit division |
+| `/admin/tournaments/:tid/teams` | Add / list teams |
+| `/admin/tournaments/:tid/teams/:teamid/edit` | Edit team |
+| `/admin/tournaments/:tid/games` | Game list with score / edit / delete |
+| `/admin/tournaments/:tid/divisions/:did/games/new` | Create game |
+| `/admin/tournaments/:tid/games/:gid/score` | Enter score |
+| `/admin/tournaments/:tid/games/:gid/edit` | Edit game |
+
+---
+
+## Standings / Rankings
+
+Two tiebreaker algorithms are available. Both sort by wins first, then apply different secondary criteria:
+
+- `WinsRunsAgainstRunsEarnedHead2Head` — fewest runs allowed, then most runs scored, then head-to-head
+- `WinsHead2HeadRunsAgainstRunsEarned` — head-to-head first, then fewest runs allowed, then most runs scored
+
+The algorithm is selected per-call in the handler. A configurable per-division algorithm is on the roadmap (see TODO.md).
+
+---
+
+## Development Notes
+
+- No ORM — direct SQL via `jackc/pgx/v5/stdlib` using `database/sql`
+- HTML rendering uses `html/template` with layouts in `webhandler/templates/`
+- All admin routes share the `RequestLogger` middleware which enforces session auth
+- The `DisableDelete` flag is checked in handlers before any delete operation
+- `ScoreGame` writes to both `games` (final score columns) and `games_by_team` (one row per team per game, used for standings); `UpdateGame` re-syncs `games_by_team` if the game is already scored
