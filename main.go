@@ -73,13 +73,19 @@ func main() {
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
+	if len(favico) == 0 {
+		http.NotFound(w, r)
+		return
+	}
 	w.Header().Set("Content-type", mime.TypeByExtension(".ico"))
 	w.Write(favico)
 }
 
 func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
+	if len(banner) == 0 {
+		http.NotFound(w, r)
+		return
+	}
 	w.Header().Set("Content-type", mime.TypeByExtension(".jpg"))
 	w.Write(banner)
 }
@@ -105,22 +111,18 @@ a:hover {
 }
 
 func LoadBanner(path string) {
+	if path == "" {
+		return
+	}
 	var err error
 	banner, err = os.ReadFile(path)
 	if err != nil {
-		log.Println("File doesn't exist", err)
+		log.Println("banner: could not load", path, err)
 	}
-
-	//if file doesn't exist lets put something here
 }
 
 func LoadFavico() {
-	var err error
-	favico, err = os.ReadFile("favicon.ico")
-	if err != nil {
-		log.Println("File doesn't exist", err)
-	}
-	//if file doesn't exist lets put something here
+	favico, _ = os.ReadFile("favicon.ico")
 }
 
 func decodeCSRFKey(hexKey string) []byte {
