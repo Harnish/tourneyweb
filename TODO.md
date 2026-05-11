@@ -7,7 +7,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Security
 
-- **[P1/S]** No rate limiting on `/login` — brute-force the single admin password with no friction; add a simple attempt counter or exponential backoff
 - **[P1/S]** Admin password stored in plaintext in config — interim fix is bcrypt hashing and `$TANADMINPASS` env var support; superseded by full auth system below once that ships
 
 ---

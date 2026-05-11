@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rivo/sessions"
@@ -15,15 +17,67 @@ import (
 
 type contextKey struct{}
 
+type loginAttempt struct {
+	count    int
+	lockUntil time.Time
+}
+
 type Env struct {
 	DB            *mydb.MyDB
 	AdminPW       string
 	DisableDelete bool
+	loginMu       sync.Mutex
+	loginAttempts map[string]*loginAttempt
 }
 
 func New(db *mydb.MyDB, adminpw string, dd bool) *Env {
-	return &Env{DB: db, AdminPW: adminpw, DisableDelete: dd}
+	return &Env{
+		DB:            db,
+		AdminPW:       adminpw,
+		DisableDelete: dd,
+		loginAttempts: make(map[string]*loginAttempt),
+	}
 }
+
+// loginDelay blocks until the lockout for ip has expired, then returns whether
+// the IP is currently locked out (more than 10 consecutive failures).
+func (me *Env) loginDelay(ip string) bool {
+	me.loginMu.Lock()
+	a := me.loginAttempts[ip]
+	if a == nil {
+		me.loginMu.Unlock()
+		return false
+	}
+	until := a.lockUntil
+	locked := a.count > 10
+	me.loginMu.Unlock()
+
+	if wait := time.Until(until); wait > 0 {
+		time.Sleep(wait)
+	}
+	return locked
+}
+
+func (me *Env) loginFailed(ip string) {
+	me.loginMu.Lock()
+	defer me.loginMu.Unlock()
+	a := me.loginAttempts[ip]
+	if a == nil {
+		a = &loginAttempt{}
+		me.loginAttempts[ip] = a
+	}
+	a.count++
+	// Exponential backoff: 2^count seconds, capped at 5 minutes.
+	delay := time.Duration(1<<min(a.count, 8)) * time.Second
+	a.lockUntil = time.Now().Add(delay)
+}
+
+func (me *Env) loginSucceeded(ip string) {
+	me.loginMu.Lock()
+	defer me.loginMu.Unlock()
+	delete(me.loginAttempts, ip)
+}
+
 
 func (me *Env) RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +99,20 @@ func (me *Env) LoginForm(w http.ResponseWriter, r *http.Request, ps httprouter.P
 }
 
 func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	if me.loginDelay(ip) {
+		http.Error(w, "Too many failed attempts — try again later", http.StatusTooManyRequests)
+		return
+	}
+
 	password := r.FormValue("password")
 	username := r.FormValue("username")
 	if password == me.AdminPW {
+		me.loginSucceeded(ip)
 		session, err := sessions.Start(w, r, true)
 		if err != nil {
 			log.Println("Session Failed to start", err)
@@ -56,6 +121,9 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		http.Redirect(w, r, "/admin/tournaments", http.StatusSeeOther)
 		return
 	}
+
+	me.loginFailed(ip)
+	log.Println("login failed for", ip)
 	me.render(w, "login", loginData{
 		baseData: newBase(r, false),
 		Error:    "Login Failed",
