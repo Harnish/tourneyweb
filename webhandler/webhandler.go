@@ -146,7 +146,11 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 		// /admin/* requires global admin.
 		if strings.HasPrefix(r.URL.Path, "/admin") && !user.IsAdmin {
 			log.Println(r.RemoteAddr, r.Method, r.URL.Path, user.Email, "Permission Denied")
-			http.Error(w, "Not authorized", http.StatusForbidden)
+			if !user.LoggedIn() {
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+			} else {
+				http.Error(w, "Not authorized", http.StatusForbidden)
+			}
 			return
 		}
 
@@ -156,7 +160,11 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 			if tidStr != "" {
 				tid, err := strconv.Atoi(tidStr)
 				if err != nil || !user.CanManage(tid) {
-					http.Error(w, "Not authorized", http.StatusForbidden)
+					if !user.LoggedIn() {
+						http.Redirect(w, r, "/login", http.StatusSeeOther)
+					} else {
+						http.Error(w, "Not authorized", http.StatusForbidden)
+					}
 					return
 				}
 			}
@@ -168,7 +176,11 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 			if tidStr != "" {
 				tid, err := strconv.Atoi(tidStr)
 				if err != nil || !user.CanScore(tid) {
-					http.Error(w, "Not authorized", http.StatusForbidden)
+					if !user.LoggedIn() {
+						http.Redirect(w, r, "/login", http.StatusSeeOther)
+					} else {
+						http.Error(w, "Not authorized", http.StatusForbidden)
+					}
 					return
 				}
 			}
