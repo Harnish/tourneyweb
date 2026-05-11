@@ -1,0 +1,17 @@
+{{define "register"}}
+{{template "header" .}}
+<h2>Create Account</h2>
+{{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
+<form method="post" action="/register">
+<table>
+<tr><td>Name</td><td><input type="text" name="name" required></td></tr>
+<tr><td>Email</td><td><input type="email" name="email" required></td></tr>
+<tr><td>Password</td><td><input type="password" name="password" required minlength="8"></td></tr>
+<tr><td>Confirm Password</td><td><input type="password" name="confirm" required minlength="8"></td></tr>
+<tr><td></td><td><input type="submit" value="Create Account"></td></tr>
+</table>
+{{.CSRFField}}
+</form>
+<p>Already have an account? <a href="/login">Log in</a></p>
+{{template "footer" .}}
+{{end}}

@@ -1,0 +1,16 @@
+{{define "verify"}}
+{{template "header" .}}
+{{if .Success}}
+  <h2>Email Verified</h2>
+  <p>Your email has been verified. <a href="/login">Log in</a></p>
+{{else if .Error}}
+  <h2>Verification Failed</h2>
+  <p style="color:red">{{.Error}}</p>
+  <p>Need a new link? <a href="/login">Go to login</a> and use the resend option.</p>
+{{else}}
+  <h2>Check Your Email</h2>
+  <p>We sent a verification link to your email address. Click it to activate your account.</p>
+  <p>Already verified? <a href="/login">Log in</a></p>
+{{end}}
+{{template "footer" .}}
+{{end}}

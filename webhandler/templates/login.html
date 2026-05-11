@@ -1,13 +1,26 @@
 {{define "login"}}
 {{template "header" .}}
-{{if .Error}}<p>{{.Error}}</p>{{end}}
+<h2>Log In</h2>
+{{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
 <form method="post" action="/login">
 <table>
-<tr><td>Username</td><td><input type="text" name="username"></td></tr>
-<tr><td>Password</td><td><input type="password" name="password"></td></tr>
-<tr><td></td><td><input type="submit" name="Login" value="Login"></td></tr>
+<tr><td>Email</td><td><input type="email" name="email" required></td></tr>
+<tr><td>Password</td><td><input type="password" name="password" required></td></tr>
+<tr><td></td><td><input type="submit" value="Log In"></td></tr>
 </table>
 {{.CSRFField}}
 </form>
+<p>
+  <a href="/password-reset">Forgot password?</a> |
+  <a href="/register">Create account</a>
+</p>
+<p>
+  Not verified yet?
+  <form method="post" action="/resend-verification" style="display:inline">
+    <input type="email" name="email" placeholder="your@email.com">
+    {{.CSRFField}}
+    <input type="submit" value="Resend verification email">
+  </form>
+</p>
 {{template "footer" .}}
 {{end}}
