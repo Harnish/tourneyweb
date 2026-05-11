@@ -7,7 +7,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Security
 
-- **[P1/S]** Admin password stored in plaintext in config — interim fix is bcrypt hashing and `$TANADMINPASS` env var support; superseded by full auth system below once that ships
+- **[P2/S]** Rate limiting on login is in-process memory only — concurrent instances or restarts reset the counter; use Redis or a DB-backed counter for production multi-instance deployments
 
 ---
 
@@ -26,7 +26,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 - **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display
 - **[P2/S]** Make the HR Derby info page content configurable — it is entirely hardcoded in `webhandler/webhandler.go` with event-specific text, Venmo links, and signup URLs; should come from the DB or config
 - **[P2/M]** Use a proper datetime type for game start times — `start_time` is stored as TEXT; a real timestamp enables sorting, calendar view, and validation
-- **[P2/M]** Add delete confirmation — currently clicking delete on a game or team immediately executes with no "are you sure?" step
 - **[P3/M]** Client-side table sorting — allow clicking column headers to sort standings and game lists
 - **[P3/L]** Calendar view — display games on a calendar grouped by date
 - **[P3/L]** Bracket/playoff support — see Major Features below
@@ -36,13 +35,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 ## Major Features
 
 These are multi-sprint architectural additions. Each depends on the ones above it.
-
-### Authentication & Multi-user
-
-- **[P1/L]** Full user authentication system — replace the single shared admin password with email-based accounts: registration with email verification link, bcrypt password hashing, password reset flow, and session management. Username is the email address. This is a prerequisite for everything else in this section.
-- **[P1/M]** Tournament Director role — a registered user can be designated as Tournament Director for a tournament; only the TD can edit tournament settings, divisions, teams, and ranking rules. Separate from score-entry staff.
-- **[P2/M]** Score-entry staff — Tournament Director can invite additional registered users (by email) to enter scores for a specific tournament; they get a scoped permission to POST scores only, not edit structure.
-- **[P1/S]** Public read access — unauthenticated users must continue to be able to view all tournaments, schedules, division standings, and scores without logging in.
 
 ### Rankings
 
@@ -76,3 +68,15 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 - **[P2/S]** Add graceful shutdown — `log.Fatal(http.ListenAndServe(...))` has no cleanup path; use `http.Server` with context cancellation on `SIGTERM`/`SIGINT`
 - **[P3/S]** Structured logging — replace scattered `log.Println` with `log/slog` to make log output parseable in production
+
+---
+
+## Recently Completed
+
+- **Authentication system** — email-based accounts with bcrypt passwords, email verification link, password reset flow; first registered user is auto-admin
+- **Role-based access control** — `admin` (site-wide), `director` (per-tournament full management), `staff` (score entry only), `coach` (reserved); middleware enforces roles on `/admin/*`, `/tournaments/:tid/manage/*`, and `/tournaments/:tid/score/*`
+- **Invitations** — directors invite unregistered users by email; pending invitation auto-applied on registration
+- **Tournament director auto-assign** — creating a tournament grants the creator a `director` role automatically
+- **Score entry for staff** — staff users see a "Score" link on the public games page
+- **Delete confirmations** — browser `confirm()` dialogs on all delete buttons (games, teams, divisions)
+- **Proper auth error handling** — unauthenticated users are redirected to `/login`; authenticated users lacking a role get a rendered 403 page

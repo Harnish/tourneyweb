@@ -13,8 +13,12 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Game scheduling** — create and edit games with location, date/time, and umpire fields
 - **Score entry** — score games with 0–40 per-team run counts; standings update immediately
 - **Full edit support** — edit tournaments, divisions, teams, and games after creation
-- **Admin protection** — single shared admin password guards all write operations; read views are fully public
+- **User authentication** — email-based accounts with bcrypt passwords, email verification, and password reset flow
+- **Role-based access control** — three roles per tournament: `director` (full tournament management), `staff` (score entry only), `coach` (reserved); site-wide `admin` flag for system administration
+- **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
+- **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
 - **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
+- **Delete confirmation** — browser confirm dialogs guard all delete operations
 - **Delete lock** — optional `disabledelete` flag prevents accidental deletions during live tournaments
 - **Container-ready** — Docker image with multi-stage build, non-root user, and health check
 
@@ -171,7 +175,30 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | `/tournaments/:tid/teams/:teamid` | Team schedule and results |
 | `/tournaments/:tid/games` | Full game schedule |
 
-### Admin (requires login)
+### Auth
+
+| Path | Description |
+|---|---|
+| `/login` | Sign in |
+| `/register` | Create account |
+| `/verify` | Email verification (link from email) |
+| `/resend-verification` | Resend verification email |
+| `/password-reset` | Request password reset |
+| `/password-reset/confirm` | Set new password (link from email) |
+
+### Score entry (directors + staff)
+
+| Path | Description |
+|---|---|
+| `/tournaments/:tid/score/games/:gid` | Enter score for a game |
+
+### Director management (directors + admins)
+
+| Path | Description |
+|---|---|
+| `/tournaments/:tid/manage/roles` | View/assign/remove roles, invite users |
+
+### Admin (requires `is_admin`)
 
 | Path | Description |
 |---|---|
