@@ -9,7 +9,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Code Quality
 
-- **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
 
 ---
 
@@ -64,6 +63,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Ranking algorithm tests** — 14 tests covering both sort strategies and all three helper functions; uses FakeDB for head-to-head scenarios
 - **Fields/Locations UI** — CRUD admin at `/admin/locations`, public map at `/map`; Leaflet + OpenStreetMap, click-to-place pin on add/edit forms; `latitude`/`longitude` added to `locations` table via migration
 - **DB interface + FakeDB** — `mydb.DB` interface lets handlers accept either `*MyDB` or `*FakeDB`; in-memory fake covers all 50 methods with 6 passing tests
 - **Static asset embeds** — `Banner.png`, `favicon.ico`, and `style.css` all embedded with `//go:embed`; no disk files required at runtime
