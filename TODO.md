@@ -11,7 +11,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 - **[P2/M]** Add unit tests for the team ranking algorithms in `webhandler/sortteams.go` — the two sort strategies (`WinsRunsAgainstRunsEarnedHead2Head`, `WinsHead2HeadRunsAgainstRunsEarned`) have complex tie-breaking logic with no test coverage
 - **[P2/M]** Mock PostgreSQL for testing — introduce a DB interface so unit tests can inject a fake without a real database; use `pgxmock` or a hand-rolled fake
-- **[P2/S]** Embed default favicon and banner image in the binary with `//go:embed` — currently the app logs nothing and returns 404 for both when the files aren't present on disk; shipping a generic default avoids broken images in fresh deployments
 
 ---
 
@@ -68,7 +67,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
-- **CSS embed** — moved inline CSS from `main.go` to `style.css`, embedded with `//go:embed`
+- **Static asset embeds** — `Banner.png`, `favicon.ico`, and `style.css` all embedded with `//go:embed`; no disk files required at runtime
 - **Login rate limiting** — DB-backed per-IP exponential lockout (2s–256s cap), persists across restarts, prunes stale records on startup
 - **Authentication system** — email-based accounts with bcrypt passwords, email verification link, password reset flow; first registered user is auto-admin
 - **Role-based access control** — `admin` (site-wide), `director` (per-tournament full management), `staff` (score entry only), `coach` (reserved); middleware enforces roles on `/admin/*`, `/tournaments/:tid/manage/*`, and `/tournaments/:tid/score/*`

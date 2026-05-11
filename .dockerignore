@@ -6,6 +6,7 @@ tourneyweb.conf
 config.yaml
 *.jpg
 *.ico
+!favicon.ico
 *.png
 !Banner.png
 *.css

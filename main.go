@@ -22,8 +22,10 @@ var defaultBanner []byte
 //go:embed style.css
 var defaultCSS []byte
 
+//go:embed favicon.ico
+var defaultFavico []byte
+
 var banner []byte
-var favico []byte
 
 func main() {
 	cfg := LoadConfig("tourneyweb.conf")
@@ -36,7 +38,6 @@ func main() {
 	wh := webhandler.New(db, email, cfg.DisableDelete, cfg.DisableEmailVerification)
 	log.Println("Listening on port:", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
-	LoadFavico()
 
 	router := httprouter.New()
 	// Health check
@@ -106,12 +107,8 @@ func main() {
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if len(favico) == 0 {
-		http.NotFound(w, r)
-		return
-	}
 	w.Header().Set("Content-type", mime.TypeByExtension(".ico"))
-	w.Write(favico)
+	w.Write(defaultFavico)
 }
 
 func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -137,9 +134,6 @@ func LoadBanner(path string) {
 	banner = data
 }
 
-func LoadFavico() {
-	favico, _ = os.ReadFile("favicon.ico")
-}
 
 func decodeCSRFKey(hexKey string) []byte {
 	if hexKey == "" {
