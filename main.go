@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	_ "embed"
 	"log"
 	"mime"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/csrf"
@@ -110,7 +114,29 @@ func main() {
 
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, wh.RequestLogger(csrfMiddleware(router))))
+
+	srv := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: wh.RequestLogger(csrfMiddleware(router)),
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("forced shutdown: %v", err)
+	}
+	log.Println("Server stopped.")
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

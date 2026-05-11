@@ -58,7 +58,6 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Ops / Deployment
 
-- **[P2/S]** Add graceful shutdown — `log.Fatal(http.ListenAndServe(...))` has no cleanup path; use `http.Server` with context cancellation on `SIGTERM`/`SIGINT`
 - **[P3/S]** Structured logging — replace scattered `log.Println` with `log/slog` to make log output parseable in production
 
 ---
