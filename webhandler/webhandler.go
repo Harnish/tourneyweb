@@ -219,6 +219,54 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
 }
 
+func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, ps)
+	if !ok {
+		return
+	}
+	gid, err := strconv.Atoi(ps.ByName("gid"))
+	if err != nil {
+		log.Println("EditGame bad ID:", err)
+		http.Error(w, "Bad Game ID", http.StatusBadRequest)
+		return
+	}
+	game := me.DB.ReturnGameByID(gid)
+	if game.ID == 0 {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+	if r.Method == http.MethodPost {
+		did, err := strconv.Atoi(r.FormValue("divisionid"))
+		if err != nil {
+			http.Error(w, "Bad Division ID", http.StatusBadRequest)
+			return
+		}
+		hid, err := strconv.Atoi(r.FormValue("hometeam"))
+		if err != nil {
+			http.Error(w, "Bad Home Team ID", http.StatusBadRequest)
+			return
+		}
+		aid, err := strconv.Atoi(r.FormValue("awayteam"))
+		if err != nil {
+			http.Error(w, "Bad Away Team ID", http.StatusBadRequest)
+			return
+		}
+		if hid == aid {
+			http.Error(w, "Home and away team must be different", http.StatusBadRequest)
+			return
+		}
+		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
+		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
+		return
+	}
+	me.render(w, "editGame", editGameData{
+		baseData:  newBaseWithTournament(r, true, t),
+		Game:      game,
+		Teams:     me.DB.ReturnTeamsByTournamentID(t.ID),
+		Divisions: me.DB.ReturnDivisions(t.ID),
+	})
+}
+
 func (me *Env) PrintHRDerby(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	me.render(w, "hrderby", newBase(r, false))
 }

@@ -1,0 +1,36 @@
+{{define "editGame"}}
+{{template "header" .}}
+<h1>Edit Game</h1>
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/games/{{.Game.ID}}/edit">
+<table>
+  <tr><td>Division</td><td>
+    <select name="divisionid">
+    {{range .Divisions}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.Division.ID}} selected{{end}}>{{.Name}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Home Team</td><td>
+    <select name="hometeam">
+    {{range .Teams}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.HomeTeam.ID}} selected{{end}}>{{.Name}} - {{.Coach}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Away Team</td><td>
+    <select name="awayteam">
+    {{range .Teams}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.AwayTeam.ID}} selected{{end}}>{{.Name}} - {{.Coach}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Location</td><td><input type="text" name="location" value="{{.Game.Location}}"></td></tr>
+  <tr><td>Date/Time</td><td><input type="text" name="datetime" value="{{.Game.Start}}"></td></tr>
+  <tr><td>Umpire</td><td><input type="text" name="umpire" value="{{.Game.Umpire}}"></td></tr>
+  <tr><td>{{.CSRFField}}</td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+</form>
+<p><a href="/admin/tournaments/{{.Tournament.ID}}/games">Cancel</a></p>
+{{template "footer" .}}
+{{end}}
