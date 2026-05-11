@@ -140,10 +140,10 @@ docker build -t tourneyweb .
 docker run -d \
   -p 8989:8989 \
   -e DATABASE_URL="postgres://tourneyweb1:CHANGE_ME@db:5432/tourneyweb?sslmode=disable" \
-  -e TANADMINPASS="CHANGE_ME" \
-  -e TANCSRFKEY="$(openssl rand -hex 32)" \
+  -e ADMIN_PASSWORD="CHANGE_ME" \
+  -e CSRF_KEY="$(openssl rand -hex 32)" \
   -v /path/to/banner.jpg:/app/banner.jpg \
-  -e TANBANNER=/app/banner.jpg \
+  -e BANNER_IMAGE_PATH=/app/banner.jpg \
   tourneyweb
 ```
 
