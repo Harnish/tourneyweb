@@ -209,6 +209,21 @@ type manageRolesData struct {
 	Success string
 }
 
+type errorData struct {
+	baseData
+	Title   string
+	Message string
+}
+
+func (me *Env) renderError(w http.ResponseWriter, r *http.Request, status int, title, message string) {
+	w.WriteHeader(status)
+	me.render(w, "error", errorData{
+		baseData: newBase(r),
+		Title:    title,
+		Message:  message,
+	})
+}
+
 func (me *Env) render(w http.ResponseWriter, name string, data any) {
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {

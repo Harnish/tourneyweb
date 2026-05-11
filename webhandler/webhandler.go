@@ -149,7 +149,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 			if !user.LoggedIn() {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 			} else {
-				http.Error(w, "Not authorized", http.StatusForbidden)
+				me.renderError(w, r, http.StatusForbidden, "Not Authorized", "You don't have permission to access this page.")
 			}
 			return
 		}
@@ -163,7 +163,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 					if !user.LoggedIn() {
 						http.Redirect(w, r, "/login", http.StatusSeeOther)
 					} else {
-						http.Error(w, "Not authorized", http.StatusForbidden)
+						me.renderError(w, r, http.StatusForbidden, "Not Authorized", "You must be a tournament director to access this page.")
 					}
 					return
 				}
@@ -179,7 +179,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 					if !user.LoggedIn() {
 						http.Redirect(w, r, "/login", http.StatusSeeOther)
 					} else {
-						http.Error(w, "Not authorized", http.StatusForbidden)
+						me.renderError(w, r, http.StatusForbidden, "Not Authorized", "You must be a director or staff member to score games for this tournament.")
 					}
 					return
 				}
