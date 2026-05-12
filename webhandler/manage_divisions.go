@@ -43,7 +43,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 	division := me.DB.ReturnDivisionByID(did)
-	if division.ID == 0 {
+	if division.ID == 0 || division.TournamentID != t.ID {
 		http.Error(w, "Division not found", http.StatusNotFound)
 		return
 	}
@@ -71,6 +71,11 @@ func (me *Env) ManageDivisionDelete(w http.ResponseWriter, r *http.Request, ps h
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
 		http.Error(w, "Bad Division ID", http.StatusBadRequest)
+		return
+	}
+	division := me.DB.ReturnDivisionByID(did)
+	if division.ID == 0 || division.TournamentID != t.ID {
+		http.Error(w, "Division not found", http.StatusNotFound)
 		return
 	}
 	if !me.DisableDelete {
