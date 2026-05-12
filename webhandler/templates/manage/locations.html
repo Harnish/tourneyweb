@@ -1,0 +1,38 @@
+{{define "manageLocations"}}
+{{template "header" .}}
+<h1>Locations — {{.Tournament.Name}}</h1>
+<h2>Add Location/Field</h2>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/locations">
+{{.CSRFField}}
+<table>
+  <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
+  <tr><td>Address</td><td><input type="text" name="address"></td></tr>
+  <tr><td>Latitude</td><td><input type="number" step="any" name="latitude" value="0"></td></tr>
+  <tr><td>Longitude</td><td><input type="number" step="any" name="longitude" value="0"></td></tr>
+  <tr><td></td><td><input type="submit" value="Add Location"></td></tr>
+</table>
+</form>
+<h2>Existing Locations</h2>
+{{if .Locations}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Name</th><th>Address</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+{{range .Locations}}
+<tr>
+  <td>{{.Name}}</td>
+  <td>{{.Address}}</td>
+  <td><a href="/tournaments/{{$.Tournament.ID}}/manage/locations/{{.ID}}/edit">Edit</a></td>
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/locations/{{.ID}}/delete" onsubmit="return confirm('Delete this location?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No locations yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+{{template "footer" .}}
+{{end}}

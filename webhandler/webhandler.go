@@ -178,6 +178,11 @@ func (me *Env) locationsFor(sport string) []mydb.Location {
 	return out
 }
 
+// locationsForTournament returns all locations belonging to the given tournament.
+func (me *Env) locationsForTournament(tid int) []mydb.Location {
+	return me.DB.GetLocationsByTournamentID(tid)
+}
+
 // extractTID pulls the tournament ID string from paths like /tournaments/42/...
 func extractTID(path string) string {
 	parts := strings.Split(path, "/")

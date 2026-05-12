@@ -1,0 +1,16 @@
+{{define "manageLocationEdit"}}
+{{template "header" .}}
+<h1>Edit Location</h1>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/locations/{{.Location.ID}}/edit">
+{{.CSRFField}}
+<table>
+  <tr><td>Name</td><td><input type="text" name="name" value="{{.Location.Name}}" required></td></tr>
+  <tr><td>Address</td><td><input type="text" name="address" value="{{.Location.Address}}"></td></tr>
+  <tr><td>Latitude</td><td><input type="number" step="any" name="latitude" value="{{.Location.Latitude}}"></td></tr>
+  <tr><td>Longitude</td><td><input type="number" step="any" name="longitude" value="{{.Location.Longitude}}"></td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/locations">Back</a></p>
+{{template "footer" .}}
+{{end}}
