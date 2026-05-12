@@ -67,9 +67,8 @@ func main() {
 	// Public routes
 	router.GET("/", wh.TournamentList)
 	// Self-service tournament creation (requires login, enforced in handler)
-	// Must be registered before /tournaments/:tid to avoid "new" matching as :tid
-	router.GET("/tournaments/new", wh.NewTournamentForm)
-	router.POST("/tournaments/new", wh.NewTournament)
+	router.GET("/create-tournament", wh.NewTournamentForm)
+	router.POST("/create-tournament", wh.NewTournament)
 	router.GET("/tournaments/:tid", wh.TournamentHome)
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)

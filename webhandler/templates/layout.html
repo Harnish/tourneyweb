@@ -35,7 +35,7 @@
   {{end}}
 {{end}}
 {{if .User.LoggedIn}}
-| <a href="/tournaments/new">Create Tournament</a>
+| <a href="/create-tournament">Create Tournament</a>
 | {{.User.Name}} (<form method="post" action="/logout" style="display:inline">{{.CSRFField}}<input type="submit" value="Log out"></form>)
 {{else}}
 | <a href="/login">Log in</a> | <a href="/register">Register</a>
