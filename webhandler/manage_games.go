@@ -19,6 +19,11 @@ func (me *Env) ManageCreateGame(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, "Bad division ID", http.StatusBadRequest)
 		return
 	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.ID == 0 || div.TournamentID != t.ID {
+		http.Error(w, "Division not found", http.StatusNotFound)
+		return
+	}
 	me.render(w, "manageCreateGame", manageCreateGameData{
 		baseData:      newBaseWithTournament(r, t),
 		DivisionID:    did,
@@ -53,6 +58,21 @@ func (me *Env) ManageCreateGameSubmit(w http.ResponseWriter, r *http.Request, ps
 		http.Error(w, "Must select a different team as an opponent.", http.StatusBadRequest)
 		return
 	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.ID == 0 || div.TournamentID != t.ID {
+		http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
+		return
+	}
+	homeTeam := me.DB.ReturnTeamByID(hid)
+	if homeTeam.ID == 0 || homeTeam.TournamentID != t.ID {
+		http.Error(w, "Home team does not belong to this tournament", http.StatusBadRequest)
+		return
+	}
+	awayTeam := me.DB.ReturnTeamByID(aid)
+	if awayTeam.ID == 0 || awayTeam.TournamentID != t.ID {
+		http.Error(w, "Away team does not belong to this tournament", http.StatusBadRequest)
+		return
+	}
 	startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
 	me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
@@ -66,6 +86,11 @@ func (me *Env) ManageGenerateGames(w http.ResponseWriter, r *http.Request, ps ht
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
 		http.Error(w, "Bad division ID", http.StatusBadRequest)
+		return
+	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.ID == 0 || div.TournamentID != t.ID {
+		http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
 		return
 	}
 	teams := me.DB.ReturnTeamsByDivisionID(did)
@@ -106,7 +131,7 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 	game := me.DB.ReturnGameByID(gid)
-	if game.ID == 0 {
+	if game.ID == 0 || game.TournamentID != t.ID {
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
@@ -135,6 +160,16 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 			http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
 			return
 		}
+		homeTeam := me.DB.ReturnTeamByID(hid)
+		if homeTeam.ID == 0 || homeTeam.TournamentID != t.ID {
+			http.Error(w, "Home team does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
+		awayTeam := me.DB.ReturnTeamByID(aid)
+		if awayTeam.ID == 0 || awayTeam.TournamentID != t.ID {
+			http.Error(w, "Away team does not belong to this tournament", http.StatusBadRequest)
+			return
+		}
 		startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
@@ -157,6 +192,11 @@ func (me *Env) ManageDeleteGame(w http.ResponseWriter, r *http.Request, ps httpr
 	gid, err := strconv.Atoi(ps.ByName("gid"))
 	if err != nil {
 		http.Error(w, "Bad Game ID", http.StatusBadRequest)
+		return
+	}
+	game := me.DB.ReturnGameByID(gid)
+	if game.ID == 0 || game.TournamentID != t.ID {
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 	if !me.DisableDelete {
