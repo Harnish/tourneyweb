@@ -1,0 +1,35 @@
+{{define "manageDivisions"}}
+{{template "header" .}}
+<h1>Divisions — {{.Tournament.Name}}</h1>
+<h2>Add Division</h2>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/divisions">
+{{.CSRFField}}
+<table>
+  <tr><td>Name</td><td><input type="text" name="divisionname" required></td></tr>
+  <tr><td></td><td><input type="submit" value="Add Division"></td></tr>
+</table>
+</form>
+<h2>Existing Divisions</h2>
+{{if .Divisions}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Name</th><th>Games</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+{{range .Divisions}}
+<tr>
+  <td>{{.Name}}</td>
+  <td><a href="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/games/new">Manage Games</a></td>
+  <td><a href="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/edit">Edit</a></td>
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/delete" onsubmit="return confirm('Delete this division and all its games?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No divisions yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+{{template "footer" .}}
+{{end}}

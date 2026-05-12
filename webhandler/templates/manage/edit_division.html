@@ -1,0 +1,13 @@
+{{define "manageDivisionEdit"}}
+{{template "header" .}}
+<h1>Edit Division</h1>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/divisions/{{.Division.ID}}/edit">
+{{.CSRFField}}
+<table>
+  <tr><td>Name</td><td><input type="text" name="name" value="{{.Division.Name}}" required></td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/divisions">Back</a></p>
+{{template "footer" .}}
+{{end}}
