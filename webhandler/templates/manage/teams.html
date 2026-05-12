@@ -1,0 +1,44 @@
+{{define "manageTeams"}}
+{{template "header" .}}
+<h1>Teams — {{.Tournament.Name}}</h1>
+<h2>Add Team</h2>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams">
+{{.CSRFField}}
+<table>
+  <tr><td>Division</td><td>
+    <select name="division">
+      {{range .Divisions}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+    </select>
+  </td></tr>
+  <tr><td>Team Name</td><td><input type="text" name="teamname" required></td></tr>
+  <tr><td>Coach</td><td><input type="text" name="teamcoach"></td></tr>
+  <tr><td></td><td><input type="submit" value="Add Team"></td></tr>
+</table>
+</form>
+<h2>Existing Teams</h2>
+{{range .Divisions}}
+  <h3>{{.Name}}</h3>
+  {{$did := .ID}}
+  {{$teams := index $.TeamsByDivision $did}}
+  {{if $teams}}
+  <table border="1" cellpadding="4" cellspacing="0">
+  <tr><th>Name</th><th>Coach</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+  {{range $teams}}
+  <tr>
+    <td>{{.Name}}</td>
+    <td>{{.Coach}}</td>
+    <td><a href="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.ID}}/edit">Edit</a></td>
+    {{if not $.DisableDelete}}<td>
+      <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.ID}}/delete" onsubmit="return confirm('Delete this team?')">
+        {{$.CSRFField}}
+        <input type="submit" value="Delete">
+      </form>
+    </td>{{end}}
+  </tr>
+  {{end}}
+  </table>
+  {{else}}<p>No teams in this division.</p>{{end}}
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+{{template "footer" .}}
+{{end}}
