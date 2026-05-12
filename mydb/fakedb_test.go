@@ -260,4 +260,20 @@ func TestFakeDB_TournamentStatus(t *testing.T) {
 			t.Error("draft tournament appeared in public future listing")
 		}
 	}
+
+	// Verify ReturnTournamentsComingUp excludes drafts
+	comingUp := db.ReturnTournamentsComingUp()
+	for _, tt := range comingUp {
+		if tt.ID == draftID {
+			t.Error("draft tournament appeared in ReturnTournamentsComingUp")
+		}
+	}
+
+	// Verify ReturnTournamentsRecent excludes drafts
+	recent := db.ReturnTournamentsRecent()
+	for _, tt := range recent {
+		if tt.ID == draftID {
+			t.Error("draft tournament appeared in ReturnTournamentsRecent")
+		}
+	}
 }
