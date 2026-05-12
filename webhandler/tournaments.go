@@ -91,7 +91,7 @@ func (me *Env) CreateTournament(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, "Name, sport, and location are required", http.StatusBadRequest)
 		return
 	}
-	id := me.DB.AddTournament(name, sport, location, notes, date)
+	id := me.DB.AddTournament(name, sport, location, notes, date, "published")
 	user := userFromContext(r.Context())
 	if user.LoggedIn() {
 		me.DB.AssignRole(user.ID, id, "director", 0)

@@ -10,7 +10,7 @@ import (
 func TestFakeDB_TournamentCRUD(t *testing.T) {
 	db := mydb.NewFakeDB()
 	date := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
-	id := db.AddTournament("Summer Classic", "baseball", "City Park", "notes", date)
+	id := db.AddTournament("Summer Classic", "baseball", "City Park", "notes", date, "published")
 	if id == 0 {
 		t.Fatal("expected non-zero tournament ID")
 	}
@@ -30,7 +30,7 @@ func TestFakeDB_TournamentCRUD(t *testing.T) {
 
 func TestFakeDB_ScoringAndStats(t *testing.T) {
 	db := mydb.NewFakeDB()
-	tid := db.AddTournament("T", "baseball", "L", "", time.Now())
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
 	db.AddDivision(tid, "12U")
 	divs := db.ReturnDivisions(tid)
 	if len(divs) != 1 {
@@ -46,7 +46,7 @@ func TestFakeDB_ScoringAndStats(t *testing.T) {
 	}
 	red, blue := teams[0], teams[1]
 
-	db.AddGame(tid, did, red.ID, blue.ID, "Field 1", "9:00", "")
+	db.AddGame(tid, did, red.ID, blue.ID, "Field 1", time.Time{}, "")
 	games := db.AllGamesByDivision(did)
 	if len(games) != 1 {
 		t.Fatalf("expected 1 game, got %d", len(games))
@@ -150,7 +150,7 @@ func TestFakeDB_UserCRUD(t *testing.T) {
 
 func TestFakeDB_Roles(t *testing.T) {
 	db := mydb.NewFakeDB()
-	tid := db.AddTournament("T", "baseball", "L", "", time.Now())
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
 	u, _ := db.CreateUser("bob@example.com", "Bob", "hash", "", true, false)
 
 	if err := db.AssignRole(u.ID, tid, "director", 0); err != nil {
@@ -176,7 +176,7 @@ func TestFakeDB_Roles(t *testing.T) {
 
 func TestFakeDB_Invitations(t *testing.T) {
 	db := mydb.NewFakeDB()
-	tid := db.AddTournament("T", "baseball", "L", "", time.Now())
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
 	expires := time.Now().Add(7 * 24 * time.Hour)
 
 	if err := db.CreateInvitation("carol@example.com", tid, "staff", 0, "token123", expires); err != nil {
@@ -223,5 +223,41 @@ func TestFakeDB_LoginAttempts(t *testing.T) {
 	a, _ = db.GetLoginAttempt(ip)
 	if a.Count != 0 {
 		t.Error("expected count 0 after clear")
+	}
+}
+
+func TestFakeDB_TournamentStatus(t *testing.T) {
+	db := mydb.NewFakeDB()
+	future := time.Date(2027, 8, 1, 0, 0, 0, 0, time.UTC)
+
+	draftID := db.AddTournament("Draft T", "baseball", "City", "", future, "draft")
+	pubID := db.AddTournament("Pub T", "baseball", "City", "", future, "published")
+
+	if db.ReturnTournamentByID(draftID).Status != "draft" {
+		t.Error("expected draft status")
+	}
+	if db.ReturnTournamentByID(pubID).Status != "published" {
+		t.Error("expected published status")
+	}
+
+	drafts := db.ReturnDraftTournaments()
+	foundDraft := false
+	for _, d := range drafts {
+		if d.ID == draftID {
+			foundDraft = true
+		}
+		if d.ID == pubID {
+			t.Error("published tournament appeared in ReturnDraftTournaments")
+		}
+	}
+	if !foundDraft {
+		t.Error("draft tournament not in ReturnDraftTournaments")
+	}
+
+	futureTourneys, _ := db.ReturnTournamentsFuture(1)
+	for _, tt := range futureTourneys {
+		if tt.ID == draftID {
+			t.Error("draft tournament appeared in public future listing")
+		}
 	}
 }

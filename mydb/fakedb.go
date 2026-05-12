@@ -56,11 +56,11 @@ func (f *FakeDB) newID() int {
 
 // --- Tournaments ---
 
-func (f *FakeDB) AddTournament(name, sport, location, notes string, date time.Time) int {
+func (f *FakeDB) AddTournament(name, sport, location, notes string, date time.Time, status string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.tournaments[id] = Tournament{ID: id, Name: name, Sport: sport, Location: location, Notes: notes, StartDate: date}
+	f.tournaments[id] = Tournament{ID: id, Name: name, Sport: sport, Location: location, Notes: notes, StartDate: date, Status: status}
 	return id
 }
 
@@ -87,7 +87,7 @@ func (f *FakeDB) ReturnTournamentsComingUp() []Tournament {
 	cutoff := now.AddDate(0, 0, 7)
 	var out []Tournament
 	for _, t := range f.tournaments {
-		if !t.StartDate.Before(now) && !t.StartDate.After(cutoff) {
+		if t.Status == "published" && !t.StartDate.Before(now) && !t.StartDate.After(cutoff) {
 			out = append(out, t)
 		}
 	}
@@ -101,7 +101,7 @@ func (f *FakeDB) ReturnTournamentsRecent() []Tournament {
 	cutoff := now.AddDate(0, 0, -7)
 	var out []Tournament
 	for _, t := range f.tournaments {
-		if !t.StartDate.Before(cutoff) && t.StartDate.Before(now) {
+		if t.Status == "published" && !t.StartDate.Before(cutoff) && t.StartDate.Before(now) {
 			out = append(out, t)
 		}
 	}
@@ -114,7 +114,7 @@ func (f *FakeDB) ReturnTournamentsFuture(page int) ([]Tournament, int) {
 	cutoff := time.Now().AddDate(0, 0, 7)
 	var all []Tournament
 	for _, t := range f.tournaments {
-		if t.StartDate.After(cutoff) {
+		if t.Status == "published" && t.StartDate.After(cutoff) {
 			all = append(all, t)
 		}
 	}
@@ -130,7 +130,7 @@ func (f *FakeDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 	cutoff := time.Now().AddDate(0, 0, -7)
 	var all []Tournament
 	for _, t := range f.tournaments {
-		if t.StartDate.Before(cutoff) {
+		if t.Status == "published" && t.StartDate.Before(cutoff) {
 			all = append(all, t)
 		}
 	}
@@ -138,6 +138,18 @@ func (f *FakeDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 		page = 1
 	}
 	return paginate(all, page)
+}
+
+func (f *FakeDB) ReturnDraftTournaments() []Tournament {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []Tournament
+	for _, t := range f.tournaments {
+		if t.Status == "draft" {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 func paginate(items []Tournament, page int) ([]Tournament, int) {
@@ -168,6 +180,15 @@ func (f *FakeDB) UpdateTournament(id int, name, sport, location, notes string, d
 		t.Location = location
 		t.Notes = notes
 		t.StartDate = date
+		f.tournaments[id] = t
+	}
+}
+
+func (f *FakeDB) SetTournamentExtras(id int, html string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if t, ok := f.tournaments[id]; ok {
+		t.ExtrasHTML = html
 		f.tournaments[id] = t
 	}
 }
@@ -365,7 +386,7 @@ func (f *FakeDB) GamesPlayedByTeam(id int) int {
 
 // --- Games ---
 
-func (f *FakeDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+func (f *FakeDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
@@ -417,7 +438,7 @@ func (f *FakeDB) DelGame(id int) {
 	delete(f.games, id)
 }
 
-func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	g, ok := f.games[id]
@@ -743,11 +764,11 @@ func (f *FakeDB) DeleteInvitation(id int) {
 
 // --- Locations ---
 
-func (f *FakeDB) AddLocation(name, address string, lat, lng float64) int {
+func (f *FakeDB) AddLocation(name, address, availableFor string, lat, lng float64) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.locations[id] = Location{ID: id, Name: name, Address: address, Latitude: lat, Longitude: lng}
+	f.locations[id] = Location{ID: id, Name: name, Address: address, AvailableFor: availableFor, Latitude: lat, Longitude: lng}
 	return id
 }
 
@@ -767,12 +788,13 @@ func (f *FakeDB) GetLocationByID(id int) Location {
 	return f.locations[id]
 }
 
-func (f *FakeDB) UpdateLocation(id int, name, address string, lat, lng float64) {
+func (f *FakeDB) UpdateLocation(id int, name, address, availableFor string, lat, lng float64) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if l, ok := f.locations[id]; ok {
 		l.Name = name
 		l.Address = address
+		l.AvailableFor = availableFor
 		l.Latitude = lat
 		l.Longitude = lng
 		f.locations[id] = l

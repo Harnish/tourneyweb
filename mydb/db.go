@@ -5,15 +5,17 @@ import "time"
 // DB is the database interface implemented by both *MyDB and *FakeDB.
 type DB interface {
 	// Tournaments
-	AddTournament(name, sport, location, notes string, date time.Time) int
+	AddTournament(name, sport, location, notes string, date time.Time, status string) int
 	ReturnTournaments() []Tournament
 	ReturnTournamentByID(id int) Tournament
 	ReturnTournamentsComingUp() []Tournament
 	ReturnTournamentsRecent() []Tournament
 	ReturnTournamentsFuture(page int) ([]Tournament, int)
 	ReturnTournamentsPast(page int) ([]Tournament, int)
+	ReturnDraftTournaments() []Tournament
 	DelTournament(id int)
 	UpdateTournament(id int, name, sport, location, notes string, date time.Time)
+	SetTournamentExtras(id int, html string)
 
 	// Divisions
 	AddDivision(tournamentID int, name string)
@@ -37,12 +39,12 @@ type DB interface {
 	GamesPlayedByTeam(id int) int
 
 	// Games
-	AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string)
+	AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string)
 	AllGamesByDivision(divisionID int) []Game
 	AllGamesByTeam(teamID int) []Game
 	ReturnGameByID(gameID int) Game
 	DelGame(id int)
-	UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string)
+	UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string)
 	AllGames(tournamentID int) []Game
 	ScoreGame(gid, hscore, ascore int)
 	DeleteTeamScore(gameID int)
@@ -73,10 +75,10 @@ type DB interface {
 	DeleteInvitation(id int)
 
 	// Locations
-	AddLocation(name, address string, lat, lng float64) int
+	AddLocation(name, address, availableFor string, lat, lng float64) int
 	GetLocations() []Location
 	GetLocationByID(id int) Location
-	UpdateLocation(id int, name, address string, lat, lng float64)
+	UpdateLocation(id int, name, address, availableFor string, lat, lng float64)
 	DelLocation(id int)
 
 	// Login rate limiting

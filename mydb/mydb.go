@@ -2,7 +2,8 @@ package mydb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
+	"os"
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -37,7 +38,7 @@ var pgtables = []string{
 		home_team_id  INTEGER NOT NULL REFERENCES teams(id),
 		away_team_id  INTEGER NOT NULL REFERENCES teams(id),
 		location      TEXT NOT NULL DEFAULT '',
-		start_time    TEXT NOT NULL DEFAULT '',
+		start_time    TIMESTAMPTZ,
 		umpire        TEXT NOT NULL DEFAULT '',
 		home_score    INTEGER,
 		away_score    INTEGER
@@ -99,6 +100,13 @@ var pgtables = []string{
 		locked_until TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		last_attempt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	)`,
+	`CREATE TABLE IF NOT EXISTS verification_codes (
+		id            SERIAL PRIMARY KEY,
+		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+		code          TEXT NOT NULL UNIQUE,
+		created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		redeemed_at   TIMESTAMPTZ
+	)`,
 }
 
 type MyDB struct {
@@ -108,23 +116,29 @@ type MyDB struct {
 
 func New(path string, debug bool) *MyDB {
 	if !strings.HasPrefix(path, "postgres://") {
-		log.Fatalf("database: must be a postgres:// URL, got %q", path)
+		slog.Error("database: must be a postgres:// URL", "got", path)
+		os.Exit(1)
 	}
 	db, err := sql.Open("pgx", path)
 	if err != nil {
-		log.Fatalf("database: open: %v", err)
+		slog.Error("database: open", "err", err)
+		os.Exit(1)
 	}
 	if err := db.Ping(); err != nil {
-		log.Fatalf("database: ping: %v", err)
+		slog.Error("database: ping", "err", err)
+		os.Exit(1)
 	}
 	for _, ddl := range pgtables {
 		if _, err := db.Exec(ddl); err != nil {
-			log.Fatalf("database: create table: %v\n%s", err, ddl)
+			slog.Error("database: create table", "err", err)
+			os.Exit(1)
 		}
 	}
-	for _, m := range pgmigrations {
+	for i, m := range pgmigrations {
 		if _, err := db.Exec(m); err != nil {
-			log.Println("migration:", err)
+			slog.Error("migration failed", "index", i, "err", err)
+		} else {
+			slog.Info("migration ok", "index", i)
 		}
 	}
 	return &MyDB{DB: db, debug: debug}
@@ -134,6 +148,21 @@ func New(path string, debug bool) *MyDB {
 var pgmigrations = []string{
 	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS latitude  DOUBLE PRECISION NOT NULL DEFAULT 0`,
 	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION NOT NULL DEFAULT 0`,
+	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS extras_html TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS available_for TEXT NOT NULL DEFAULT ''`,
+	`DO $$ BEGIN
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name='games' AND column_name='start_time' AND data_type='text'
+		) THEN
+			ALTER TABLE games ALTER COLUMN start_time DROP NOT NULL;
+			ALTER TABLE games ALTER COLUMN start_time DROP DEFAULT;
+			UPDATE games SET start_time = NULL;
+			ALTER TABLE games ALTER COLUMN start_time TYPE TIMESTAMPTZ USING NULL::TIMESTAMPTZ;
+		END IF;
+	END $$`,
+	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published'`,
+	`ALTER TABLE locations ADD COLUMN IF NOT EXISTS tournament_id INTEGER REFERENCES tournaments(id)`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {
@@ -142,6 +171,6 @@ func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameI
 		tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore,
 	)
 	if err != nil {
-		log.Println("AddTeamScore:", err)
+		slog.Error("AddTeamScore", "err", err)
 	}
 }
