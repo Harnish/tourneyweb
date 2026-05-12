@@ -10,7 +10,7 @@ import (
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
 
-func (me *Env) tournamentFromRoute(w http.ResponseWriter, ps httprouter.Params) (mydb.Tournament, bool) {
+func (me *Env) tournamentFromRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) (mydb.Tournament, bool) {
 	tid, err := strconv.Atoi(ps.ByName("tid"))
 	if err != nil {
 		http.Error(w, "Bad tournament ID", http.StatusBadRequest)
@@ -20,6 +20,13 @@ func (me *Env) tournamentFromRoute(w http.ResponseWriter, ps httprouter.Params) 
 	if t.ID == 0 {
 		http.Error(w, "Tournament not found", http.StatusNotFound)
 		return mydb.Tournament{}, false
+	}
+	if t.Status == "draft" {
+		user := userFromContext(r.Context())
+		if !user.IsAdmin && !user.IsDirectorFor(t.ID) && !user.IsStaffFor(t.ID) {
+			http.NotFound(w, r)
+			return mydb.Tournament{}, false
+		}
 	}
 	return t, true
 }
@@ -53,7 +60,7 @@ func (me *Env) TournamentList(w http.ResponseWriter, r *http.Request, ps httprou
 }
 
 func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -100,7 +107,7 @@ func (me *Env) CreateTournament(w http.ResponseWriter, r *http.Request, ps httpr
 }
 
 func (me *Env) AdminTournamentView(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -111,7 +118,7 @@ func (me *Env) AdminTournamentView(w http.ResponseWriter, r *http.Request, ps ht
 }
 
 func (me *Env) EditTournament(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}

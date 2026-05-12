@@ -10,7 +10,7 @@ import (
 )
 
 func (me *Env) ManageRoles(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -31,7 +31,7 @@ func (me *Env) ManageRoles(w http.ResponseWriter, r *http.Request, ps httprouter
 }
 
 func (me *Env) AssignRole(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -57,7 +57,7 @@ func (me *Env) AssignRole(w http.ResponseWriter, r *http.Request, ps httprouter.
 }
 
 func (me *Env) InviteUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -85,7 +85,7 @@ func (me *Env) InviteUser(w http.ResponseWriter, r *http.Request, ps httprouter.
 }
 
 func (me *Env) RemoveRole(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}

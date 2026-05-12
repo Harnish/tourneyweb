@@ -3,7 +3,7 @@ package webhandler
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -99,7 +99,7 @@ func (me *Env) loginBlocked(ip string) bool {
 
 func (me *Env) loginFailed(ip string) {
 	if err := me.DB.RecordLoginFailure(ip); err != nil {
-		log.Println("loginFailed: record attempt:", err)
+		slog.Error("login attempt record failed", "err", err)
 	}
 }
 
@@ -112,7 +112,7 @@ func (me *Env) loginSucceeded(ip string) {
 func (me *Env) RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		forwardedip := r.Header.Get("X-Forwarded-For")
-		log.Println(r.Method, r.URL.Path, r.Proto, forwardedip)
+		slog.Info("request", "method", r.Method, "path", r.URL.Path, "proto", r.Proto, "ip", forwardedip)
 
 		user := me.loadUser(w, r)
 		ctx := context.WithValue(r.Context(), contextKey{}, user)
@@ -120,7 +120,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 
 		// /admin/* requires global admin.
 		if strings.HasPrefix(r.URL.Path, "/admin") && !user.IsAdmin {
-			log.Println(r.RemoteAddr, r.Method, r.URL.Path, user.Email, "Permission Denied")
+			slog.Warn("permission denied", "ip", r.RemoteAddr, "method", r.Method, "path", r.URL.Path, "email", user.Email)
 			if !user.LoggedIn() {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 			} else {
@@ -165,6 +165,19 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 	})
 }
 
+// locationsFor returns all locations whose AvailableFor is empty or contains sport (case-insensitive).
+func (me *Env) locationsFor(sport string) []mydb.Location {
+	all := me.DB.GetLocations()
+	sport = strings.ToLower(sport)
+	var out []mydb.Location
+	for _, l := range all {
+		if l.AvailableFor == "" || strings.Contains(strings.ToLower(l.AvailableFor), sport) {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
 // extractTID pulls the tournament ID string from paths like /tournaments/42/...
 func extractTID(path string) string {
 	parts := strings.Split(path, "/")
@@ -201,7 +214,7 @@ func (me *Env) loadUser(w http.ResponseWriter, r *http.Request) TWUser {
 }
 
 func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	_, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -217,7 +230,7 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData: newBase(r),
+		baseData: newBaseWithTournament(r, t),
 		Division: me.DB.ReturnDivisionByID(did),
 		Teams:    rows,
 		Games:    me.DB.AllGamesByDivision(did),
@@ -225,7 +238,7 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -241,7 +254,7 @@ func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 }
 
 func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	_, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -255,14 +268,14 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		options[i] = i
 	}
 	me.render(w, "scoreGame", scoreGameData{
-		baseData:     newBase(r),
+		baseData:     newBaseWithTournament(r, t),
 		Game:         me.DB.ReturnGameByID(gid),
 		ScoreOptions: options,
 	})
 }
 
 func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -286,30 +299,30 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 }
 
 func (me *Env) Games(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	me.render(w, "games", gamesData{
-		baseData: newBase(r),
+		baseData: newBaseWithTournament(r, t),
 		Games:    me.DB.AllGames(t.ID),
 	})
 }
 
 func (me *Env) AdminGames(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	me.render(w, "adminGames", adminGamesData{
-		baseData:      newBase(r),
+		baseData:      newBaseWithTournament(r, t),
 		Games:         me.DB.AllGames(t.ID),
 		DisableDelete: me.DisableDelete,
 	})
 }
 
 func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	_, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -319,16 +332,17 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 	me.render(w, "createGame", createGameData{
-		baseData:      newBase(r),
+		baseData:      newBaseWithTournament(r, t),
 		DivisionID:    did,
 		Teams:         me.DB.ReturnTeamsByDivisionID(did),
 		Games:         me.DB.AllGamesByDivision(did),
+		Locations:     me.locationsFor(t.Sport),
 		DisableDelete: me.DisableDelete,
 	})
 }
 
 func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -351,18 +365,19 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, "Must select a different team as an opponent.", http.StatusBadRequest)
 		return
 	}
-	me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
+	startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
+	me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
 }
 
 func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	gid, err := strconv.Atoi(ps.ByName("gid"))
 	if err != nil {
-		log.Println("EditGame bad ID:", err)
+		slog.Error("EditGame bad ID", "err", err)
 		http.Error(w, "Bad Game ID", http.StatusBadRequest)
 		return
 	}
@@ -406,18 +421,17 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 			http.Error(w, "Away team does not belong to this tournament", http.StatusBadRequest)
 			return
 		}
-		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), r.FormValue("datetime"), r.FormValue("umpire"))
+		startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
+		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 		return
 	}
 	me.render(w, "editGame", editGameData{
-		baseData:  newBase(r),
+		baseData:  newBaseWithTournament(r, t),
 		Game:      game,
 		Teams:     me.DB.ReturnTeamsByTournamentID(t.ID),
 		Divisions: me.DB.ReturnDivisions(t.ID),
+		Locations: me.locationsFor(t.Sport),
 	})
 }
 
-func (me *Env) PrintHRDerby(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	me.render(w, "hrderby", newBase(r))
-}

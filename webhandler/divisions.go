@@ -2,7 +2,7 @@ package webhandler
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -32,13 +32,13 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 func (me *Env) DeleteDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
-		log.Println("DeleteDivision bad ID:", err)
+		slog.Error("DeleteDivision bad ID", "err", err)
 		http.Error(w, "Bad Division ID", http.StatusBadRequest)
 		return
 	}
@@ -49,13 +49,13 @@ func (me *Env) DeleteDivision(w http.ResponseWriter, r *http.Request, ps httprou
 }
 
 func (me *Env) AdminDivisionView(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
-		log.Println("AdminDivisionView bad ID:", err)
+		slog.Error("AdminDivisionView bad ID", "err", err)
 		http.Error(w, "Bad Division ID", http.StatusBadRequest)
 		return
 	}
@@ -70,13 +70,13 @@ func (me *Env) AdminDivisionView(w http.ResponseWriter, r *http.Request, ps http
 }
 
 func (me *Env) EditDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	did, err := strconv.Atoi(ps.ByName("did"))
 	if err != nil {
-		log.Println("EditDivision bad ID:", err)
+		slog.Error("EditDivision bad ID", "err", err)
 		http.Error(w, "Bad Division ID", http.StatusBadRequest)
 		return
 	}

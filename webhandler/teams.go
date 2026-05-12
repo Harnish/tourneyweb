@@ -2,7 +2,7 @@ package webhandler
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -11,7 +11,7 @@ import (
 )
 
 func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
@@ -41,13 +41,13 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 }
 
 func (me *Env) DeleteTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	teamID, err := strconv.Atoi(ps.ByName("teamid"))
 	if err != nil {
-		log.Println("DeleteTeam bad ID:", err)
+		slog.Error("DeleteTeam bad ID", "err", err)
 		http.Error(w, "Bad team ID", http.StatusBadRequest)
 		return
 	}
@@ -58,13 +58,13 @@ func (me *Env) DeleteTeam(w http.ResponseWriter, r *http.Request, ps httprouter.
 }
 
 func (me *Env) EditTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
 	teamID, err := strconv.Atoi(ps.ByName("teamid"))
 	if err != nil {
-		log.Println("EditTeam bad ID:", err)
+		slog.Error("EditTeam bad ID", "err", err)
 		http.Error(w, "Bad Team ID", http.StatusBadRequest)
 		return
 	}
@@ -98,7 +98,7 @@ func (me *Env) EditTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 }
 
 func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	t, ok := me.tournamentFromRoute(w, ps)
+	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
 		return
 	}
