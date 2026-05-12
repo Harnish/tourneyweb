@@ -86,6 +86,10 @@ type DB interface {
 	RecordLoginFailure(ip string) error
 	ClearLoginAttempts(ip string) error
 	PruneLoginAttempts() error
+
+	// Verification codes
+	IssueVerificationCode(tournamentID int) (string, error)
+	RedeemVerificationCode(code string, tournamentID int) error
 }
 
 // Compile-time checks that both implementations satisfy the interface.

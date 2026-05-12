@@ -21,6 +21,7 @@ type FakeDB struct {
 	invitations   map[int]Invitation
 	locations     map[int]Location
 	loginAttempts map[string]LoginAttempt
+	verifCodes    []fakeVerifCode
 }
 
 type gameByTeamRow struct {
@@ -32,6 +33,13 @@ type gameByTeamRow struct {
 	gameID        int
 	teamScore     int
 	opponentScore int
+}
+
+type fakeVerifCode struct {
+	id           int
+	tournamentID int
+	code         string
+	redeemed     bool
 }
 
 func NewFakeDB() *FakeDB {
@@ -844,4 +852,39 @@ func (f *FakeDB) PruneLoginAttempts() error {
 		}
 	}
 	return nil
+}
+
+// --- Verification codes ---
+
+func (f *FakeDB) IssueVerificationCode(tournamentID int) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	code, err := generateVerificationCode()
+	if err != nil {
+		return "", err
+	}
+	f.verifCodes = append(f.verifCodes, fakeVerifCode{id: f.newID(), tournamentID: tournamentID, code: code})
+	return code, nil
+}
+
+func (f *FakeDB) RedeemVerificationCode(code string, tournamentID int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for i, vc := range f.verifCodes {
+		if vc.code == code {
+			if vc.tournamentID != tournamentID {
+				return errors.New("invalid code")
+			}
+			if vc.redeemed {
+				return errors.New("code already used")
+			}
+			f.verifCodes[i].redeemed = true
+			if t, ok := f.tournaments[tournamentID]; ok {
+				t.Status = "published"
+				f.tournaments[tournamentID] = t
+			}
+			return nil
+		}
+	}
+	return errors.New("invalid code")
 }

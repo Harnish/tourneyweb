@@ -226,6 +226,42 @@ func TestFakeDB_LoginAttempts(t *testing.T) {
 	}
 }
 
+func TestFakeDB_VerificationCodes(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "draft")
+	otherTID := db.AddTournament("T2", "baseball", "L", "", time.Now(), "draft")
+
+	code, err := db.IssueVerificationCode(tid)
+	if err != nil {
+		t.Fatalf("IssueVerificationCode: %v", err)
+	}
+	if len(code) != 8 {
+		t.Errorf("expected 8-char code, got %q (len %d)", code, len(code))
+	}
+
+	// Wrong tournament → error
+	if err := db.RedeemVerificationCode(code, otherTID); err == nil {
+		t.Error("expected error for wrong tournament")
+	}
+	// Tournament not yet published
+	if db.ReturnTournamentByID(tid).Status != "draft" {
+		t.Error("should still be draft after failed redemption")
+	}
+
+	// Valid redemption
+	if err := db.RedeemVerificationCode(code, tid); err != nil {
+		t.Fatalf("RedeemVerificationCode: %v", err)
+	}
+	if db.ReturnTournamentByID(tid).Status != "published" {
+		t.Error("tournament should be published after redemption")
+	}
+
+	// Cannot reuse
+	if err := db.RedeemVerificationCode(code, tid); err == nil {
+		t.Error("expected error for already-used code")
+	}
+}
+
 func TestFakeDB_TournamentStatus(t *testing.T) {
 	db := mydb.NewFakeDB()
 	future := time.Date(2027, 8, 1, 0, 0, 0, 0, time.UTC)
