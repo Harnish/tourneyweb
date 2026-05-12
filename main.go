@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	_ "embed"
-	"log"
+	"log/slog"
 	"mime"
 	"net/http"
 	"os"
@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 
@@ -32,15 +31,16 @@ var defaultFavico []byte
 var banner []byte
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	cfg := LoadConfig("tourneyweb.conf")
-	spew.Dump(cfg)
 	db := mydb.New(cfg.Database, cfg.Debug)
 	email := webhandler.NewEmailService(
 		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
 		cfg.FromEmail, cfg.BaseURL,
 	)
 	wh := webhandler.New(db, email, cfg.DisableDelete, cfg.DisableEmailVerification)
-	log.Println("Listening on port:", cfg.Port)
+	slog.Info("listening", "port", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
 
 	router := httprouter.New()
@@ -66,16 +66,22 @@ func main() {
 	router.POST("/logout", wh.Logout)
 	// Public routes
 	router.GET("/", wh.TournamentList)
-	router.GET("/hrderbyinfo", wh.PrintHRDerby)
+	// Self-service tournament creation (requires login, enforced in handler)
+	// Must be registered before /tournaments/:tid to avoid "new" matching as :tid
+	router.GET("/tournaments/new", wh.NewTournamentForm)
+	router.POST("/tournaments/new", wh.NewTournament)
 	router.GET("/tournaments/:tid", wh.TournamentHome)
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
 	router.GET("/tournaments/:tid/games", wh.Games)
+	router.GET("/tournaments/:tid/extras", wh.TournamentExtras)
 	router.GET("/map", wh.MapView)
 	// Score routes (directors + staff)
 	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
 	router.POST("/tournaments/:tid/score/games/:gid", wh.RecordScore)
 	// Director manage routes
+	router.GET("/tournaments/:tid/manage/extras", wh.ManageExtras)
+	router.POST("/tournaments/:tid/manage/extras", wh.ManageExtras)
 	router.GET("/tournaments/:tid/manage/roles", wh.ManageRoles)
 	router.POST("/tournaments/:tid/manage/roles", wh.AssignRole)
 	router.POST("/tournaments/:tid/manage/invite", wh.InviteUser)
@@ -94,6 +100,7 @@ func main() {
 	router.GET("/admin/tournaments/:tid/games", wh.AdminGames)
 	router.GET("/admin/tournaments/:tid/divisions/:did/games/new", wh.CreateGame)
 	router.POST("/admin/tournaments/:tid/games", wh.CreateGameSubmit)
+	router.POST("/admin/tournaments/:tid/divisions/:did/games/generate", wh.GenerateGames)
 	router.GET("/admin/tournaments/:tid/games/:gid/score", wh.ScoreGame)
 	router.POST("/admin/tournaments/:tid/games/:gid/score", wh.RecordScore)
 	router.POST("/admin/tournaments/:tid/games/:gid/delete", wh.DelGame)
@@ -122,21 +129,23 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %v", err)
+			slog.Error("listen", "err", err)
+			os.Exit(1)
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down...")
+	slog.Info("shutting down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("forced shutdown: %v", err)
+		slog.Error("forced shutdown", "err", err)
+		os.Exit(1)
 	}
-	log.Println("Server stopped.")
+	slog.Info("server stopped")
 }
 
 func PrintFavIco(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -161,7 +170,7 @@ func LoadBanner(path string) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Println("banner: could not load", path, err)
+		slog.Warn("banner: could not load", "path", path, "err", err)
 		return
 	}
 	banner = data
@@ -170,14 +179,17 @@ func LoadBanner(path string) {
 
 func decodeCSRFKey(hexKey string) []byte {
 	if hexKey == "" {
-		log.Fatalf("csrfkey config: not set — generate with: openssl rand -hex 32")
+		slog.Error("csrfkey config: not set — generate with: openssl rand -hex 32")
+		os.Exit(1)
 	}
 	key, err := hex.DecodeString(hexKey)
 	if err != nil {
-		log.Fatalf("csrfkey config: must be a valid hex string: %v", err)
+		slog.Error("csrfkey config: must be a valid hex string", "err", err)
+		os.Exit(1)
 	}
 	if len(key) != 32 {
-		log.Fatalf("csrfkey config: must decode to exactly 32 bytes (64 hex chars), got %d bytes", len(key))
+		slog.Error("csrfkey config: must decode to exactly 32 bytes (64 hex chars)", "got", len(key))
+		os.Exit(1)
 	}
 	return key
 }

@@ -1,0 +1,16 @@
+{{define "newTournament"}}
+{{template "header" .}}
+<h1>Create Tournament</h1>
+<form method="post" action="/tournaments/new">
+{{.CSRFField}}
+<table>
+  <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
+  <tr><td>Sport</td><td><input type="text" name="sport" required></td></tr>
+  <tr><td>Location/Venue</td><td><input type="text" name="location" required></td></tr>
+  <tr><td>Start Date</td><td><input type="date" name="start_date" required></td></tr>
+  <tr><td>Notes</td><td><input type="text" name="notes"></td></tr>
+  <tr><td></td><td><input type="submit" value="Create Tournament"></td></tr>
+</table>
+</form>
+{{template "footer" .}}
+{{end}}

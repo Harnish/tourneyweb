@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"embed"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
@@ -20,10 +21,24 @@ func init() {
 	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
 		"inc": func(i int) int { return i + 1 },
 		"dec": func(i int) int { return i - 1 },
+		"htmlSafe": func(s string) template.HTML { return template.HTML(s) },
+		"formatTime": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format("Jan 2, 2006 3:04 PM")
+		},
+		"formatDateTimeLocal": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format("2006-01-02T15:04")
+		},
 	}).ParseFS(templateFS,
 		"templates/*.html",
 		"templates/admin/*.html",
 		"templates/auth/*.html",
+		"templates/manage/*.html",
 	))
 }
 
@@ -138,6 +153,7 @@ type createGameData struct {
 	DivisionID    int
 	Teams         []mydb.Team
 	Games         []mydb.Game
+	Locations     []mydb.Location
 	DisableDelete bool
 }
 
@@ -173,6 +189,7 @@ type editGameData struct {
 	Game      mydb.Game
 	Teams     []mydb.Team
 	Divisions []mydb.Division
+	Locations []mydb.Location
 }
 
 // Auth template data types
@@ -234,6 +251,75 @@ type errorData struct {
 	Message string
 }
 
+type manageDashboardData struct {
+	baseData
+	IsDraft bool
+}
+
+type managePublishData struct {
+	baseData
+	Error string
+}
+
+type manageDivisionsData struct {
+	baseData
+	Divisions     []mydb.Division
+	DisableDelete bool
+}
+
+type manageDivisionEditData struct {
+	baseData
+	Division mydb.Division
+}
+
+type manageTeamsData struct {
+	baseData
+	Divisions       []mydb.Division
+	TeamsByDivision map[int][]mydb.Team
+	DisableDelete   bool
+}
+
+type manageTeamEditData struct {
+	baseData
+	Team      mydb.Team
+	Divisions []mydb.Division
+}
+
+type manageLocationsData struct {
+	baseData
+	Locations     []mydb.Location
+	DisableDelete bool
+}
+
+type manageLocationEditData struct {
+	baseData
+	Location mydb.Location
+}
+
+type manageCreateGameData struct {
+	baseData
+	DivisionID    int
+	Teams         []mydb.Team
+	Games         []mydb.Game
+	Locations     []mydb.Location
+	DisableDelete bool
+}
+
+type manageEditGameData struct {
+	baseData
+	Game      mydb.Game
+	Teams     []mydb.Team
+	Divisions []mydb.Division
+	Locations []mydb.Location
+}
+
+type adminQueueData struct {
+	baseData
+	Drafts     []mydb.Tournament
+	IssuedCode string
+	IssuedFor  string
+}
+
 func (me *Env) renderError(w http.ResponseWriter, r *http.Request, status int, title, message string) {
 	w.WriteHeader(status)
 	me.render(w, "error", errorData{
@@ -247,7 +333,7 @@ func (me *Env) render(w http.ResponseWriter, name string, data any) {
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, name, data); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
-		log.Println("template error:", name, err)
+		slog.Error("template error", "name", name, "err", err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

@@ -117,6 +117,43 @@ func (me *Env) AdminTournamentView(w http.ResponseWriter, r *http.Request, ps ht
 	})
 }
 
+func (me *Env) NewTournamentForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	user := userFromContext(r.Context())
+	if !user.LoggedIn() {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	me.render(w, "newTournament", newBase(r))
+}
+
+func (me *Env) NewTournament(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	user := userFromContext(r.Context())
+	if !user.LoggedIn() {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	name := r.FormValue("name")
+	sport := r.FormValue("sport")
+	location := r.FormValue("location")
+	notes := r.FormValue("notes")
+	date, err := time.Parse("2006-01-02", r.FormValue("start_date"))
+	if err != nil {
+		http.Error(w, "Invalid date format (expected YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
+	if name == "" || sport == "" || location == "" {
+		http.Error(w, "Name, sport, and location are required", http.StatusBadRequest)
+		return
+	}
+	status := "draft"
+	if user.IsAdmin {
+		status = "published"
+	}
+	id := me.DB.AddTournament(name, sport, location, notes, date, status)
+	me.DB.AssignRole(user.ID, id, "director", 0)
+	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage", id), http.StatusSeeOther)
+}
+
 func (me *Env) EditTournament(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
