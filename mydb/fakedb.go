@@ -797,6 +797,9 @@ func (f *FakeDB) GetLocationByID(id int) Location {
 }
 
 func (f *FakeDB) GetLocationsByTournamentID(tournamentID int) []Location {
+	if tournamentID == 0 {
+		return nil
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	var out []Location
