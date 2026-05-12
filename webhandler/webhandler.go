@@ -130,7 +130,7 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 		}
 
 		// /tournaments/:tid/manage/* requires CanManage for that tournament.
-		if strings.Contains(r.URL.Path, "/manage/") {
+		if strings.Contains(r.URL.Path, "/manage/") || strings.HasSuffix(r.URL.Path, "/manage") {
 			tidStr := extractTID(r.URL.Path)
 			if tidStr != "" {
 				tid, err := strconv.Atoi(tidStr)
