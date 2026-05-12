@@ -62,9 +62,17 @@ func (me *MyDB) RedeemVerificationCode(code string, tournamentID int) error {
 	if redeemed {
 		return errors.New("code already used")
 	}
-	if _, err = me.DB.Exec(`UPDATE verification_codes SET redeemed_at=NOW() WHERE id=$1`, id); err != nil {
+	tx, err := me.DB.Begin()
+	if err != nil {
 		return err
 	}
-	_, err = me.DB.Exec(`UPDATE tournaments SET status='published' WHERE id=$1`, tournamentID)
-	return err
+	if _, err = tx.Exec(`UPDATE verification_codes SET redeemed_at=NOW() WHERE id=$1`, id); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err = tx.Exec(`UPDATE tournaments SET status='published' WHERE id=$1`, tournamentID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
