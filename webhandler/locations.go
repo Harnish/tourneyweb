@@ -15,10 +15,11 @@ func (me *Env) Locations(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if r.Method == http.MethodPost {
 		name := r.FormValue("name")
 		address := r.FormValue("address")
+		availableFor := r.FormValue("available_for")
 		lat, _ := strconv.ParseFloat(r.FormValue("latitude"), 64)
 		lng, _ := strconv.ParseFloat(r.FormValue("longitude"), 64)
 		if name != "" {
-			me.DB.AddLocation(name, address, lat, lng)
+			me.DB.AddLocation(name, address, availableFor, lat, lng, 0)
 		}
 		http.Redirect(w, r, "/admin/locations", http.StatusSeeOther)
 		return
@@ -44,9 +45,10 @@ func (me *Env) EditLocation(w http.ResponseWriter, r *http.Request, ps httproute
 	if r.Method == http.MethodPost {
 		name := r.FormValue("name")
 		address := r.FormValue("address")
+		availableFor := r.FormValue("available_for")
 		lat, _ := strconv.ParseFloat(r.FormValue("latitude"), 64)
 		lng, _ := strconv.ParseFloat(r.FormValue("longitude"), 64)
-		me.DB.UpdateLocation(lid, name, address, lat, lng)
+		me.DB.UpdateLocation(lid, name, address, availableFor, lat, lng)
 		http.Redirect(w, r, "/admin/locations", http.StatusSeeOther)
 		return
 	}

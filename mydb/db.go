@@ -75,9 +75,10 @@ type DB interface {
 	DeleteInvitation(id int)
 
 	// Locations
-	AddLocation(name, address, availableFor string, lat, lng float64) int
+	AddLocation(name, address, availableFor string, lat, lng float64, tournamentID int) int
 	GetLocations() []Location
 	GetLocationByID(id int) Location
+	GetLocationsByTournamentID(tournamentID int) []Location
 	UpdateLocation(id int, name, address, availableFor string, lat, lng float64)
 	DelLocation(id int)
 

@@ -262,6 +262,30 @@ func TestFakeDB_VerificationCodes(t *testing.T) {
 	}
 }
 
+func TestFakeDB_TournamentLocations(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
+
+	db.AddLocation("Global Field", "123 Main", "", 0, 0, 0)
+	db.AddLocation("Home Field", "456 Oak", "", 40.0, -75.0, tid)
+
+	all := db.GetLocations()
+	if len(all) != 2 {
+		t.Fatalf("GetLocations: expected 2, got %d", len(all))
+	}
+
+	byTID := db.GetLocationsByTournamentID(tid)
+	if len(byTID) != 1 {
+		t.Fatalf("GetLocationsByTournamentID: expected 1, got %d", len(byTID))
+	}
+	if byTID[0].Name != "Home Field" {
+		t.Errorf("expected Home Field, got %q", byTID[0].Name)
+	}
+	if byTID[0].TournamentID != tid {
+		t.Errorf("TournamentID: got %d, want %d", byTID[0].TournamentID, tid)
+	}
+}
+
 func TestFakeDB_TournamentStatus(t *testing.T) {
 	db := mydb.NewFakeDB()
 	future := time.Date(2027, 8, 1, 0, 0, 0, 0, time.UTC)

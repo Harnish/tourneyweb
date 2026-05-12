@@ -772,11 +772,11 @@ func (f *FakeDB) DeleteInvitation(id int) {
 
 // --- Locations ---
 
-func (f *FakeDB) AddLocation(name, address, availableFor string, lat, lng float64) int {
+func (f *FakeDB) AddLocation(name, address, availableFor string, lat, lng float64, tournamentID int) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.locations[id] = Location{ID: id, Name: name, Address: address, AvailableFor: availableFor, Latitude: lat, Longitude: lng}
+	f.locations[id] = Location{ID: id, Name: name, Address: address, AvailableFor: availableFor, Latitude: lat, Longitude: lng, TournamentID: tournamentID}
 	return id
 }
 
@@ -794,6 +794,18 @@ func (f *FakeDB) GetLocationByID(id int) Location {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.locations[id]
+}
+
+func (f *FakeDB) GetLocationsByTournamentID(tournamentID int) []Location {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []Location
+	for _, l := range f.locations {
+		if l.TournamentID == tournamentID {
+			out = append(out, l)
+		}
+	}
+	return out
 }
 
 func (f *FakeDB) UpdateLocation(id int, name, address, availableFor string, lat, lng float64) {
