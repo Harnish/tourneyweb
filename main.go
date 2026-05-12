@@ -80,6 +80,7 @@ func main() {
 	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
 	router.POST("/tournaments/:tid/score/games/:gid", wh.RecordScore)
 	// Director manage routes
+	router.GET("/tournaments/:tid/manage", wh.ManageDashboard)
 	router.GET("/tournaments/:tid/manage/extras", wh.ManageExtras)
 	router.POST("/tournaments/:tid/manage/extras", wh.ManageExtras)
 	router.GET("/tournaments/:tid/manage/roles", wh.ManageRoles)

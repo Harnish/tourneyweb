@@ -12,8 +12,8 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 </head>
 <body>
-<img src="/img/topimage.jpg"><br>
-<a href="/">Home</a> | <a href="/hrderbyinfo">Skills &amp; HR Derby Info</a> | <a href="/map">Field Map</a>
+<img src="/img/topimage.jpg" style="max-width:20%;height:auto;"><br>
+<a href="/">Home</a> 
 {{if .IsAdmin}}
   {{if .Tournament.ID}}
   | <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
@@ -27,7 +27,7 @@
 {{else if .User.LoggedIn}}
   {{if .Tournament.ID}}
     {{if .User.IsDirectorFor .Tournament.ID}}
-    | <a href="/tournaments/{{.Tournament.ID}}/manage/roles">Manage Roles</a>
+    | <a href="/tournaments/{{.Tournament.ID}}/manage">Manage</a>
     {{end}}
     {{if .User.CanScore .Tournament.ID}}
     | Score Games
@@ -35,6 +35,7 @@
   {{end}}
 {{end}}
 {{if .User.LoggedIn}}
+| <a href="/tournaments/new">Create Tournament</a>
 | {{.User.Name}} (<form method="post" action="/logout" style="display:inline">{{.CSRFField}}<input type="submit" value="Log out"></form>)
 {{else}}
 | <a href="/login">Log in</a> | <a href="/register">Register</a>

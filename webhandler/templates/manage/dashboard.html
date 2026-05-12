@@ -1,0 +1,20 @@
+{{define "manageDashboard"}}
+{{template "header" .}}
+<h1>Manage: {{.Tournament.Name}}</h1>
+{{if .IsDraft}}
+<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin-bottom:15px">
+  This tournament is a <strong>draft</strong> and not publicly visible.
+  <a href="/tournaments/{{.Tournament.ID}}/manage/publish">Enter verification code to publish &rarr;</a>
+</div>
+{{end}}
+<ul>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/divisions">Divisions &amp; Games</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/teams">Teams</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/locations">Locations/Fields</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/roles">Roles &amp; Staff</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/extras">Event Extras</a></li>
+  {{if .IsDraft}}<li><a href="/tournaments/{{.Tournament.ID}}/manage/publish">Publish Tournament</a></li>{{end}}
+</ul>
+<p><a href="/tournaments/{{.Tournament.ID}}">View Public Page</a></p>
+{{template "footer" .}}
+{{end}}
