@@ -1,0 +1,45 @@
+{{define "manageEditGame"}}
+{{template "header" .}}
+<h1>Edit Game</h1>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/games/{{.Game.ID}}/edit">
+{{.CSRFField}}
+<table>
+  <tr><td>Division</td><td>
+    <select name="divisionid">
+    {{range .Divisions}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.Division.ID}} selected{{end}}>{{.Name}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Home Team</td><td>
+    <select name="hometeam">
+    {{range .Teams}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.HomeTeam.ID}} selected{{end}}>{{.Name}} - {{.Coach}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Away Team</td><td>
+    <select name="awayteam">
+    {{range .Teams}}
+    <option value="{{.ID}}"{{if eq .ID $.Game.AwayTeam.ID}} selected{{end}}>{{.Name}} - {{.Coach}}</option>
+    {{end}}
+    </select>
+  </td></tr>
+  <tr><td>Location</td><td>
+    {{if .Locations}}
+    <select name="location">
+      <option value="">-- select --</option>
+      {{range .Locations}}<option value="{{.Name}}"{{if eq .Name $.Game.Location}} selected{{end}}>{{.Name}}{{if .Address}} — {{.Address}}{{end}}</option>{{end}}
+    </select>
+    {{else}}
+    <input type="text" name="location" value="{{.Game.Location}}">
+    {{end}}
+  </td></tr>
+  <tr><td>Date/Time</td><td><input type="datetime-local" name="datetime" value="{{formatDateTimeLocal .Game.Start}}"></td></tr>
+  <tr><td>Umpire</td><td><input type="text" name="umpire" value="{{.Game.Umpire}}"></td></tr>
+  <tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/divisions">Cancel</a></p>
+{{template "footer" .}}
+{{end}}
