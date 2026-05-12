@@ -1,0 +1,33 @@
+{{define "adminQueue"}}
+{{template "header" .}}
+<h1>Verification Queue</h1>
+{{if .IssuedCode}}
+<div style="background:#d4edda;border:1px solid #28a745;padding:10px;margin-bottom:15px">
+  <strong>Code for "{{.IssuedFor}}":</strong> <code style="font-size:1.3em">{{.IssuedCode}}</code>
+  <p>Share this code with the tournament director so they can publish their tournament.</p>
+</div>
+{{end}}
+{{if .Drafts}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Name</th><th>Sport</th><th>Location</th><th>Start Date</th><th>Action</th></tr>
+{{range .Drafts}}
+<tr>
+  <td>{{.Name}}</td>
+  <td>{{.Sport}}</td>
+  <td>{{.Location}}</td>
+  <td>{{.StartDate.Format "Jan 2, 2006"}}</td>
+  <td>
+    <form method="post" action="/admin/tournaments/{{.ID}}/issue-code">
+      {{$.CSRFField}}
+      <input type="submit" value="Issue Code">
+    </form>
+  </td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No draft tournaments pending.</p>
+{{end}}
+<p><a href="/admin/tournaments">Back to tournaments</a></p>
+{{template "footer" .}}
+{{end}}

@@ -80,6 +80,8 @@ func main() {
 	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
 	router.POST("/tournaments/:tid/score/games/:gid", wh.RecordScore)
 	// Director manage routes
+	router.GET("/tournaments/:tid/manage/publish", wh.ManagePublish)
+	router.POST("/tournaments/:tid/manage/publish", wh.ManagePublish)
 	router.GET("/tournaments/:tid/manage", wh.ManageDashboard)
 	router.GET("/tournaments/:tid/manage/extras", wh.ManageExtras)
 	router.POST("/tournaments/:tid/manage/extras", wh.ManageExtras)
@@ -90,6 +92,9 @@ func main() {
 	// Admin routes
 	router.GET("/admin/tournaments", wh.AdminTournaments)
 	router.POST("/admin/tournaments", wh.CreateTournament)
+	// queue must be registered before :tid to avoid "queue" matching as :tid
+	router.GET("/admin/tournaments/queue", wh.TournamentQueue)
+	router.POST("/admin/tournaments/:tid/issue-code", wh.IssueCode)
 	router.GET("/admin/tournaments/:tid", wh.AdminTournamentView)
 	router.GET("/admin/tournaments/:tid/divisions", wh.AddDivisionForm)
 	router.POST("/admin/tournaments/:tid/divisions", wh.AddDivisionForm)

@@ -1,0 +1,17 @@
+{{define "managePublish"}}
+{{template "header" .}}
+<h1>Publish Tournament</h1>
+<p>Enter the verification code provided by an admin to make <strong>{{.Tournament.Name}}</strong> publicly visible.</p>
+{{if .Error}}
+<p style="color:red">{{.Error}}</p>
+{{end}}
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/publish">
+{{.CSRFField}}
+<table>
+  <tr><td>Verification Code</td><td><input type="text" name="code" required autofocus style="font-size:1.2em;letter-spacing:0.1em"></td></tr>
+  <tr><td></td><td><input type="submit" value="Publish Tournament"></td></tr>
+</table>
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+{{template "footer" .}}
+{{end}}
