@@ -3,6 +3,7 @@
 <h1>{{.Tournament.Name}}</h1>
 <p>{{.Tournament.Sport}} | {{.Tournament.Location}} | {{.Tournament.StartDate.Format "Jan 2, 2006"}}</p>
 {{if .Tournament.Notes}}<p>{{.Tournament.Notes}}</p>{{end}}
+{{if .Tournament.ExtrasHTML}}<p><a href="/tournaments/{{.Tournament.ID}}/extras">Event Extras</a></p>{{end}}
 <p>Click a division for standings. Click a team for their schedule.</p>
 {{range .Divisions}}
 <h2><a href="/tournaments/{{$.Tournament.ID}}/divisions/{{.ID}}">{{.Name}}</a></h2>

@@ -24,7 +24,7 @@
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
   <td>{{.AwayTeam.Name}} {{.AwayTeam.Coach}}</td>
   <td>{{.Location}}</td>
-  <td>{{.Start}}</td>
+  <td>{{formatTime .Start}}</td>
   <td>{{.Umpire}}</td>
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
   <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/edit">Edit</a></td>

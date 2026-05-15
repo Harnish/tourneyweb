@@ -7,6 +7,7 @@
 <table>
 <tr><td>Name</td><td><input type="text" name="name" value="{{.Location.Name}}" required></td></tr>
 <tr><td>Address</td><td><input type="text" name="address" value="{{.Location.Address}}" size="40"></td></tr>
+<tr><td>Available For</td><td><input type="text" name="available_for" value="{{.Location.AvailableFor}}" size="40" placeholder="e.g. Baseball, Softball (blank = all sports)"></td></tr>
 <tr><td>Latitude</td><td><input type="text" name="latitude" id="lat_edit" value="{{.Location.Latitude}}"></td></tr>
 <tr><td>Longitude</td><td><input type="text" name="longitude" id="lng_edit" value="{{.Location.Longitude}}"></td></tr>
 </table>

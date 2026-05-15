@@ -7,6 +7,7 @@
   <li><a href="/admin/tournaments/{{.Tournament.ID}}/teams">Manage Teams</a></li>
   <li><a href="/admin/tournaments/{{.Tournament.ID}}/games">Manage Games</a></li>
   <li><a href="/admin/tournaments/{{.Tournament.ID}}/edit">Edit Tournament</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/extras">Edit Event Extras</a></li>
 </ul>
 {{if .DisableDelete}}<p>Deletes have been disabled during the tournament.</p>{{end}}
 <p><a href="/tournaments/{{.Tournament.ID}}">View Public Page</a></p>

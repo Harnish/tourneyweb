@@ -1,0 +1,38 @@
+{{define "editExtras"}}
+{{template "header" .}}
+<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css">
+<h2>Edit Event Extras — {{.Tournament.Name}}</h2>
+<p>Use this page to describe optional activities, contests, or information for this tournament (e.g. Home Run Derby, skills competitions, registration links, schedules).</p>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/extras" id="extras-form">
+{{.CSRFField}}
+<div id="editor" style="height:400px;margin-bottom:1em;"></div>
+<input type="hidden" name="extras_html" id="extras_html_input">
+<textarea id="existing_content" style="display:none">{{.Tournament.ExtrasHTML}}</textarea>
+<input type="submit" value="Save">
+&nbsp;<a href="/tournaments/{{.Tournament.ID}}/extras">View</a>
+&nbsp;<a href="/admin/tournaments/{{.Tournament.ID}}">Cancel</a>
+</form>
+<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+<script>
+var quill = new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      ['link'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['clean']
+    ]
+  }
+});
+var existing = document.getElementById('existing_content').value;
+if (existing.trim()) {
+  quill.clipboard.dangerouslyPasteHTML(existing);
+}
+document.getElementById('extras-form').addEventListener('submit', function() {
+  document.getElementById('extras_html_input').value = quill.root.innerHTML;
+});
+</script>
+{{template "footer" .}}
+{{end}}

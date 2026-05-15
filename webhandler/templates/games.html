@@ -10,7 +10,7 @@
   <td>{{.AwayTeam.Name}} - {{.AwayTeam.Coach}}</td>
   <td>{{.AwayScore}}</td>
   <td>{{.Location}}</td>
-  <td>{{.Start}}</td>
+  <td>{{formatTime .Start}}</td>
   <td>{{.Umpire}}</td>
   {{if $.User.CanScore $.Tournament.ID}}<td><a href="/tournaments/{{$.Tournament.ID}}/score/games/{{.ID}}">Score</a></td>{{end}}
 </tr>

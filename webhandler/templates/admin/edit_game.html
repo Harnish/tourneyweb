@@ -24,8 +24,17 @@
     {{end}}
     </select>
   </td></tr>
-  <tr><td>Location</td><td><input type="text" name="location" value="{{.Game.Location}}"></td></tr>
-  <tr><td>Date/Time</td><td><input type="text" name="datetime" value="{{.Game.Start}}"></td></tr>
+  <tr><td>Location</td><td>
+    {{if .Locations}}
+    <select name="location">
+      <option value="">-- select --</option>
+      {{range .Locations}}<option value="{{.Name}}"{{if eq .Name $.Game.Location}} selected{{end}}>{{.Name}}{{if .Address}} — {{.Address}}{{end}}</option>{{end}}
+    </select>
+    {{else}}
+    <input type="text" name="location" value="{{.Game.Location}}">
+    {{end}}
+  </td></tr>
+  <tr><td>Date/Time</td><td><input type="datetime-local" name="datetime" value="{{formatDateTimeLocal .Game.Start}}"></td></tr>
   <tr><td>Umpire</td><td><input type="text" name="umpire" value="{{.Game.Umpire}}"></td></tr>
   <tr><td>{{.CSRFField}}</td></tr>
   <tr><td></td><td><input type="submit" value="Save"></td></tr>

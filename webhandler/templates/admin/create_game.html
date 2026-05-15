@@ -1,7 +1,9 @@
 {{define "createGame"}}
 {{template "header" .}}
+<h2>Add Game</h2>
 <form method="post" action="/admin/tournaments/{{.Tournament.ID}}/games">
 <input type="hidden" name="divisionid" value="{{.DivisionID}}">
+{{.CSRFField}}
 <table>
   <tr><td>Home Team</td><td><select name="hometeam">
     {{range .Teams}}<option value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
@@ -9,28 +11,81 @@
   <tr><td>Away Team</td><td><select name="awayteam">
     {{range .Teams}}<option value="{{.ID}}">{{.Name}} - {{.Coach}}</option>{{end}}
   </select></td></tr>
-  <tr><td>Location</td><td><input type="text" name="location"></td></tr>
-  <tr><td>Date/Time</td><td><input type="text" name="datetime"></td></tr>
+  <tr><td>Location</td><td>
+    {{if .Locations}}
+    <select name="location">
+      <option value="">-- select --</option>
+      {{range .Locations}}<option value="{{.Name}}">{{.Name}}{{if .Address}} — {{.Address}}{{end}}</option>{{end}}
+    </select>
+    {{else}}
+    <input type="text" name="location">
+    {{end}}
+  </td></tr>
+  <tr><td>Date/Time</td><td><input type="datetime-local" name="datetime"></td></tr>
   <tr><td>Umpire</td><td><input type="text" name="umpire"></td></tr>
-  <tr><td></td><td><input type="submit" name="submit"></td></tr>
+  <tr><td></td><td><input type="submit" value="Add Game"></td></tr>
 </table>
-{{.CSRFField}}
 </form>
+
+<hr>
+<h2>Auto-Generate Schedule</h2>
+<p>Creates a round-robin schedule for all {{len .Teams}} teams in this division.</p>
+{{if lt (len .Teams) 2}}
+<p><em>Add at least 2 teams to generate a schedule.</em></p>
+{{else}}
+<form method="post" action="/admin/tournaments/{{.Tournament.ID}}/divisions/{{.DivisionID}}/games/generate">
+{{.CSRFField}}
 <table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
+  <tr><td>Start Date/Time</td><td><input type="datetime-local" name="start_datetime" required></td></tr>
+  <tr><td>Minutes Between Games</td><td><input type="number" name="minutes_between" value="120" min="1" style="width:80px"></td></tr>
+  <tr><td>Location</td><td>
+    {{if .Locations}}
+    <select name="location">
+      <option value="">-- none --</option>
+      {{range .Locations}}<option value="{{.Name}}">{{.Name}}{{if .Address}} — {{.Address}}{{end}}</option>{{end}}
+    </select>
+    {{else}}
+    <input type="text" name="location" placeholder="leave blank or enter manually">
+    {{end}}
+  </td></tr>
+  <tr><td>Round Robin Type</td><td>
+    <select name="round_type">
+      <option value="single">Single (each pair plays once)</option>
+      <option value="double">Double (each pair plays home &amp; away)</option>
+    </select>
+  </td></tr>
+  <tr><td></td><td><input type="submit" value="Generate Schedule" onclick="return confirm('Generate {{len .Teams}} team round-robin? Existing games will not be removed.')"></td></tr>
+</table>
+</form>
+{{end}}
+
+<hr>
+<h2>Existing Games</h2>
+{{if .Games}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
   <td>{{.AwayTeam.Name}} {{.AwayTeam.Coach}}</td>
   <td>{{.Location}}</td>
-  <td>{{.Start}}</td>
+  <td>{{formatTime .Start}}</td>
   <td>{{.Umpire}}</td>
-  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score Game</a></td>
-  {{if not $.DisableDelete}}<td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete">Delete Game</a></td>{{end}}
-  <td>{{.HomeScore}}</td>
-  <td>{{.AwayScore}}</td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/score">Score</a></td>
+  <td><a href="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/edit">Edit</a></td>
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/admin/tournaments/{{$.Tournament.ID}}/games/{{.ID}}/delete" onsubmit="return confirm('Delete this game?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
+  <td>{{if .Scored}}{{.HomeScore}}{{end}}</td>
+  <td>{{if .Scored}}{{.AwayScore}}{{end}}</td>
 </tr>
 {{end}}
 </table>
+{{else}}
+<p>No games yet.</p>
+{{end}}
 {{template "footer" .}}
 {{end}}

@@ -5,7 +5,7 @@
   <tr><td>Home Team</td><td>{{.Game.HomeTeam.Name}}</td></tr>
   <tr><td>Away Team</td><td>{{.Game.AwayTeam.Name}}</td></tr>
   <tr><td>Location</td><td>{{.Game.Location}}</td></tr>
-  <tr><td>Start Time</td><td>{{.Game.Start}}</td></tr>
+  <tr><td>Start Time</td><td>{{formatTime .Game.Start}}</td></tr>
   <tr><td>Umpire</td><td>{{.Game.Umpire}}</td></tr>
   <tr><td>Home Team Score</td><td>
     <select name="homescore">

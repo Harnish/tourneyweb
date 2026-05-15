@@ -7,6 +7,7 @@
 <table>
 <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
 <tr><td>Address</td><td><input type="text" name="address" size="40"></td></tr>
+<tr><td>Available For</td><td><input type="text" name="available_for" size="40" placeholder="e.g. Baseball, Softball (blank = all sports)"></td></tr>
 <tr><td>Latitude</td><td><input type="text" name="latitude" id="lat_add" value="0"></td></tr>
 <tr><td>Longitude</td><td><input type="text" name="longitude" id="lng_add" value="0"></td></tr>
 </table>
@@ -18,13 +19,12 @@
 <h2>Locations</h2>
 {{if .Locations}}
 <table border="1" cellpadding="4" cellspacing="0">
-<tr><th>Name</th><th>Address</th><th>Lat</th><th>Lng</th><th>Edit</th>{{if not .DisableDelete}}<th>Delete</th>{{end}}</tr>
+<tr><th>Name</th><th>Address</th><th>Available For</th><th>Edit</th>{{if not .DisableDelete}}<th>Delete</th>{{end}}</tr>
 {{range .Locations}}
 <tr>
   <td>{{.Name}}</td>
   <td>{{.Address}}</td>
-  <td>{{.Latitude}}</td>
-  <td>{{.Longitude}}</td>
+  <td>{{.AvailableFor}}</td>
   <td><a href="/admin/locations/{{.ID}}/edit">Edit</a></td>
   {{if not $.DisableDelete}}<td>
     <form method="post" action="/admin/locations/{{.ID}}/delete" onsubmit="return confirm('Delete this location?')">
