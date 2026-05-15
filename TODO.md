@@ -15,8 +15,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 ## Missing Features
 
 - **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display
-- **[P2/S]** Make the HR Derby info page content configurable — it is entirely hardcoded in `webhandler/webhandler.go` with event-specific text, Venmo links, and signup URLs; should come from the DB or config
-- **[P2/M]** Use a proper datetime type for game start times — `start_time` is stored as TEXT; a real timestamp enables sorting, calendar view, and validation
 - **[P3/M]** Client-side table sorting — allow clicking column headers to sort standings and game lists
 - **[P3/L]** Calendar view — display games on a calendar grouped by date
 - **[P3/L]** Bracket/playoff support — see Major Features below
@@ -55,14 +53,22 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ---
 
+## Bugs
+
+- **[P1/S]** Map pin not appearing on add/edit location forms — Leaflet click-to-place pin does not render in the admin location forms; likely a container height or JS load order issue
+
+---
+
 ## Ops / Deployment
 
-- **[P3/S]** Structured logging — replace scattered `log.Println` with `log/slog` to make log output parseable in production
 
 ---
 
 ## Recently Completed
 
+- **Tournament Event Extras** — per-tournament freeform page (`/tournaments/:tid/extras`) editable by directors via Quill WYSIWYG at `/tournaments/:tid/manage/extras`; replaces hardcoded `/hrderbyinfo` route; `extras_html` column added to `tournaments` table via migration
+- **Structured logging** — all `log.Println`/`log.Fatalf`/`log.Printf` replaced with `log/slog`; JSON handler set as default in `main()`; request logs include method/path/proto/ip as fields; `github.com/davecgh/go-spew` dependency removed
+- **Proper game start time** — `start_time` migrated from TEXT to TIMESTAMPTZ; forms use `datetime-local` input; displays formatted as "Jan 2, 2006 3:04 PM"; zero value renders as empty string
 - **Ranking algorithm tests** — 14 tests covering both sort strategies and all three helper functions; uses FakeDB for head-to-head scenarios
 - **Fields/Locations UI** — CRUD admin at `/admin/locations`, public map at `/map`; Leaflet + OpenStreetMap, click-to-place pin on add/edit forms; `latitude`/`longitude` added to `locations` table via migration
 - **DB interface + FakeDB** — `mydb.DB` interface lets handlers accept either `*MyDB` or `*FakeDB`; in-memory fake covers all 50 methods with 6 passing tests
