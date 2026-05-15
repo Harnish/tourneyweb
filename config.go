@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -47,10 +47,10 @@ func LoadConfig(confpath string) (config Config) {
 func ParseConfig(confpath string) (config Config) {
 	file, err := os.ReadFile(confpath)
 	if err != nil {
-		log.Println("open config:", confpath, "Error", err)
+		slog.Warn("open config", "path", confpath, "err", err)
 	}
 	if err = yaml.Unmarshal(file, &config); err != nil {
-		log.Println("parse config:", err)
+		slog.Error("parse config", "err", err)
 	}
 	return
 }

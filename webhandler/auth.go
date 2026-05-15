@@ -2,7 +2,7 @@ package webhandler
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -78,7 +78,7 @@ func (me *Env) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	if me.Email != nil {
 		go func() {
 			if err := me.Email.SendVerificationEmail(email, name, token); err != nil {
-				log.Println("verification email failed:", err)
+				slog.Error("verification email failed", "err", err)
 			}
 		}()
 	}
@@ -148,7 +148,7 @@ func (me *Env) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) != nil {
 		me.loginFailed(ip)
-		log.Println("login failed for", ip, email)
+		slog.Warn("login failed", "ip", ip, "email", email)
 		me.render(w, "login", loginData{baseData: newBase(r), Error: "Invalid email or password."})
 		return
 	}
@@ -235,7 +235,7 @@ func (me *Env) PasswordResetConfirm(w http.ResponseWriter, r *http.Request, ps h
 func (me *Env) startSession(w http.ResponseWriter, r *http.Request, userID int) {
 	session, err := sessions.Start(w, r, true)
 	if err != nil {
-		log.Println("session start failed:", err)
+		slog.Error("session start failed", "err", err)
 		return
 	}
 	session.Set("user_id", userID)

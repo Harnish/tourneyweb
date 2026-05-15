@@ -1,7 +1,7 @@
 package mydb
 
 import (
-	"log"
+	"log/slog"
 	"time"
 )
 
@@ -28,7 +28,7 @@ func (me *MyDB) GetRolesForUser(userID int) []TournamentRole {
 		`SELECT id, user_id, tournament_id, role, COALESCE(team_id,0)
 		 FROM tournament_roles WHERE user_id=$1`, userID)
 	if err != nil {
-		log.Println("GetRolesForUser:", err)
+		slog.Error("GetRolesForUser", "err", err)
 		return nil
 	}
 	defer rows.Close()
@@ -46,7 +46,7 @@ func (me *MyDB) GetRolesForTournament(tournamentID int) []TournamentRole {
 		`SELECT id, user_id, tournament_id, role, COALESCE(team_id,0)
 		 FROM tournament_roles WHERE tournament_id=$1`, tournamentID)
 	if err != nil {
-		log.Println("GetRolesForTournament:", err)
+		slog.Error("GetRolesForTournament", "err", err)
 		return nil
 	}
 	defer rows.Close()
@@ -70,7 +70,7 @@ func (me *MyDB) AssignRole(userID, tournamentID int, role string, teamID int) er
 		 ON CONFLICT (user_id, tournament_id) DO UPDATE SET role=$3, team_id=$4`,
 		userID, tournamentID, role, teamArg)
 	if err != nil {
-		log.Println("AssignRole:", err)
+		slog.Error("AssignRole", "err", err)
 	}
 	return err
 }
@@ -80,7 +80,7 @@ func (me *MyDB) RemoveRole(userID, tournamentID int) {
 		`DELETE FROM tournament_roles WHERE user_id=$1 AND tournament_id=$2`,
 		userID, tournamentID)
 	if err != nil {
-		log.Println("RemoveRole:", err)
+		slog.Error("RemoveRole", "err", err)
 	}
 }
 
@@ -94,7 +94,7 @@ func (me *MyDB) CreateInvitation(email string, tournamentID int, role string, te
 		 VALUES ($1,$2,$3,$4,$5,$6)`,
 		email, tournamentID, role, teamArg, token, expires)
 	if err != nil {
-		log.Println("CreateInvitation:", err)
+		slog.Error("CreateInvitation", "err", err)
 	}
 	return err
 }
@@ -127,6 +127,6 @@ func (me *MyDB) GetInvitationByToken(token string) (Invitation, bool) {
 func (me *MyDB) DeleteInvitation(id int) {
 	_, err := me.DB.Exec(`DELETE FROM invitations WHERE id=$1`, id)
 	if err != nil {
-		log.Println("DeleteInvitation:", err)
+		slog.Error("DeleteInvitation", "err", err)
 	}
 }

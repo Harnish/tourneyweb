@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/smtp"
 	"strings"
 	"time"
@@ -51,10 +51,10 @@ func (s *EmailService) sendEmail(toEmail, subject, htmlBody string) error {
 	)
 
 	if err := smtp.SendMail(addr, auth, s.fromEmail, []string{toEmail}, []byte(msg)); err != nil {
-		log.Printf("email: FAILED to=%s subject=%q err=%v", toEmail, safeSubject, err)
+		slog.Error("email send failed", "to", toEmail, "subject", safeSubject, "err", err)
 		return err
 	}
-	log.Printf("email: OK to=%s subject=%q", toEmail, safeSubject)
+	slog.Info("email sent", "to", toEmail, "subject", safeSubject)
 	return nil
 }
 

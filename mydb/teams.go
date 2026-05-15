@@ -2,7 +2,7 @@ package mydb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 )
 
 type Team struct {
@@ -23,7 +23,7 @@ func (me *MyDB) AddTeam(tournamentID, divisionID int, name, coach string) {
 		tournamentID, divisionID, name, coach,
 	)
 	if err != nil {
-		log.Println("AddTeam:", err)
+		slog.Error("AddTeam", "err", err)
 	}
 }
 
@@ -37,7 +37,7 @@ func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
 		tournamentID,
 	)
 	if err != nil {
-		log.Println("ReturnTeamsByTournamentID:", err)
+		slog.Error("ReturnTeamsByTournamentID", "err", err)
 		return nil
 	}
 	var teams []Team
@@ -45,7 +45,7 @@ func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
 		var t Team
 		var did int
 		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did); err != nil {
-			log.Println("ReturnTeamsByTournamentID scan:", err)
+			slog.Error("ReturnTeamsByTournamentID scan", "err", err)
 			continue
 		}
 		t.Division = me.ReturnDivisionByID(did)
@@ -61,7 +61,7 @@ func (me *MyDB) UpdateTeam(id, divisionID int, name, coach string) {
 		divisionID, name, coach, id,
 	)
 	if err != nil {
-		log.Println("UpdateTeam:", err)
+		slog.Error("UpdateTeam", "err", err)
 	}
 }
 
@@ -71,7 +71,7 @@ func (me *MyDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 		divisionID,
 	)
 	if err != nil {
-		log.Println("ReturnTeamsByDivisionID:", err)
+		slog.Error("ReturnTeamsByDivisionID", "err", err)
 		return nil
 	}
 	var teams []Team
@@ -79,7 +79,7 @@ func (me *MyDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 		var t Team
 		var did int
 		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did); err != nil {
-			log.Println("ReturnTeamsByDivisionID scan:", err)
+			slog.Error("ReturnTeamsByDivisionID scan", "err", err)
 			continue
 		}
 		t.Division = me.ReturnDivisionByID(did)
@@ -107,7 +107,7 @@ func (me *MyDB) ReturnTeamByID(id int) Team {
 		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE id=$1`, id,
 	).Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did)
 	if err != nil && err != sql.ErrNoRows {
-		log.Println("ReturnTeamByID:", err)
+		slog.Error("ReturnTeamByID", "err", err)
 		return t
 	}
 	t.Division = me.ReturnDivisionByID(did)

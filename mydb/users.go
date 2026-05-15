@@ -2,7 +2,7 @@ package mydb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"time"
 )
 
@@ -34,7 +34,7 @@ func (me *MyDB) CreateUser(email, name, passwordHash, verificationToken string, 
 		email, name, passwordHash, nullableString(verificationToken), emailVerified, isAdmin,
 	).Scan(&u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.EmailVerified, &u.VerificationToken, &u.IsAdmin, &u.CreatedAt)
 	if err != nil {
-		log.Println("CreateUser:", err)
+		slog.Error("CreateUser", "err", err)
 	}
 	return u, err
 }
@@ -75,7 +75,7 @@ func (me *MyDB) MarkEmailVerified(userID int) {
 	_, err := me.DB.Exec(
 		`UPDATE users SET email_verified=true, verification_token=NULL WHERE id=$1`, userID)
 	if err != nil {
-		log.Println("MarkEmailVerified:", err)
+		slog.Error("MarkEmailVerified", "err", err)
 	}
 }
 
@@ -83,7 +83,7 @@ func (me *MyDB) SetVerificationToken(userID int, token string) {
 	_, err := me.DB.Exec(
 		`UPDATE users SET verification_token=$1 WHERE id=$2`, token, userID)
 	if err != nil {
-		log.Println("SetVerificationToken:", err)
+		slog.Error("SetVerificationToken", "err", err)
 	}
 }
 
@@ -91,7 +91,7 @@ func (me *MyDB) SetResetToken(userID int, token string, expires time.Time) {
 	_, err := me.DB.Exec(
 		`UPDATE users SET reset_token=$1, reset_expires=$2 WHERE id=$3`, token, expires, userID)
 	if err != nil {
-		log.Println("SetResetToken:", err)
+		slog.Error("SetResetToken", "err", err)
 	}
 }
 
@@ -100,7 +100,7 @@ func (me *MyDB) UpdatePassword(userID int, passwordHash string) {
 		`UPDATE users SET password_hash=$1, reset_token=NULL, reset_expires=NULL WHERE id=$2`,
 		passwordHash, userID)
 	if err != nil {
-		log.Println("UpdatePassword:", err)
+		slog.Error("UpdatePassword", "err", err)
 	}
 }
 
@@ -110,7 +110,7 @@ func (me *MyDB) scanUser(row *sql.Row) (User, error) {
 		&u.EmailVerified, &u.VerificationToken, &u.ResetToken, &u.ResetExpires,
 		&u.IsAdmin, &u.CreatedAt)
 	if err != nil && err != sql.ErrNoRows {
-		log.Println("scanUser:", err)
+		slog.Error("scanUser", "err", err)
 	}
 	return u, err
 }

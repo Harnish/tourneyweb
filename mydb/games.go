@@ -2,7 +2,8 @@ package mydb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
+	"time"
 )
 
 type Game struct {
@@ -12,7 +13,7 @@ type Game struct {
 	HomeTeam     Team
 	AwayTeam     Team
 	Location     string
-	Start        string
+	Start        time.Time
 	Umpire       string
 	AwayScore    int
 	HomeScore    int
@@ -27,9 +28,13 @@ func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 		var g Game
 		var hid, aid, did int
 		var homeScore, awayScore sql.NullInt64
-		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &g.Start, &g.Umpire, &homeScore, &awayScore); err != nil {
-			log.Println("scanGames:", err)
+		var startTime sql.NullTime
+		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &startTime, &g.Umpire, &homeScore, &awayScore); err != nil {
+			slog.Error("scanGames", "err", err)
 			continue
+		}
+		if startTime.Valid {
+			g.Start = startTime.Time
 		}
 		g.Division = me.ReturnDivisionByID(did)
 		g.HomeTeam = me.ReturnTeamByID(hid)
@@ -45,20 +50,24 @@ func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 	return out
 }
 
-func (me *MyDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+func (me *MyDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
+	var st interface{}
+	if !startTime.IsZero() {
+		st = startTime
+	}
 	_, err := me.DB.Exec(
 		`INSERT INTO games (tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-		tournamentID, divisionID, homeTeamID, awayTeamID, location, startTime, umpire,
+		tournamentID, divisionID, homeTeamID, awayTeamID, location, st, umpire,
 	)
 	if err != nil {
-		log.Println("AddGame:", err)
+		slog.Error("AddGame", "err", err)
 	}
 }
 
 func (me *MyDB) AllGamesByDivision(divisionID int) []Game {
 	rows, err := me.DB.Query(gameSelect+` WHERE division_id=$1`, divisionID)
 	if err != nil {
-		log.Println("AllGamesByDivision:", err)
+		slog.Error("AllGamesByDivision", "err", err)
 		return nil
 	}
 	return me.scanGames(rows)
@@ -67,7 +76,7 @@ func (me *MyDB) AllGamesByDivision(divisionID int) []Game {
 func (me *MyDB) AllGamesByTeam(teamID int) []Game {
 	rows, err := me.DB.Query(gameSelect+` WHERE home_team_id=$1 OR away_team_id=$1`, teamID)
 	if err != nil {
-		log.Println("AllGamesByTeam:", err)
+		slog.Error("AllGamesByTeam", "err", err)
 		return nil
 	}
 	return me.scanGames(rows)
@@ -76,7 +85,7 @@ func (me *MyDB) AllGamesByTeam(teamID int) []Game {
 func (me *MyDB) ReturnGameByID(gameID int) Game {
 	rows, err := me.DB.Query(gameSelect+` WHERE id=$1`, gameID)
 	if err != nil {
-		log.Println("ReturnGameByID:", err)
+		slog.Error("ReturnGameByID", "err", err)
 		return Game{}
 	}
 	games := me.scanGames(rows)
@@ -90,13 +99,17 @@ func (me *MyDB) DelGame(id int) {
 	me.DB.Exec(`DELETE FROM games WHERE id=$1`, id)
 }
 
-func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location, startTime, umpire string) {
+func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
+	var st interface{}
+	if !startTime.IsZero() {
+		st = startTime
+	}
 	_, err := me.DB.Exec(
 		`UPDATE games SET division_id=$1, home_team_id=$2, away_team_id=$3, location=$4, start_time=$5, umpire=$6 WHERE id=$7`,
-		divisionID, homeTeamID, awayTeamID, location, startTime, umpire, id,
+		divisionID, homeTeamID, awayTeamID, location, st, umpire, id,
 	)
 	if err != nil {
-		log.Println("UpdateGame:", err)
+		slog.Error("UpdateGame", "err", err)
 		return
 	}
 	// Re-fetch to get updated team/division references before re-syncing scores.
@@ -111,7 +124,7 @@ func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location,
 func (me *MyDB) AllGames(tournamentID int) []Game {
 	rows, err := me.DB.Query(gameSelect+` WHERE tournament_id=$1 ORDER BY start_time`, tournamentID)
 	if err != nil {
-		log.Println("AllGames:", err)
+		slog.Error("AllGames", "err", err)
 		return nil
 	}
 	return me.scanGames(rows)
@@ -123,7 +136,7 @@ func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
 		hscore, ascore, gid,
 	)
 	if err != nil {
-		log.Println("ScoreGame:", err)
+		slog.Error("ScoreGame", "err", err)
 		return
 	}
 	game := me.ReturnGameByID(gid)
@@ -146,7 +159,7 @@ func (me *MyDB) DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool) {
 		return false, false
 	}
 	if err != nil {
-		log.Println("DidTeamABeatTeamB:", err)
+		slog.Error("DidTeamABeatTeamB", "err", err)
 		return false, false
 	}
 	return true, teamAScore > teamBScore

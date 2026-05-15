@@ -3,11 +3,11 @@ module gitlab.joe.beardedgeek.org/harnish/tourneyweb
 go 1.25.0
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gorilla/csrf v1.7.3
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rivo/sessions v0.0.0-20180420064926-e18b9ef80f84
+	golang.org/x/crypto v0.51.0
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 )
 
@@ -18,7 +18,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/kr/text v0.1.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 )

@@ -2,7 +2,7 @@ package mydb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 )
 
 type Division struct {
@@ -17,7 +17,7 @@ func (me *MyDB) AddDivision(tournamentID int, name string) {
 		tournamentID, name,
 	)
 	if err != nil {
-		log.Println("AddDivision:", err)
+		slog.Error("AddDivision", "err", err)
 	}
 }
 
@@ -31,7 +31,7 @@ func (me *MyDB) UpdateDivision(id int, name string) {
 		name, id,
 	)
 	if err != nil {
-		log.Println("UpdateDivision:", err)
+		slog.Error("UpdateDivision", "err", err)
 	}
 }
 
@@ -41,14 +41,14 @@ func (me *MyDB) ReturnDivisions(tournamentID int) []Division {
 		tournamentID,
 	)
 	if err != nil {
-		log.Println("ReturnDivisions:", err)
+		slog.Error("ReturnDivisions", "err", err)
 		return nil
 	}
 	var out []Division
 	for rows.Next() {
 		var d Division
 		if err := rows.Scan(&d.ID, &d.TournamentID, &d.Name); err != nil {
-			log.Println("ReturnDivisions scan:", err)
+			slog.Error("ReturnDivisions scan", "err", err)
 			continue
 		}
 		out = append(out, d)
@@ -63,7 +63,7 @@ func (me *MyDB) ReturnDivisionByID(id int) Division {
 		`SELECT id, tournament_id, name FROM divisions WHERE id=$1`, id,
 	).Scan(&d.ID, &d.TournamentID, &d.Name)
 	if err != nil && err != sql.ErrNoRows {
-		log.Println("ReturnDivisionByID:", err)
+		slog.Error("ReturnDivisionByID", "err", err)
 	}
 	return d
 }
