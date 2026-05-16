@@ -109,6 +109,11 @@ func main() {
 	router.GET("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/delete", wh.ManageDeleteGame)
+	router.GET("/tournaments/:tid/manage/news", wh.ManageNews)
+	router.POST("/tournaments/:tid/manage/news", wh.ManageNews)
+	router.GET("/tournaments/:tid/manage/news/:nid/edit", wh.ManageNewsEdit)
+	router.POST("/tournaments/:tid/manage/news/:nid/edit", wh.ManageNewsEdit)
+	router.POST("/tournaments/:tid/manage/news/:nid/delete", wh.ManageNewsDelete)
 	// Admin routes
 	router.GET("/admin/tournaments", wh.AdminTournaments)
 	router.POST("/admin/tournaments", wh.CreateTournament)
@@ -144,6 +149,12 @@ func main() {
 	router.GET("/admin/locations/:lid/edit", wh.EditLocation)
 	router.POST("/admin/locations/:lid/edit", wh.EditLocation)
 	router.POST("/admin/locations/:lid/delete", wh.DeleteLocation)
+	// Admin news routes
+	router.GET("/admin/news", wh.AdminNews)
+	router.POST("/admin/news", wh.AdminNews)
+	router.GET("/admin/news/:nid/edit", wh.AdminNewsEdit)
+	router.POST("/admin/news/:nid/edit", wh.AdminNewsEdit)
+	router.POST("/admin/news/:nid/delete", wh.AdminNewsDelete)
 
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
