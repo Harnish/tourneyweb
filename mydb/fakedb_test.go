@@ -338,6 +338,58 @@ func TestFakeDB_TournamentStatus(t *testing.T) {
 	}
 }
 
+func TestFakeDB_RulesCRUD(t *testing.T) {
+	db := mydb.NewFakeDB()
+	date := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	tid := db.AddTournament("Test", "baseball", "Park", "", date, "published")
+
+	// Initially empty tournament rules
+	tournament := db.ReturnTournamentByID(tid)
+	if tournament.RulesHTML != "" {
+		t.Errorf("expected empty rules, got %q", tournament.RulesHTML)
+	}
+
+	// Set tournament rules
+	db.SetTournamentRules(tid, "<p>Tournament rules</p>")
+	tournament = db.ReturnTournamentByID(tid)
+	if tournament.RulesHTML != "<p>Tournament rules</p>" {
+		t.Errorf("SetTournamentRules: got %q", tournament.RulesHTML)
+	}
+
+	// Add division
+	db.AddDivision(tid, "12U")
+	divs := db.ReturnDivisions(tid)
+	if len(divs) != 1 {
+		t.Fatalf("expected 1 division, got %d", len(divs))
+	}
+	did := divs[0].ID
+
+	// Initially empty division rules
+	div := db.ReturnDivisionByID(did)
+	if div.RulesHTML != "" {
+		t.Errorf("expected empty division rules, got %q", div.RulesHTML)
+	}
+
+	// Set division rules
+	db.SetDivisionRules(did, "<p>Division rules</p>")
+	div = db.ReturnDivisionByID(did)
+	if div.RulesHTML != "<p>Division rules</p>" {
+		t.Errorf("SetDivisionRules: got %q", div.RulesHTML)
+	}
+
+	// ReturnDivisions also returns RulesHTML
+	divs = db.ReturnDivisions(tid)
+	if divs[0].RulesHTML != "<p>Division rules</p>" {
+		t.Errorf("ReturnDivisions RulesHTML: got %q", divs[0].RulesHTML)
+	}
+
+	// Tournament rules unchanged after setting division rules
+	tournament = db.ReturnTournamentByID(tid)
+	if tournament.RulesHTML != "<p>Tournament rules</p>" {
+		t.Errorf("tournament rules unchanged: got %q", tournament.RulesHTML)
+	}
+}
+
 func TestFakeDB_NewsCRUD(t *testing.T) {
 	db := mydb.NewFakeDB()
 

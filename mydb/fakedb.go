@@ -202,6 +202,15 @@ func (f *FakeDB) SetTournamentExtras(id int, html string) {
 	}
 }
 
+func (f *FakeDB) SetTournamentRules(id int, html string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if t, ok := f.tournaments[id]; ok {
+		t.RulesHTML = html
+		f.tournaments[id] = t
+	}
+}
+
 // --- Divisions ---
 
 func (f *FakeDB) AddDivision(tournamentID int, name string) {
@@ -222,6 +231,15 @@ func (f *FakeDB) UpdateDivision(id int, name string) {
 	defer f.mu.Unlock()
 	if d, ok := f.divisions[id]; ok {
 		d.Name = name
+		f.divisions[id] = d
+	}
+}
+
+func (f *FakeDB) SetDivisionRules(id int, html string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if d, ok := f.divisions[id]; ok {
+		d.RulesHTML = html
 		f.divisions[id] = d
 	}
 }
