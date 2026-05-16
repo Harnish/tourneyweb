@@ -117,10 +117,9 @@ func main() {
 	router.GET("/tournaments/:tid/manage/rules", wh.ManageRules)
 	router.POST("/tournaments/:tid/manage/rules", wh.ManageRules)
 	// Admin routes
+	router.GET("/admin/queue", wh.TournamentQueue)
 	router.GET("/admin/tournaments", wh.AdminTournaments)
 	router.POST("/admin/tournaments", wh.CreateTournament)
-	// queue must be registered before :tid to avoid "queue" matching as :tid
-	router.GET("/admin/tournaments/queue", wh.TournamentQueue)
 	router.POST("/admin/tournaments/:tid/issue-code", wh.IssueCode)
 	router.GET("/admin/tournaments/:tid", wh.AdminTournamentView)
 	router.GET("/admin/tournaments/:tid/divisions", wh.AddDivisionForm)
