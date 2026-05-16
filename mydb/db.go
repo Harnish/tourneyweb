@@ -16,11 +16,13 @@ type DB interface {
 	DelTournament(id int)
 	UpdateTournament(id int, name, sport, location, notes string, date time.Time)
 	SetTournamentExtras(id int, html string)
+	SetTournamentRules(id int, html string)
 
 	// Divisions
 	AddDivision(tournamentID int, name string)
 	DelDivision(id int)
 	UpdateDivision(id int, name string)
+	SetDivisionRules(id int, html string)
 	ReturnDivisions(tournamentID int) []Division
 	ReturnDivisionByID(id int) Division
 
