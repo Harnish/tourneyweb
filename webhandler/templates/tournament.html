@@ -25,5 +25,10 @@
 {{end}}
 {{end}}
 
+{{if .Tournament.RulesHTML}}
+<hr>
+<h2>Rules</h2>
+{{.Tournament.RulesHTML | htmlSafe}}
+{{end}}
 {{template "footer" .}}
 {{end}}

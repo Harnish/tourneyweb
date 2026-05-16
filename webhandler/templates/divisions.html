@@ -32,5 +32,15 @@
 </tr>
 {{end}}
 </table>
+{{if .Division.RulesHTML}}
+<hr>
+<h2>Rules</h2>
+{{.Division.RulesHTML | htmlSafe}}
+{{else if .Tournament.RulesHTML}}
+<hr>
+<h2>Rules</h2>
+<p><em>Tournament rules (no division-specific rules set)</em></p>
+{{.Tournament.RulesHTML | htmlSafe}}
+{{end}}
 {{template "footer" .}}
 {{end}}
