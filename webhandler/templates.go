@@ -85,12 +85,14 @@ type indexData struct {
 	FutureHasNext bool
 	PastHasPrev   bool
 	PastHasNext   bool
+	SiteNews      []mydb.NewsItem
 }
 
 type tournamentData struct {
 	baseData
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
+	News      []mydb.NewsItem
 }
 
 type adminTournamentsData struct {
@@ -318,6 +320,17 @@ type adminQueueData struct {
 	Drafts     []mydb.Tournament
 	IssuedCode string
 	IssuedFor  string
+}
+
+type newsListData struct {
+	baseData
+	News          []mydb.NewsItem
+	DisableDelete bool
+}
+
+type newsEditData struct {
+	baseData
+	Item mydb.NewsItem
 }
 
 func (me *Env) renderError(w http.ResponseWriter, r *http.Request, status int, title, message string) {
