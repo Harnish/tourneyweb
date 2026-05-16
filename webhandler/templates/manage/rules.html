@@ -6,7 +6,7 @@
 <form method="post" action="/tournaments/{{.Tournament.ID}}/manage/rules" id="rules-form">
 {{.CSRFField}}
 <div id="editor" style="height:400px;margin-bottom:1em;"></div>
-<textarea id="existing_content" style="display:none">{{.Tournament.RulesHTML | htmlSafe}}</textarea>
+<textarea id="existing_content" style="display:none">{{.Tournament.RulesHTML}}</textarea>
 <input type="hidden" name="rules_html" id="rules_html_input">
 <input type="submit" value="Save">
 &nbsp;<a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a>
