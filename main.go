@@ -114,6 +114,8 @@ func main() {
 	router.GET("/tournaments/:tid/manage/news/:nid/edit", wh.ManageNewsEdit)
 	router.POST("/tournaments/:tid/manage/news/:nid/edit", wh.ManageNewsEdit)
 	router.POST("/tournaments/:tid/manage/news/:nid/delete", wh.ManageNewsDelete)
+	router.GET("/tournaments/:tid/manage/rules", wh.ManageRules)
+	router.POST("/tournaments/:tid/manage/rules", wh.ManageRules)
 	// Admin routes
 	router.GET("/admin/tournaments", wh.AdminTournaments)
 	router.POST("/admin/tournaments", wh.CreateTournament)

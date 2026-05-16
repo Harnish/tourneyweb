@@ -83,3 +83,16 @@ func (me *Env) ManageDivisionDelete(w http.ResponseWriter, r *http.Request, ps h
 	}
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 }
+
+func (me *Env) ManageRules(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	if r.Method == http.MethodPost {
+		me.DB.SetTournamentRules(t.ID, r.FormValue("rules_html"))
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/rules", t.ID), http.StatusSeeOther)
+		return
+	}
+	me.render(w, "manageRules", newBaseWithTournament(r, t))
+}
