@@ -22,6 +22,7 @@ type FakeDB struct {
 	locations     map[int]Location
 	loginAttempts map[string]LoginAttempt
 	verifCodes    []fakeVerifCode
+	news          []NewsItem
 }
 
 type gameByTeamRow struct {
@@ -902,4 +903,82 @@ func (f *FakeDB) RedeemVerificationCode(code string, tournamentID int) error {
 		}
 	}
 	return errors.New("invalid code")
+}
+
+// --- News ---
+
+func (f *FakeDB) AddNews(tournamentID int, title, body string, authorID int) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	f.news = append(f.news, NewsItem{
+		ID:           id,
+		TournamentID: tournamentID,
+		Title:        title,
+		Body:         body,
+		CreatedAt:    time.Now(),
+		AuthorID:     authorID,
+	})
+	return id
+}
+
+func (f *FakeDB) GetSiteNews() []NewsItem {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []NewsItem
+	for i := len(f.news) - 1; i >= 0; i-- {
+		if f.news[i].TournamentID == 0 {
+			out = append(out, f.news[i])
+			if len(out) >= 10 {
+				break
+			}
+		}
+	}
+	return out
+}
+
+func (f *FakeDB) GetTournamentNews(tournamentID int) []NewsItem {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []NewsItem
+	for i := len(f.news) - 1; i >= 0; i-- {
+		if f.news[i].TournamentID == tournamentID {
+			out = append(out, f.news[i])
+		}
+	}
+	return out
+}
+
+func (f *FakeDB) GetNewsByID(id int) (NewsItem, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, n := range f.news {
+		if n.ID == id {
+			return n, true
+		}
+	}
+	return NewsItem{}, false
+}
+
+func (f *FakeDB) UpdateNews(id int, title, body string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for i, n := range f.news {
+		if n.ID == id {
+			f.news[i].Title = title
+			f.news[i].Body = body
+			return
+		}
+	}
+}
+
+func (f *FakeDB) DeleteNews(id int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for i, n := range f.news {
+		if n.ID == id {
+			f.news = append(f.news[:i], f.news[i+1:]...)
+			return
+		}
+	}
 }

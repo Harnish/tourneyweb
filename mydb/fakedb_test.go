@@ -337,3 +337,60 @@ func TestFakeDB_TournamentStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestFakeDB_NewsCRUD(t *testing.T) {
+	db := mydb.NewFakeDB()
+
+	// Site news: tournamentID = 0
+	id1 := db.AddNews(0, "Site Post 1", "<p>Body 1</p>", 0)
+	id2 := db.AddNews(0, "Site Post 2", "<p>Body 2</p>", 0)
+
+	siteNews := db.GetSiteNews()
+	if len(siteNews) != 2 {
+		t.Fatalf("GetSiteNews: want 2, got %d", len(siteNews))
+	}
+	// newest first: id2 should be first
+	if siteNews[0].ID != id2 {
+		t.Errorf("GetSiteNews order: want id2=%d first, got id=%d", id2, siteNews[0].ID)
+	}
+
+	// Tournament news
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
+	id3 := db.AddNews(tid, "Tourney News", "<p>T body</p>", 0)
+	tNews := db.GetTournamentNews(tid)
+	if len(tNews) != 1 || tNews[0].ID != id3 {
+		t.Errorf("GetTournamentNews: want 1 item with id=%d, got %v", id3, tNews)
+	}
+
+	// Site news unaffected by tournament news
+	if len(db.GetSiteNews()) != 2 {
+		t.Error("GetSiteNews should still return 2 after adding tournament news")
+	}
+
+	// GetNewsByID
+	item, ok := db.GetNewsByID(id1)
+	if !ok || item.Title != "Site Post 1" {
+		t.Errorf("GetNewsByID: ok=%v, title=%q", ok, item.Title)
+	}
+	_, ok = db.GetNewsByID(99999)
+	if ok {
+		t.Error("GetNewsByID: expected not found for missing id")
+	}
+
+	// Update
+	db.UpdateNews(id1, "Updated Title", "<p>Updated</p>")
+	updated, _ := db.GetNewsByID(id1)
+	if updated.Title != "Updated Title" || updated.Body != "<p>Updated</p>" {
+		t.Errorf("UpdateNews: got title=%q body=%q", updated.Title, updated.Body)
+	}
+
+	// Delete
+	db.DeleteNews(id1)
+	_, ok = db.GetNewsByID(id1)
+	if ok {
+		t.Error("DeleteNews: item should be gone")
+	}
+	if len(db.GetSiteNews()) != 1 {
+		t.Error("GetSiteNews: should have 1 item after delete")
+	}
+}

@@ -82,6 +82,14 @@ type DB interface {
 	UpdateLocation(id int, name, address, availableFor string, lat, lng float64)
 	DelLocation(id int)
 
+	// News
+	AddNews(tournamentID int, title, body string, authorID int) int
+	GetSiteNews() []NewsItem
+	GetTournamentNews(tournamentID int) []NewsItem
+	GetNewsByID(id int) (NewsItem, bool)
+	UpdateNews(id int, title, body string)
+	DeleteNews(id int)
+
 	// Login rate limiting
 	GetLoginAttempt(ip string) (LoginAttempt, error)
 	RecordLoginFailure(ip string) error
