@@ -54,6 +54,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 			return
 		}
 		me.DB.UpdateDivision(did, name)
+		me.DB.SetDivisionRules(did, r.FormValue("rules_html"))
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
