@@ -13,5 +13,17 @@
 {{end}}
 </ul>
 {{end}}
+{{if .News}}
+<hr>
+<h2>News</h2>
+{{range .News}}
+<div style="margin-bottom:1.5em">
+  <strong>{{.Title}}</strong> &mdash; <em>{{formatTime .CreatedAt}}</em>{{if .AuthorName}} &mdash; {{.AuthorName}}{{end}}
+  <div>{{.Body | htmlSafe}}</div>
+</div>
+<hr>
+{{end}}
+{{end}}
+
 {{template "footer" .}}
 {{end}}

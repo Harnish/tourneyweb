@@ -56,6 +56,7 @@ func (me *Env) TournamentList(w http.ResponseWriter, r *http.Request, ps httprou
 		FutureHasNext: futurePage*20 < futureTotal,
 		PastHasPrev:   pastPage > 1,
 		PastHasNext:   pastPage*20 < pastTotal,
+		SiteNews:      me.DB.GetSiteNews(),
 	})
 }
 
@@ -73,6 +74,7 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 		baseData:  newBaseWithTournament(r, t),
 		Divisions: divs,
 		Teams:     teams,
+		News:      me.DB.GetTournamentNews(t.ID),
 	})
 }
 
