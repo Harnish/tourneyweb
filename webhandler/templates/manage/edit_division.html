@@ -10,7 +10,7 @@
 <h3>Division Rules</h3>
 <p>Optional. If left empty, the tournament rules (if any) will be shown on this division's public page.</p>
 <div id="editor" style="height:300px;margin-bottom:1em;"></div>
-<textarea id="existing_content" style="display:none">{{.Division.RulesHTML}}</textarea>
+<textarea id="existing_content" style="display:none">{{.Division.RulesHTML | htmlSafe}}</textarea>
 <input type="hidden" name="rules_html" id="rules_html_input">
 <input type="submit" value="Save">
 &nbsp;<a href="/tournaments/{{.Tournament.ID}}/manage/divisions">Back</a>
@@ -32,7 +32,9 @@ if (existing.trim()) {
   quill.clipboard.dangerouslyPasteHTML(existing);
 }
 document.getElementById('division-form').addEventListener('submit', function() {
-  document.getElementById('rules_html_input').value = quill.root.innerHTML;
+  var html = quill.root.innerHTML;
+  if (html === '<p><br></p>') html = '';
+  document.getElementById('rules_html_input').value = html;
 });
 </script>
 {{template "footer" .}}
