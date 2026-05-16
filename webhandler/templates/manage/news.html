@@ -1,0 +1,56 @@
+{{define "manageNews"}}
+{{template "header" .}}
+<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css">
+<h2>News &mdash; {{.Tournament.Name}}</h2>
+<h3>Add News Item</h3>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/news" id="news-form">
+{{.CSRFField}}
+<table>
+<tr><td>Title</td><td><input type="text" name="title" required size="50"></td></tr>
+</table>
+<div id="editor" style="height:200px;margin-bottom:1em;"></div>
+<input type="hidden" name="news_html" id="news_html_input">
+<input type="submit" value="Add News">
+</form>
+<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+<script>
+var quill = new Quill('#editor', {
+  theme: 'snow',
+  modules: { toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline'],
+    ['link'],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['clean']
+  ]}
+});
+document.getElementById('news-form').addEventListener('submit', function() {
+  document.getElementById('news_html_input').value = quill.root.innerHTML;
+});
+</script>
+<hr>
+<h3>All News</h3>
+{{if .News}}
+{{range .News}}
+<div style="margin-bottom:1.5em">
+  <strong>{{.Title}}</strong> &mdash; <em>{{formatTime .CreatedAt}}</em>{{if .AuthorName}} &mdash; {{.AuthorName}}{{end}}
+  <div>{{.Body | htmlSafe}}</div>
+  {{if $.User.IsDirectorFor $.Tournament.ID}}
+  <p>
+    <a href="/tournaments/{{$.Tournament.ID}}/manage/news/{{.ID}}/edit">Edit</a>
+    &nbsp;
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/news/{{.ID}}/delete" style="display:inline" onsubmit="return confirm('Delete this news item?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </p>
+  {{end}}
+</div>
+<hr>
+{{end}}
+{{else}}
+<p>No news items yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+{{template "footer" .}}
+{{end}}
