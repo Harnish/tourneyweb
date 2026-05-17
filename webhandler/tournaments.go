@@ -75,6 +75,18 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 		Divisions: divs,
 		Teams:     teams,
 		News:      me.DB.GetTournamentNews(t.ID),
+		Fields:    me.DB.GetLocationsByTournamentID(t.ID),
+	})
+}
+
+func (me *Env) TournamentFields(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	me.render(w, "tournamentFields", tournamentFieldsData{
+		baseData: newBaseWithTournament(r, t),
+		Fields:   me.DB.GetLocationsByTournamentID(t.ID),
 	})
 }
 

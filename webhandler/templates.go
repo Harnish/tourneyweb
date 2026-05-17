@@ -93,6 +93,12 @@ type tournamentData struct {
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
 	News      []mydb.NewsItem
+	Fields    []mydb.Location
+}
+
+type tournamentFieldsData struct {
+	baseData
+	Fields []mydb.Location
 }
 
 type adminTournamentsData struct {

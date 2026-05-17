@@ -1,0 +1,32 @@
+{{define "tournamentFields"}}
+{{template "header" .}}
+<h1>Fields &mdash; {{.Tournament.Name}}</h1>
+{{if .Fields}}
+<table class="table">
+<thead>
+<tr><th>Field</th><th>Address</th><th>Available For</th></tr>
+</thead>
+<tbody>
+{{range .Fields}}
+<tr>
+  <td><strong>{{.Name}}</strong></td>
+  <td>
+    {{if and .Lat .Lng}}
+    <a href="https://maps.google.com/?q={{.Lat}},{{.Lng}}" target="_blank" rel="noopener">{{.Address}}</a>
+    {{else if .Address}}
+    {{.Address}}
+    {{else}}
+    <span style="color:var(--tw-muted)">—</span>
+    {{end}}
+  </td>
+  <td>{{if .AvailableFor}}{{.AvailableFor}}{{else}}<span style="color:var(--tw-muted)">—</span>{{end}}</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+{{else}}
+<p style="color:var(--tw-muted)">No fields have been added for this tournament yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}" class="tw-back">&larr; Back to tournament</a></p>
+{{template "footer" .}}
+{{end}}

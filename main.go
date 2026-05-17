@@ -74,6 +74,7 @@ func main() {
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
 	router.GET("/tournaments/:tid/games", wh.Games)
 	router.GET("/tournaments/:tid/extras", wh.TournamentExtras)
+	router.GET("/tournaments/:tid/fields", wh.TournamentFields)
 	router.GET("/map", wh.MapView)
 	// Score routes (directors + staff)
 	router.GET("/tournaments/:tid/score/games/:gid", wh.ScoreGame)
