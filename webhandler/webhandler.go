@@ -229,16 +229,18 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 	rawTeams := me.DB.ReturnTeamsByDivisionIDWithStats(did)
-	rawTeams = me.SortTeams(rawTeams, "WinsRunsAgainstRunsEarnedHead2Head")
+	div := me.DB.ReturnDivisionByID(did)
+	rawTeams = me.SortTeams(rawTeams, div.RankingCriteria)
 	rows := make([]divisionTeamRow, len(rawTeams))
 	for i, team := range rawTeams {
 		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData: newBaseWithTournament(r, t),
-		Division: me.DB.ReturnDivisionByID(did),
-		Teams:    rows,
-		Games:    me.DB.AllGamesByDivision(did),
+		baseData:     newBaseWithTournament(r, t),
+		Division:     div,
+		Teams:        rows,
+		Games:        me.DB.AllGamesByDivision(did),
+		RankingLabel: CriteriaRankingLabel(div.RankingCriteria),
 	})
 }
 

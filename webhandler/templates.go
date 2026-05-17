@@ -113,9 +113,10 @@ type adminTournamentViewData struct {
 
 type divisionData struct {
 	baseData
-	Division mydb.Division
-	Teams    []divisionTeamRow
-	Games    []mydb.Game
+	Division     mydb.Division
+	Teams        []divisionTeamRow
+	Games        []mydb.Game
+	RankingLabel string
 }
 
 type teamData struct {
@@ -277,7 +278,8 @@ type manageDivisionsData struct {
 
 type manageDivisionEditData struct {
 	baseData
-	Division mydb.Division
+	Division    mydb.Division
+	AllCriteria []CriterionUIRow
 }
 
 type manageTeamsData struct {
