@@ -61,6 +61,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Ops / Deployment
 
+- **[P2/M]** Access log metrics pipeline — parse structured JSON access logs (method, path, status, latency, IP) into aggregated metrics (request counts, p50/p95 latency, top paths, error rates) instead of writing every request row to SQLite. Ship a lightweight batch job or log-tail processor that emits to a time-series store or a static summary report on a schedule.
 
 ---
 
