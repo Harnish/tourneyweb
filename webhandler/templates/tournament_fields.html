@@ -26,6 +26,9 @@
 </table>
 {{else}}
 <p style="color:var(--tw-muted)">No fields have been added for this tournament yet.</p>
+{{if or .IsAdmin (.User.IsDirectorFor .Tournament.ID)}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/locations">Add fields &rarr;</a></p>
+{{end}}
 {{end}}
 <p><a href="/tournaments/{{.Tournament.ID}}" class="tw-back">&larr; Back to tournament</a></p>
 {{template "footer" .}}
