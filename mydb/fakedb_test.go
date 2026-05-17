@@ -390,6 +390,45 @@ func TestFakeDB_RulesCRUD(t *testing.T) {
 	}
 }
 
+func TestFakeDB_RankingCriteria(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
+
+	// AddDivision creates a division with the default criteria
+	db.AddDivision(tid, "12U")
+	divs := db.ReturnDivisions(tid)
+	if len(divs) != 1 {
+		t.Fatalf("expected 1 division, got %d", len(divs))
+	}
+	did := divs[0].ID
+
+	// Default criteria should be populated (not nil/empty)
+	got := db.ReturnDivisionByID(did)
+	if len(got.RankingCriteria) == 0 {
+		t.Error("expected non-empty default RankingCriteria")
+	}
+	if got.RankingCriteria[0] != "wins" {
+		t.Errorf("first default criterion: got %q, want \"wins\"", got.RankingCriteria[0])
+	}
+
+	// UpdateDivision stores custom criteria
+	custom := []string{"wins", "run_differential", "coin_flip"}
+	db.UpdateDivision(did, "12U", custom)
+	got = db.ReturnDivisionByID(did)
+	if len(got.RankingCriteria) != 3 {
+		t.Fatalf("after update: got %d criteria, want 3", len(got.RankingCriteria))
+	}
+	if got.RankingCriteria[1] != "run_differential" {
+		t.Errorf("second criterion: got %q, want \"run_differential\"", got.RankingCriteria[1])
+	}
+
+	// ReturnDivisions also returns RankingCriteria
+	divs = db.ReturnDivisions(tid)
+	if len(divs[0].RankingCriteria) != 3 {
+		t.Errorf("ReturnDivisions RankingCriteria: got %d criteria, want 3", len(divs[0].RankingCriteria))
+	}
+}
+
 func TestFakeDB_NewsCRUD(t *testing.T) {
 	db := mydb.NewFakeDB()
 

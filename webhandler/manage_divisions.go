@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
+	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
 
 func (me *Env) ManageDivisions(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -53,7 +54,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 			http.Error(w, "Division name required", http.StatusBadRequest)
 			return
 		}
-		me.DB.UpdateDivision(did, name)
+		me.DB.UpdateDivision(did, name, mydb.DefaultRankingCriteria)
 		me.DB.SetDivisionRules(did, r.FormValue("rules_html"))
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return

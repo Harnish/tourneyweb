@@ -168,6 +168,7 @@ var pgmigrations = []string{
 	`ALTER TABLE event_news ADD COLUMN IF NOT EXISTS author_id INTEGER REFERENCES users(id) ON DELETE SET NULL`,
 	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS rules_html TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE divisions  ADD COLUMN IF NOT EXISTS rules_html TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS ranking_criteria TEXT`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {

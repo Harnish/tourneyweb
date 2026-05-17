@@ -165,6 +165,28 @@ func (me *MyDB) DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool) {
 	return true, teamAScore > teamBScore
 }
 
+func (me *MyDB) RunsAllowedInHeadToHead(teamAID, teamBID int) (int, bool) {
+	var total int
+	err := me.DB.QueryRow(
+		`SELECT COALESCE(SUM(opponent_score),0) FROM games_by_team WHERE team_id=$1 AND opponent_id=$2`,
+		teamAID, teamBID,
+	).Scan(&total)
+	if err == sql.ErrNoRows {
+		return 0, false
+	}
+	if err != nil {
+		slog.Error("RunsAllowedInHeadToHead", "err", err)
+		return 0, false
+	}
+	// SUM returns 0 with no rows via COALESCE; we need to check actual existence.
+	var count int
+	me.DB.QueryRow(
+		`SELECT COUNT(*) FROM games_by_team WHERE team_id=$1 AND opponent_id=$2`,
+		teamAID, teamBID,
+	).Scan(&count)
+	return total, count > 0
+}
+
 func (me *MyDB) IsGameScored(id int) bool {
 	var n int
 	me.DB.QueryRow(`SELECT COUNT(*) FROM games_by_team WHERE game_id=$1`, id).Scan(&n)

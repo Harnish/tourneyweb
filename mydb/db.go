@@ -21,7 +21,7 @@ type DB interface {
 	// Divisions
 	AddDivision(tournamentID int, name string)
 	DelDivision(id int)
-	UpdateDivision(id int, name string)
+	UpdateDivision(id int, name string, criteria []string)
 	SetDivisionRules(id int, html string)
 	ReturnDivisions(tournamentID int) []Division
 	ReturnDivisionByID(id int) Division
@@ -52,6 +52,7 @@ type DB interface {
 	DeleteTeamScore(gameID int)
 	AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int)
 	DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool)
+	RunsAllowedInHeadToHead(teamAID, teamBID int) (int, bool)
 	IsGameScored(id int) bool
 
 	// Users

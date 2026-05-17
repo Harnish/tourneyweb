@@ -217,7 +217,12 @@ func (f *FakeDB) AddDivision(tournamentID int, name string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.divisions[id] = Division{ID: id, TournamentID: tournamentID, Name: name}
+	f.divisions[id] = Division{
+		ID:              id,
+		TournamentID:    tournamentID,
+		Name:            name,
+		RankingCriteria: DefaultRankingCriteria,
+	}
 }
 
 func (f *FakeDB) DelDivision(id int) {
@@ -226,11 +231,17 @@ func (f *FakeDB) DelDivision(id int) {
 	delete(f.divisions, id)
 }
 
-func (f *FakeDB) UpdateDivision(id int, name string) {
+func (f *FakeDB) UpdateDivision(id int, name string, criteria []string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if d, ok := f.divisions[id]; ok {
 		d.Name = name
+		if len(criteria) == 0 {
+			d.RankingCriteria = DefaultRankingCriteria
+		} else {
+			d.RankingCriteria = make([]string, len(criteria))
+			copy(d.RankingCriteria, criteria)
+		}
 		f.divisions[id] = d
 	}
 }
@@ -549,6 +560,20 @@ func (f *FakeDB) DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool) {
 		}
 	}
 	return false, false
+}
+
+func (f *FakeDB) RunsAllowedInHeadToHead(teamAID, teamBID int) (int, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	total := 0
+	found := false
+	for _, r := range f.gamesByTeam {
+		if r.teamID == teamAID && r.opponentID == teamBID {
+			total += r.opponentScore
+			found = true
+		}
+	}
+	return total, found
 }
 
 func (f *FakeDB) IsGameScored(id int) bool {
