@@ -57,10 +57,12 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		}
 		criteriaStr := r.FormValue("ranking_criteria")
 		var criteria []string
-		for _, k := range strings.Split(criteriaStr, ",") {
-			k = strings.TrimSpace(k)
-			if _, ok := criteriaRegistry[k]; ok {
-				criteria = append(criteria, k)
+		if criteriaStr != "" {
+			for _, k := range strings.Split(criteriaStr, ",") {
+				k = strings.TrimSpace(k)
+				if _, ok := criteriaRegistry[k]; ok {
+					criteria = append(criteria, k)
+				}
 			}
 		}
 		if len(criteria) == 0 {
