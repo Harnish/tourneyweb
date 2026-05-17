@@ -2,21 +2,21 @@
 {{template "header" .}}
 <h1>Manage: {{.Tournament.Name}}</h1>
 {{if .IsDraft}}
-<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin-bottom:15px">
+<div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.4);padding:12px 16px;margin-bottom:18px;border-radius:6px;font-size:0.9rem">
   This tournament is a <strong>draft</strong> and not publicly visible.
   <a href="/tournaments/{{.Tournament.ID}}/manage/publish">Enter verification code to publish &rarr;</a>
 </div>
 {{end}}
-<ul>
+<ul class="tw-manage-nav">
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/divisions">Divisions &amp; Games</a></li>
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/teams">Teams</a></li>
-  <li><a href="/tournaments/{{.Tournament.ID}}/manage/locations">Locations/Fields</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/locations">Locations / Fields</a></li>
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/roles">Roles &amp; Staff</a></li>
-  <li><a href="/tournaments/{{.Tournament.ID}}/manage/extras">Event Extras</a></li>
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/rules">Rules</a></li>
+  <li><a href="/tournaments/{{.Tournament.ID}}/manage/extras">Event Extras</a></li>
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/news">News</a></li>
   {{if .IsDraft}}<li><a href="/tournaments/{{.Tournament.ID}}/manage/publish">Publish Tournament</a></li>{{end}}
 </ul>
-<p><a href="/tournaments/{{.Tournament.ID}}">View Public Page</a></p>
+<p style="margin-top:1.25rem"><a href="/tournaments/{{.Tournament.ID}}" class="tw-back">&larr; View Public Page</a></p>
 {{template "footer" .}}
 {{end}}

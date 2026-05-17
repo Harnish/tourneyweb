@@ -5,46 +5,63 @@
 <title>TourneyWeb</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<link rel="stylesheet" href="/style.css">
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 </head>
 <body>
-<img src="/img/topimage.jpg" style="max-width:20%;height:auto;"><br>
-<a href="/">Home</a> 
-{{if .IsAdmin}}
-  {{if .Tournament.ID}}
-  | <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
-  | <a href="/admin/tournaments/{{.Tournament.ID}}/divisions">Divisions</a>
-  | <a href="/admin/tournaments/{{.Tournament.ID}}/teams">Teams</a>
-  | <a href="/admin/tournaments/{{.Tournament.ID}}/games">Games</a>
-  {{else}}
-  | <a href="/admin/tournaments">Admin</a>
-  | <a href="/admin/locations">Locations</a>
-  {{end}}
-{{else if .User.LoggedIn}}
-  {{if .Tournament.ID}}
-    {{if .User.IsDirectorFor .Tournament.ID}}
-    | <a href="/tournaments/{{.Tournament.ID}}/manage">Manage</a>
+<nav class="tw-nav">
+  <a href="/" class="tw-nav-brand">&#127942; tourney<span>web</span></a>
+  <div class="tw-nav-links">
+    {{if .IsAdmin}}
+      {{if .Tournament.ID}}
+      <a href="/admin/tournaments/{{.Tournament.ID}}">Admin</a>
+      <a href="/admin/tournaments/{{.Tournament.ID}}/divisions">Divisions</a>
+      <a href="/admin/tournaments/{{.Tournament.ID}}/teams">Teams</a>
+      <a href="/admin/tournaments/{{.Tournament.ID}}/games">Games</a>
+      {{else}}
+      <a href="/admin/tournaments">Admin</a>
+      <a href="/admin/locations">Locations</a>
+      <a href="/admin/queue">Queue</a>
+      {{end}}
+    {{else if .User.LoggedIn}}
+      {{if .Tournament.ID}}
+        {{if .User.IsDirectorFor .Tournament.ID}}
+        <a href="/tournaments/{{.Tournament.ID}}/manage">Manage</a>
+        {{end}}
+        {{if .User.CanScore .Tournament.ID}}
+        <a href="/tournaments/{{.Tournament.ID}}/score/games">Score Games</a>
+        {{end}}
+      {{end}}
     {{end}}
-    {{if .User.CanScore .Tournament.ID}}
-    | Score Games
+    {{if .User.LoggedIn}}
+    <a href="/create-tournament">+ New Tournament</a>
     {{end}}
-  {{end}}
+  </div>
+  <div class="tw-nav-user">
+    {{if .User.LoggedIn}}
+    <span class="tw-username">{{.User.Name}}</span>
+    <form method="post" action="/logout" style="margin:0">{{.CSRFField}}<button type="submit" class="tw-btn-logout">Log out</button></form>
+    {{else}}
+    <a href="/login" style="color:var(--tw-muted);font-size:0.875rem">Log in</a>
+    <a href="/register" class="tw-btn-register">Register</a>
+    {{end}}
+  </div>
+</nav>
+{{if .Tournament.ID}}
+<div class="tw-breadcrumb">
+  <a href="/">Tournaments</a> &rsaquo; <strong>{{.Tournament.Name}}</strong><span class="tw-sport-tag">{{.Tournament.Sport}}</span>
+</div>
 {{end}}
-{{if .User.LoggedIn}}
-| <a href="/create-tournament">Create Tournament</a>
-| {{.User.Name}} (<form method="post" action="/logout" style="display:inline">{{.CSRFField}}<input type="submit" value="Log out"></form>)
-{{else}}
-| <a href="/login">Log in</a> | <a href="/register">Register</a>
-{{end}}
-{{if .Tournament.ID}}<br><strong>{{.Tournament.Name}}</strong> — {{.Tournament.Sport}}{{end}}
-<br><hr>
+<div class="tw-content">
 {{end}}
 
 {{define "footer"}}
-<br><hr>Powered by <a href="https://github.com/Harnish/tourneyweb">TourneyWeb</a>
+</div>
+<div class="tw-footer">
+  Powered by <a href="https://github.com/Harnish/tourneyweb">TourneyWeb</a>
+</div>
 </body></html>
 {{end}}
