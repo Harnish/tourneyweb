@@ -311,6 +311,33 @@ func TestFakeDB_RunsAllowedInHeadToHead(t *testing.T) {
 	if ok {
 		t.Error("expected found=false for teams that never played")
 	}
+
+	// Multi-game: add a second game, Red 2 Blue 4
+	db.AddGame(tid, did, red.ID, blue.ID, "", time.Time{}, "")
+	var secondGameID int
+	for _, g := range db.AllGamesByDivision(did) {
+		if !db.IsGameScored(g.ID) {
+			secondGameID = g.ID
+			break
+		}
+	}
+	if secondGameID == 0 {
+		t.Fatal("could not find second unscored game")
+	}
+	db.ScoreGame(secondGameID, 2, 4) // Red 2, Blue 4
+
+	// Red has now allowed 3+4=7 vs Blue; Blue has allowed 5+2=7 vs Red
+	ra, ok = db.RunsAllowedInHeadToHead(red.ID, blue.ID)
+	if !ok {
+		t.Error("expected found=true after two games (Red vs Blue)")
+	}
+	if ra != 7 {
+		t.Errorf("Red allowed vs Blue (2 games): got %d, want 7", ra)
+	}
+	ra, ok = db.RunsAllowedInHeadToHead(blue.ID, red.ID)
+	if ra != 7 {
+		t.Errorf("Blue allowed vs Red (2 games): got %d, want 7", ra)
+	}
 }
 
 func TestFakeDB_TournamentLocations(t *testing.T) {
