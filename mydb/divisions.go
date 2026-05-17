@@ -44,14 +44,30 @@ func (me *MyDB) DelDivision(id int) {
 }
 
 func (me *MyDB) UpdateDivision(id int, name string, criteria []string) {
-	b, _ := json.Marshal(criteria)
+	var critVal interface{}
+	if !criteriaEqualDefault(criteria) {
+		b, _ := json.Marshal(criteria)
+		critVal = string(b)
+	}
 	_, err := me.DB.Exec(
 		`UPDATE divisions SET name=$1, ranking_criteria=$2 WHERE id=$3`,
-		name, string(b), id,
+		name, critVal, id,
 	)
 	if err != nil {
 		slog.Error("UpdateDivision", "err", err)
 	}
+}
+
+func criteriaEqualDefault(c []string) bool {
+	if len(c) != len(DefaultRankingCriteria) {
+		return false
+	}
+	for i := range c {
+		if c[i] != DefaultRankingCriteria[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (me *MyDB) ReturnDivisions(tournamentID int) []Division {
