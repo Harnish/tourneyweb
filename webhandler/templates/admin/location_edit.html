@@ -12,13 +12,17 @@
 <tr><td>Longitude</td><td><input type="text" name="longitude" id="lng_edit" value="{{.Location.Longitude}}"></td></tr>
 </table>
 <p>Click the map to reposition the pin:</p>
-<div id="edit-map" style="height:400px;width:600px;margin-bottom:0.5em;"></div>
+<div id="edit-map" style="height:400px;width:100%;max-width:700px;margin-bottom:0.5em;"></div>
 <input type="submit" value="Save"> &nbsp; <a href="/admin/locations">Cancel</a>
 </form>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
 <script>
-L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
+L.Icon.Default.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 var loc = {{.LocationJSON}};
 var hasPin = loc.lat !== 0 || loc.lng !== 0;
 var center = hasPin ? [loc.lat, loc.lng] : [39, -98];

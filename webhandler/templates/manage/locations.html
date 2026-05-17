@@ -1,17 +1,21 @@
 {{define "manageLocations"}}
 {{template "header" .}}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <h1>Locations — {{.Tournament.Name}}</h1>
-<h2>Add Location/Field</h2>
+<h2>Add Location / Field</h2>
 <form method="post" action="/tournaments/{{.Tournament.ID}}/manage/locations">
 {{.CSRFField}}
 <table>
   <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
   <tr><td>Address</td><td><input type="text" name="address"></td></tr>
-  <tr><td>Latitude</td><td><input type="number" step="any" name="latitude" value="0"></td></tr>
-  <tr><td>Longitude</td><td><input type="number" step="any" name="longitude" value="0"></td></tr>
-  <tr><td></td><td><input type="submit" value="Add Location"></td></tr>
+  <tr><td>Latitude</td><td><input type="text" name="latitude" id="lat_add" value="0"></td></tr>
+  <tr><td>Longitude</td><td><input type="text" name="longitude" id="lng_add" value="0"></td></tr>
 </table>
+<p>Click the map to place a pin (optional):</p>
+<div id="add-map" style="height:300px;width:100%;max-width:700px;margin-bottom:0.5em;"></div>
+<input type="submit" value="Add Location">
 </form>
+
 <h2>Existing Locations</h2>
 {{if .Locations}}
 <table border="1" cellpadding="4" cellspacing="0">
@@ -33,6 +37,26 @@
 {{else}}
 <p>No locations yet.</p>
 {{end}}
-<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back to manage</a></p>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage" class="tw-back">&larr; Back to manage</a></p>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
+<script>
+L.Icon.Default.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+var addMap = L.map('add-map').setView([39, -98], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(addMap);
+var addMarker = null;
+addMap.on('click', function(e) {
+  if (addMarker) addMap.removeLayer(addMarker);
+  addMarker = L.marker(e.latlng).addTo(addMap);
+  document.getElementById('lat_add').value = e.latlng.lat.toFixed(6);
+  document.getElementById('lng_add').value = e.latlng.lng.toFixed(6);
+});
+</script>
 {{template "footer" .}}
 {{end}}

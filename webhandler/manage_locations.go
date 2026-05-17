@@ -1,7 +1,9 @@
 package webhandler
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 
@@ -51,9 +53,11 @@ func (me *Env) ManageLocationEdit(w http.ResponseWriter, r *http.Request, ps htt
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/locations", t.ID), http.StatusSeeOther)
 		return
 	}
+	j, _ := json.Marshal(loc)
 	me.render(w, "manageLocationEdit", manageLocationEditData{
-		baseData: newBaseWithTournament(r, t),
-		Location: loc,
+		baseData:     newBaseWithTournament(r, t),
+		Location:     loc,
+		LocationJSON: template.JS(j),
 	})
 }
 

@@ -301,7 +301,8 @@ type manageLocationsData struct {
 
 type manageLocationEditData struct {
 	baseData
-	Location mydb.Location
+	Location     mydb.Location
+	LocationJSON template.JS
 }
 
 type manageCreateGameData struct {
