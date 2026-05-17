@@ -262,6 +262,57 @@ func TestFakeDB_VerificationCodes(t *testing.T) {
 	}
 }
 
+func TestFakeDB_RunsAllowedInHeadToHead(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
+	db.AddDivision(tid, "12U")
+	divs := db.ReturnDivisions(tid)
+	did := divs[0].ID
+
+	db.AddTeam(tid, did, "Red", "")
+	db.AddTeam(tid, did, "Blue", "")
+	db.AddTeam(tid, did, "Green", "")
+	teams := db.ReturnTeamsByDivisionID(did)
+	var red, blue, green mydb.Team
+	for _, t2 := range teams {
+		switch t2.Name {
+		case "Red":
+			red = t2
+		case "Blue":
+			blue = t2
+		case "Green":
+			green = t2
+		}
+	}
+
+	db.AddGame(tid, did, red.ID, blue.ID, "", time.Time{}, "")
+	games := db.AllGamesByDivision(did)
+	db.ScoreGame(games[0].ID, 5, 3) // Red 5, Blue 3
+
+	// Red allowed 3 runs vs Blue; Blue allowed 5 runs vs Red
+	ra, ok := db.RunsAllowedInHeadToHead(red.ID, blue.ID)
+	if !ok {
+		t.Error("expected found=true for Red vs Blue")
+	}
+	if ra != 3 {
+		t.Errorf("Red allowed vs Blue: got %d, want 3", ra)
+	}
+
+	ra, ok = db.RunsAllowedInHeadToHead(blue.ID, red.ID)
+	if !ok {
+		t.Error("expected found=true for Blue vs Red")
+	}
+	if ra != 5 {
+		t.Errorf("Blue allowed vs Red: got %d, want 5", ra)
+	}
+
+	// Teams that never played: found=false
+	_, ok = db.RunsAllowedInHeadToHead(red.ID, green.ID)
+	if ok {
+		t.Error("expected found=false for teams that never played")
+	}
+}
+
 func TestFakeDB_TournamentLocations(t *testing.T) {
 	db := mydb.NewFakeDB()
 	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
