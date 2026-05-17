@@ -152,7 +152,7 @@ func (me *MyDB) DeleteTeamScore(gameID int) {
 func (me *MyDB) DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool) {
 	var teamAScore, teamBScore int
 	err := me.DB.QueryRow(
-		`SELECT team_score, opponent_score FROM games_by_team WHERE team_id=$1 AND opponent_id=$2`,
+		`SELECT team_score, opponent_score FROM games_by_team WHERE team_id=$1 AND opponent_id=$2 LIMIT 1`,
 		teamAID, teamBID,
 	).Scan(&teamAScore, &teamBScore)
 	if err == sql.ErrNoRows {
