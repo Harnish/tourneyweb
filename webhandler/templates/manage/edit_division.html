@@ -7,6 +7,19 @@
 <table>
   <tr><td>Name</td><td><input type="text" name="name" value="{{.Division.Name}}" required></td></tr>
 </table>
+<h3>Standings Ranking Order</h3>
+<p>Check criteria to include them. Use ↑/↓ to set the tiebreaker order (top = first tiebreaker).</p>
+<ul id="ranking-list" style="list-style:none;padding:0;max-width:500px;">
+{{range .AllCriteria}}
+<li style="display:flex;align-items:center;gap:0.5em;margin-bottom:0.3em;padding:0.5em 0.75em;background:var(--tw-bg-card, #f9f9f9);border:1px solid var(--tw-border, #ddd);border-radius:4px;">
+  <input type="checkbox" value="{{.Key}}"{{if .Checked}} checked{{end}}>
+  <span style="flex:1">{{.Label}}</span>
+  <button type="button" onclick="moveUp(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;">↑</button>
+  <button type="button" onclick="moveDown(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;">↓</button>
+</li>
+{{end}}
+</ul>
+<input type="hidden" name="ranking_criteria" id="ranking_criteria_input">
 <h3>Division Rules</h3>
 <p>Optional. If left empty, the tournament rules (if any) will be shown on this division's public page.</p>
 <div id="editor" style="height:300px;margin-bottom:1em;"></div>
@@ -35,7 +48,23 @@ document.getElementById('division-form').addEventListener('submit', function() {
   var html = quill.root.innerHTML;
   if (html === '<p><br></p>') html = '';
   document.getElementById('rules_html_input').value = html;
+  var checks = document.querySelectorAll('#ranking-list input[type=checkbox]');
+  var active = [];
+  checks.forEach(function(cb) {
+    if (cb.checked) active.push(cb.value);
+  });
+  document.getElementById('ranking_criteria_input').value = active.join(',');
 });
+function moveUp(btn) {
+  var li = btn.closest('li');
+  var prev = li.previousElementSibling;
+  if (prev) li.parentNode.insertBefore(li, prev);
+}
+function moveDown(btn) {
+  var li = btn.closest('li');
+  var next = li.nextElementSibling;
+  if (next) li.parentNode.insertBefore(next, li);
+}
 </script>
 {{template "footer" .}}
 {{end}}

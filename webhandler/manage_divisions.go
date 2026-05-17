@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
@@ -54,14 +55,26 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 			http.Error(w, "Division name required", http.StatusBadRequest)
 			return
 		}
-		me.DB.UpdateDivision(did, name, mydb.DefaultRankingCriteria)
+		criteriaStr := r.FormValue("ranking_criteria")
+		var criteria []string
+		for _, k := range strings.Split(criteriaStr, ",") {
+			k = strings.TrimSpace(k)
+			if _, ok := criteriaRegistry[k]; ok {
+				criteria = append(criteria, k)
+			}
+		}
+		if len(criteria) == 0 {
+			criteria = mydb.DefaultRankingCriteria
+		}
+		me.DB.UpdateDivision(did, name, criteria)
 		me.DB.SetDivisionRules(did, r.FormValue("rules_html"))
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
 	me.render(w, "manageDivisionEdit", manageDivisionEditData{
-		baseData: newBaseWithTournament(r, t),
-		Division: division,
+		baseData:    newBaseWithTournament(r, t),
+		Division:    division,
+		AllCriteria: AllCriteriaForUI(division.RankingCriteria),
 	})
 }
 

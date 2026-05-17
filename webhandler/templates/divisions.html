@@ -17,6 +17,9 @@
 </tr>
 {{end}}
 </table>
+{{if .RankingLabel}}
+<p style="font-size:0.85em;color:#888;margin-top:0.25em;">Ranked by: {{.RankingLabel}}</p>
+{{end}}
 <h2>Games</h2>
 <table>
 <tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Home Team Score</th><th>Away Team Score</th></tr>
