@@ -58,16 +58,20 @@ type CriterionUIRow struct {
 // AllCriteriaForUI returns all criteria for the edit form: active ones first
 // (in configured order, checked=true), then remaining ones (checked=false).
 func AllCriteriaForUI(active []string) []CriterionUIRow {
-	activeSet := make(map[string]bool, len(active))
-	for _, k := range active {
-		activeSet[k] = true
-	}
+	seen := make(map[string]bool, len(active))
 	var rows []CriterionUIRow
 	for _, k := range active {
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		if _, ok := criteriaLabels[k]; !ok {
+			continue
+		}
 		rows = append(rows, CriterionUIRow{Key: k, Label: criteriaLabels[k], Checked: true})
 	}
 	for _, k := range orderedCriteriaKeys {
-		if !activeSet[k] {
+		if !seen[k] {
 			rows = append(rows, CriterionUIRow{Key: k, Label: criteriaLabels[k], Checked: false})
 		}
 	}
@@ -201,11 +205,11 @@ func criterionRunsFor(a, b mydb.Team, _ mydb.DB) int {
 }
 
 func criterionHeadToHeadRunsAgainst(a, b mydb.Team, db mydb.DB) int {
-	raA, played := db.RunsAllowedInHeadToHead(a.ID, b.ID)
-	if !played {
+	raA, playedA := db.RunsAllowedInHeadToHead(a.ID, b.ID)
+	raB, playedB := db.RunsAllowedInHeadToHead(b.ID, a.ID)
+	if !playedA || !playedB {
 		return 0
 	}
-	raB, _ := db.RunsAllowedInHeadToHead(b.ID, a.ID)
 	if raA < raB {
 		return -1
 	}
