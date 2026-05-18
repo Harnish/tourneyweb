@@ -104,16 +104,28 @@ func (me *Env) ManageGenerateGames(w http.ResponseWriter, r *http.Request, ps ht
 		minutesBetween = 120
 	}
 	location := r.FormValue("location")
-	double := r.FormValue("round_type") == "double"
 	interval := time.Duration(minutesBetween) * time.Minute
 	current := startTime
-	for i := 0; i < len(teams); i++ {
-		for j := i + 1; j < len(teams); j++ {
-			me.DB.AddGame(t.ID, did, teams[i].ID, teams[j].ID, location, current, "")
+
+	maxGames, _ := strconv.Atoi(r.FormValue("max_games_per_team"))
+	if maxGames > 0 {
+		for _, spec := range cappedSchedule(teams, maxGames) {
+			gid := me.DB.AddGame(t.ID, did, spec.homeTeamID, spec.awayTeamID, location, current, "")
+			if spec.scrimmageFor != 0 {
+				me.DB.SetGameScrimmage(gid, spec.scrimmageFor)
+			}
 			current = current.Add(interval)
-			if double {
-				me.DB.AddGame(t.ID, did, teams[j].ID, teams[i].ID, location, current, "")
+		}
+	} else {
+		double := r.FormValue("round_type") == "double"
+		for i := 0; i < len(teams); i++ {
+			for j := i + 1; j < len(teams); j++ {
+				me.DB.AddGame(t.ID, did, teams[i].ID, teams[j].ID, location, current, "")
 				current = current.Add(interval)
+				if double {
+					me.DB.AddGame(t.ID, did, teams[j].ID, teams[i].ID, location, current, "")
+					current = current.Add(interval)
+				}
 			}
 		}
 	}
