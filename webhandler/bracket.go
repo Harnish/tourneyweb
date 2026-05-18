@@ -12,16 +12,6 @@ import (
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
 
-// Suppress "imported and not used" errors for imports needed by later tasks.
-var (
-	_ = http.StatusOK
-	_ = strconv.Atoi
-	_ = strings.Split
-	_ = time.Time{}
-	_ httprouter.Params
-	_ mydb.Bracket
-)
-
 func nextPowerOf2(n int) int {
 	if n <= 1 {
 		return 1
@@ -127,4 +117,135 @@ func generateBracket(db mydb.DB, bracketID int) {
 			db.SetBracketGameBottomTeam(parent.ID, winner)
 		}
 	}
+}
+
+func (me *Env) ManageBracketStart(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
+	if err != nil {
+		http.Error(w, "bad division id", http.StatusBadRequest)
+		return
+	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.TournamentID != t.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if div.Phase != "pool" {
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions/%d/bracket/seed", t.ID, did), http.StatusSeeOther)
+		return
+	}
+
+	teams := me.DB.ReturnTeamsByDivisionIDWithStats(div.ID)
+	teams = me.SortTeams(teams, div.RankingCriteria)
+
+	size := nextPowerOf2(len(teams))
+	if size < 2 {
+		size = 2
+	}
+	bracketID := me.DB.CreateBracket(div.ID, "single_elimination", size)
+	for i, team := range teams {
+		me.DB.AddBracketSeed(bracketID, i+1, team.ID)
+	}
+	for i := len(teams) + 1; i <= size; i++ {
+		me.DB.AddBracketSeed(bracketID, i, 0)
+	}
+	me.DB.SetDivisionPhase(div.ID, "bracket")
+	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions/%d/bracket/seed", t.ID, did), http.StatusSeeOther)
+}
+
+func (me *Env) ManageBracketSeed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
+	if err != nil {
+		http.Error(w, "bad division id", http.StatusBadRequest)
+		return
+	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.TournamentID != t.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	bracket := me.DB.GetBracketByDivisionID(did)
+	if bracket.ID == 0 {
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		orderStr := r.FormValue("seed_order")
+		var teamIDs []int
+		for _, s := range strings.Split(orderStr, ",") {
+			s = strings.TrimSpace(s)
+			id, err := strconv.Atoi(s)
+			if err != nil || id <= 0 {
+				continue
+			}
+			teamIDs = append(teamIDs, id)
+		}
+		// Append byes to fill bracket size
+		byeCount := bracket.Size - len(teamIDs)
+		for i := 0; i < byeCount; i++ {
+			teamIDs = append(teamIDs, 0)
+		}
+		me.DB.UpdateBracketSeeds(bracket.ID, teamIDs)
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions/%d/bracket/seed", t.ID, did), http.StatusSeeOther)
+		return
+	}
+
+	seeds := me.DB.GetBracketSeeds(bracket.ID)
+	me.render(w, "bracketSeed", manageBracketSeedData{
+		baseData: newBaseWithTournament(r, t),
+		Division: div,
+		Bracket:  bracket,
+		Seeds:    seeds,
+	})
+}
+
+func (me *Env) ManageBracketLock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
+	if err != nil {
+		http.Error(w, "bad division id", http.StatusBadRequest)
+		return
+	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.TournamentID != t.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	bracket := me.DB.GetBracketByDivisionID(did)
+	if bracket.ID == 0 || bracket.Status != "seeding" {
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
+		return
+	}
+
+	me.DB.SetBracketStatus(bracket.ID, "active")
+	generateBracket(me.DB, bracket.ID)
+
+	// Create placeholder games for all matchups that are immediately ready.
+	for _, bg := range me.DB.GetBracketGames(bracket.ID) {
+		if bg.WinnerTeamID != 0 {
+			continue // already decided (bye advancement)
+		}
+		if bg.TopTeamID == 0 || bg.BottomTeamID == 0 {
+			continue // TBD
+		}
+		if bg.GameID != 0 {
+			continue // already has a game
+		}
+		gid := me.DB.AddGame(div.TournamentID, div.ID, bg.TopTeamID, bg.BottomTeamID, "", time.Time{}, "")
+		me.DB.SetBracketGameGameID(bg.ID, gid)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 }

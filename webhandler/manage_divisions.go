@@ -26,9 +26,20 @@ func (me *Env) ManageDivisions(w http.ResponseWriter, r *http.Request, ps httpro
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
+	divisions := me.DB.ReturnDivisions(t.ID)
+	brackets := make(map[int]mydb.Bracket)
+	for _, d := range divisions {
+		if d.Phase == "bracket" {
+			b := me.DB.GetBracketByDivisionID(d.ID)
+			if b.ID != 0 {
+				brackets[d.ID] = b
+			}
+		}
+	}
 	me.render(w, "manageDivisions", manageDivisionsData{
 		baseData:      newBaseWithTournament(r, t),
-		Divisions:     me.DB.ReturnDivisions(t.ID),
+		Divisions:     divisions,
+		Brackets:      brackets,
 		DisableDelete: me.DisableDelete,
 	})
 }

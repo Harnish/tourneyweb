@@ -273,6 +273,7 @@ type managePublishData struct {
 type manageDivisionsData struct {
 	baseData
 	Divisions     []mydb.Division
+	Brackets      map[int]mydb.Bracket // division ID → bracket
 	DisableDelete bool
 }
 
@@ -280,6 +281,13 @@ type manageDivisionEditData struct {
 	baseData
 	Division    mydb.Division
 	AllCriteria []CriterionUIRow
+}
+
+type manageBracketSeedData struct {
+	baseData
+	Division mydb.Division
+	Bracket  mydb.Bracket
+	Seeds    []mydb.BracketSeed
 }
 
 type manageTeamsData struct {

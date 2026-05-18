@@ -12,10 +12,30 @@
 <h2>Existing Divisions</h2>
 {{if .Divisions}}
 <table border="1" cellpadding="4" cellspacing="0">
-<tr><th>Name</th><th>Games</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+<tr><th>Name</th><th>Phase</th><th>Bracket</th><th>Games</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
 {{range .Divisions}}
 <tr>
   <td>{{.Name}}</td>
+  <td>{{.Phase}}</td>
+  <td>
+    {{if eq .Phase "pool"}}
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/bracket/start" style="display:inline;">
+      {{$.CSRFField}}
+      <button type="submit">Start Bracket</button>
+    </form>
+    {{else}}
+      {{with index $.Brackets .ID}}
+        {{if eq .Status "seeding"}}
+          <a href="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.DivisionID}}/bracket/seed">Edit Seeds</a>
+        {{else}}
+          <span>{{.Status}}</span>
+          &middot; <a href="/tournaments/{{$.Tournament.ID}}/divisions/{{.DivisionID}}/bracket">View</a>
+        {{end}}
+      {{else}}
+        —
+      {{end}}
+    {{end}}
+  </td>
   <td><a href="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/games/new">Manage Games</a></td>
   <td><a href="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/edit">Edit</a></td>
   {{if not $.DisableDelete}}<td>
