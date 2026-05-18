@@ -179,6 +179,10 @@ func (me *Env) ManageBracketSeed(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	if r.Method == http.MethodPost {
+		if bracket.Status != "seeding" {
+			http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
+			return
+		}
 		orderStr := r.FormValue("seed_order")
 		var teamIDs []int
 		for _, s := range strings.Split(orderStr, ",") {
@@ -189,8 +193,13 @@ func (me *Env) ManageBracketSeed(w http.ResponseWriter, r *http.Request, ps http
 			}
 			teamIDs = append(teamIDs, id)
 		}
-		// Append byes to fill bracket size
+		// Clamp to bracket size in case of oversized submission (form tampering).
 		byeCount := bracket.Size - len(teamIDs)
+		if byeCount < 0 {
+			teamIDs = teamIDs[:bracket.Size]
+			byeCount = 0
+		}
+		// Append byes to fill bracket size
 		for i := 0; i < byeCount; i++ {
 			teamIDs = append(teamIDs, 0)
 		}
