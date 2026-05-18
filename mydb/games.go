@@ -50,18 +50,20 @@ func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 	return out
 }
 
-func (me *MyDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
+func (me *MyDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) int {
 	var st interface{}
 	if !startTime.IsZero() {
 		st = startTime
 	}
-	_, err := me.DB.Exec(
-		`INSERT INTO games (tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+	var id int
+	err := me.DB.QueryRow(
+		`INSERT INTO games (tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
 		tournamentID, divisionID, homeTeamID, awayTeamID, location, st, umpire,
-	)
+	).Scan(&id)
 	if err != nil {
 		slog.Error("AddGame", "err", err)
 	}
+	return id
 }
 
 func (me *MyDB) AllGamesByDivision(divisionID int) []Game {

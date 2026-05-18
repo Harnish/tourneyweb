@@ -3,6 +3,7 @@ package mydb
 import (
 	"database/sql"
 	"errors"
+	"sort"
 	"sync"
 	"time"
 )
@@ -23,6 +24,9 @@ type FakeDB struct {
 	loginAttempts map[string]LoginAttempt
 	verifCodes    []fakeVerifCode
 	news          []NewsItem
+	brackets      map[int]Bracket
+	bracketSeeds  []BracketSeed
+	bracketGames  map[int]BracketGame
 }
 
 type gameByTeamRow struct {
@@ -54,6 +58,8 @@ func NewFakeDB() *FakeDB {
 		invitations:   make(map[int]Invitation),
 		locations:     make(map[int]Location),
 		loginAttempts: make(map[string]LoginAttempt),
+		brackets:      make(map[int]Bracket),
+		bracketGames:  make(map[int]BracketGame),
 	}
 }
 
@@ -222,6 +228,7 @@ func (f *FakeDB) AddDivision(tournamentID int, name string) {
 		TournamentID:    tournamentID,
 		Name:            name,
 		RankingCriteria: DefaultRankingCriteria,
+		Phase:           "pool",
 	}
 }
 
@@ -424,7 +431,7 @@ func (f *FakeDB) GamesPlayedByTeam(id int) int {
 
 // --- Games ---
 
-func (f *FakeDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
+func (f *FakeDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
@@ -438,6 +445,7 @@ func (f *FakeDB) AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, l
 		Start:        startTime,
 		Umpire:       umpire,
 	}
+	return id
 }
 
 func (f *FakeDB) AllGamesByDivision(divisionID int) []Game {
@@ -1023,5 +1031,214 @@ func (f *FakeDB) DeleteNews(id int) {
 			f.news = append(f.news[:i], f.news[i+1:]...)
 			return
 		}
+	}
+}
+
+// --- Brackets ---
+
+func (f *FakeDB) CreateBracket(divisionID int, format string, size int) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	f.brackets[id] = Bracket{ID: id, DivisionID: divisionID, Format: format, Status: "seeding", Size: size}
+	return id
+}
+
+func (f *FakeDB) GetBracketByID(id int) Bracket {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.brackets[id]
+}
+
+func (f *FakeDB) GetBracketByDivisionID(divisionID int) Bracket {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, b := range f.brackets {
+		if b.DivisionID == divisionID {
+			return b
+		}
+	}
+	return Bracket{}
+}
+
+func (f *FakeDB) SetBracketStatus(bracketID int, status string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if b, ok := f.brackets[bracketID]; ok {
+		b.Status = status
+		f.brackets[bracketID] = b
+	}
+}
+
+func (f *FakeDB) AddBracketSeed(bracketID, seed, teamID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	name := ""
+	if t, ok := f.teams[teamID]; ok {
+		name = t.Name
+	}
+	f.bracketSeeds = append(f.bracketSeeds, BracketSeed{ID: id, BracketID: bracketID, Seed: seed, TeamID: teamID, TeamName: name})
+}
+
+func (f *FakeDB) GetBracketSeeds(bracketID int) []BracketSeed {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []BracketSeed
+	for _, s := range f.bracketSeeds {
+		if s.BracketID == bracketID {
+			out = append(out, s)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Seed < out[j].Seed })
+	return out
+}
+
+func (f *FakeDB) UpdateBracketSeeds(bracketID int, teamIDs []int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var remaining []BracketSeed
+	for _, s := range f.bracketSeeds {
+		if s.BracketID != bracketID {
+			remaining = append(remaining, s)
+		}
+	}
+	f.bracketSeeds = remaining
+	for i, tid := range teamIDs {
+		id := f.newID()
+		name := ""
+		if t, ok := f.teams[tid]; ok {
+			name = t.Name
+		}
+		f.bracketSeeds = append(f.bracketSeeds, BracketSeed{ID: id, BracketID: bracketID, Seed: i + 1, TeamID: tid, TeamName: name})
+	}
+}
+
+func (f *FakeDB) AddBracketGame(bracketID, round, position int) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	f.bracketGames[id] = BracketGame{ID: id, BracketID: bracketID, Round: round, Position: position}
+	return id
+}
+
+func (f *FakeDB) SetBracketGameTeams(id, topTeamID, bottomTeamID int, topIsBye, bottomIsBye bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if bg, ok := f.bracketGames[id]; ok {
+		bg.TopTeamID = topTeamID
+		bg.BottomTeamID = bottomTeamID
+		bg.TopIsBye = topIsBye
+		bg.BottomIsBye = bottomIsBye
+		if t, ok2 := f.teams[topTeamID]; ok2 {
+			bg.TopTeamName = t.Name
+		}
+		if t, ok2 := f.teams[bottomTeamID]; ok2 {
+			bg.BottomTeamName = t.Name
+		}
+		f.bracketGames[id] = bg
+	}
+}
+
+func (f *FakeDB) SetBracketGameTopTeam(id, teamID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if bg, ok := f.bracketGames[id]; ok {
+		bg.TopTeamID = teamID
+		if t, ok2 := f.teams[teamID]; ok2 {
+			bg.TopTeamName = t.Name
+		}
+		f.bracketGames[id] = bg
+	}
+}
+
+func (f *FakeDB) SetBracketGameBottomTeam(id, teamID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if bg, ok := f.bracketGames[id]; ok {
+		bg.BottomTeamID = teamID
+		if t, ok2 := f.teams[teamID]; ok2 {
+			bg.BottomTeamName = t.Name
+		}
+		f.bracketGames[id] = bg
+	}
+}
+
+func (f *FakeDB) SetBracketGameWinner(id, winnerTeamID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if bg, ok := f.bracketGames[id]; ok {
+		bg.WinnerTeamID = winnerTeamID
+		if t, ok2 := f.teams[winnerTeamID]; ok2 {
+			bg.WinnerTeamName = t.Name
+		}
+		f.bracketGames[id] = bg
+	}
+}
+
+func (f *FakeDB) SetBracketGameGameID(id, gameID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if bg, ok := f.bracketGames[id]; ok {
+		bg.GameID = gameID
+		if g, ok2 := f.games[gameID]; ok2 {
+			bg.Game = g
+		}
+		f.bracketGames[id] = bg
+	}
+}
+
+func (f *FakeDB) GetBracketGameByID(id int) BracketGame {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.bracketGames[id]
+}
+
+func (f *FakeDB) GetBracketGameByGameID(gameID int) BracketGame {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, bg := range f.bracketGames {
+		if bg.GameID == gameID {
+			return bg
+		}
+	}
+	return BracketGame{}
+}
+
+func (f *FakeDB) GetBracketGameByRoundPosition(bracketID, round, position int) BracketGame {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, bg := range f.bracketGames {
+		if bg.BracketID == bracketID && bg.Round == round && bg.Position == position {
+			return bg
+		}
+	}
+	return BracketGame{}
+}
+
+func (f *FakeDB) GetBracketGames(bracketID int) []BracketGame {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []BracketGame
+	for _, bg := range f.bracketGames {
+		if bg.BracketID == bracketID {
+			out = append(out, bg)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Round != out[j].Round {
+			return out[i].Round < out[j].Round
+		}
+		return out[i].Position < out[j].Position
+	})
+	return out
+}
+
+func (f *FakeDB) SetDivisionPhase(id int, phase string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if d, ok := f.divisions[id]; ok {
+		d.Phase = phase
+		f.divisions[id] = d
 	}
 }

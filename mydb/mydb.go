@@ -169,6 +169,32 @@ var pgmigrations = []string{
 	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS rules_html TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE divisions  ADD COLUMN IF NOT EXISTS rules_html TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS ranking_criteria TEXT`,
+	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS phase TEXT NOT NULL DEFAULT 'pool'`,
+	`CREATE TABLE IF NOT EXISTS brackets (
+		id            SERIAL PRIMARY KEY,
+		division_id   INT NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
+		format        TEXT NOT NULL DEFAULT 'single_elimination',
+		status        TEXT NOT NULL DEFAULT 'seeding',
+		size          INT  NOT NULL
+	)`,
+	`CREATE TABLE IF NOT EXISTS bracket_seeds (
+		id          SERIAL PRIMARY KEY,
+		bracket_id  INT NOT NULL REFERENCES brackets(id) ON DELETE CASCADE,
+		seed        INT NOT NULL,
+		team_id     INT
+	)`,
+	`CREATE TABLE IF NOT EXISTS bracket_games (
+		id               SERIAL PRIMARY KEY,
+		bracket_id       INT  NOT NULL REFERENCES brackets(id) ON DELETE CASCADE,
+		round            INT  NOT NULL,
+		position         INT  NOT NULL,
+		top_team_id      INT,
+		bottom_team_id   INT,
+		top_is_bye       BOOL NOT NULL DEFAULT false,
+		bottom_is_bye    BOOL NOT NULL DEFAULT false,
+		game_id          INT,
+		winner_team_id   INT
+	)`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {

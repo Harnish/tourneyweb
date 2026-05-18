@@ -16,6 +16,7 @@ type Division struct {
 	Name            string
 	RulesHTML       string
 	RankingCriteria []string
+	Phase           string
 }
 
 func parseCriteria(s sql.NullString) []string {
@@ -72,7 +73,7 @@ func criteriaEqualDefault(c []string) bool {
 
 func (me *MyDB) ReturnDivisions(tournamentID int) []Division {
 	rows, err := me.DB.Query(
-		`SELECT id, tournament_id, name, rules_html, ranking_criteria FROM divisions WHERE tournament_id=$1 ORDER BY name`,
+		`SELECT id, tournament_id, name, rules_html, ranking_criteria, COALESCE(phase,'pool') FROM divisions WHERE tournament_id=$1 ORDER BY name`,
 		tournamentID,
 	)
 	if err != nil {
@@ -83,7 +84,7 @@ func (me *MyDB) ReturnDivisions(tournamentID int) []Division {
 	for rows.Next() {
 		var d Division
 		var crit sql.NullString
-		if err := rows.Scan(&d.ID, &d.TournamentID, &d.Name, &d.RulesHTML, &crit); err != nil {
+		if err := rows.Scan(&d.ID, &d.TournamentID, &d.Name, &d.RulesHTML, &crit, &d.Phase); err != nil {
 			slog.Error("ReturnDivisions scan", "err", err)
 			continue
 		}
@@ -98,8 +99,8 @@ func (me *MyDB) ReturnDivisionByID(id int) Division {
 	var d Division
 	var crit sql.NullString
 	err := me.DB.QueryRow(
-		`SELECT id, tournament_id, name, rules_html, ranking_criteria FROM divisions WHERE id=$1`, id,
-	).Scan(&d.ID, &d.TournamentID, &d.Name, &d.RulesHTML, &crit)
+		`SELECT id, tournament_id, name, rules_html, ranking_criteria, COALESCE(phase,'pool') FROM divisions WHERE id=$1`, id,
+	).Scan(&d.ID, &d.TournamentID, &d.Name, &d.RulesHTML, &crit, &d.Phase)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error("ReturnDivisionByID", "err", err)
 	}
@@ -111,5 +112,12 @@ func (me *MyDB) SetDivisionRules(id int, html string) {
 	_, err := me.DB.Exec(`UPDATE divisions SET rules_html=$1 WHERE id=$2`, html, id)
 	if err != nil {
 		slog.Error("SetDivisionRules", "err", err)
+	}
+}
+
+func (me *MyDB) SetDivisionPhase(id int, phase string) {
+	_, err := me.DB.Exec(`UPDATE divisions SET phase=$1 WHERE id=$2`, phase, id)
+	if err != nil {
+		slog.Error("SetDivisionPhase", "err", err)
 	}
 }

@@ -25,6 +25,7 @@ type DB interface {
 	SetDivisionRules(id int, html string)
 	ReturnDivisions(tournamentID int) []Division
 	ReturnDivisionByID(id int) Division
+	SetDivisionPhase(id int, phase string)
 
 	// Teams
 	AddTeam(tournamentID, divisionID int, name, coach string)
@@ -41,7 +42,7 @@ type DB interface {
 	GamesPlayedByTeam(id int) int
 
 	// Games
-	AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string)
+	AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) int
 	AllGamesByDivision(divisionID int) []Game
 	AllGamesByTeam(teamID int) []Game
 	ReturnGameByID(gameID int) Game
@@ -84,6 +85,25 @@ type DB interface {
 	GetLocationsByTournamentID(tournamentID int) []Location
 	UpdateLocation(id int, name, address, availableFor string, lat, lng float64)
 	DelLocation(id int)
+
+	// Brackets
+	CreateBracket(divisionID int, format string, size int) int
+	GetBracketByID(id int) Bracket
+	GetBracketByDivisionID(divisionID int) Bracket
+	SetBracketStatus(bracketID int, status string)
+	AddBracketSeed(bracketID, seed, teamID int)
+	GetBracketSeeds(bracketID int) []BracketSeed
+	UpdateBracketSeeds(bracketID int, teamIDs []int)
+	AddBracketGame(bracketID, round, position int) int
+	SetBracketGameTeams(id, topTeamID, bottomTeamID int, topIsBye, bottomIsBye bool)
+	SetBracketGameTopTeam(id, teamID int)
+	SetBracketGameBottomTeam(id, teamID int)
+	SetBracketGameWinner(id, winnerTeamID int)
+	SetBracketGameGameID(id, gameID int)
+	GetBracketGameByID(id int) BracketGame
+	GetBracketGameByGameID(gameID int) BracketGame
+	GetBracketGameByRoundPosition(bracketID, round, position int) BracketGame
+	GetBracketGames(bracketID int) []BracketGame
 
 	// News
 	AddNews(tournamentID int, title, body string, authorID int) int
