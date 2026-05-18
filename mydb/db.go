@@ -50,6 +50,7 @@ type DB interface {
 	UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string)
 	AllGames(tournamentID int) []Game
 	ScoreGame(gid, hscore, ascore int)
+	SetGameScrimmage(gameID, teamID int)
 	DeleteTeamScore(gameID int)
 	AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int)
 	DidTeamABeatTeamB(teamAID, teamBID int) (bool, bool)

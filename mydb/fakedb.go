@@ -519,6 +519,15 @@ func (f *FakeDB) AllGames(tournamentID int) []Game {
 	return out
 }
 
+func (f *FakeDB) SetGameScrimmage(gameID, teamID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if g, ok := f.games[gameID]; ok {
+		g.ScrimmageTeamID = teamID
+		f.games[gameID] = g
+	}
+}
+
 func (f *FakeDB) ScoreGame(gid, hscore, ascore int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -531,10 +540,16 @@ func (f *FakeDB) ScoreGame(gid, hscore, ascore int) {
 	g.Scored = true
 	f.games[gid] = g
 	f.removeGamesByTeamLocked(gid)
-	f.gamesByTeam = append(f.gamesByTeam,
-		gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.HomeTeam.ID, opponentID: g.AwayTeam.ID, gameID: gid, teamScore: hscore, opponentScore: ascore},
-		gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.AwayTeam.ID, opponentID: g.HomeTeam.ID, gameID: gid, teamScore: ascore, opponentScore: hscore},
-	)
+	if g.ScrimmageTeamID != g.HomeTeam.ID {
+		f.gamesByTeam = append(f.gamesByTeam,
+			gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.HomeTeam.ID, opponentID: g.AwayTeam.ID, gameID: gid, teamScore: hscore, opponentScore: ascore},
+		)
+	}
+	if g.ScrimmageTeamID != g.AwayTeam.ID {
+		f.gamesByTeam = append(f.gamesByTeam,
+			gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.AwayTeam.ID, opponentID: g.HomeTeam.ID, gameID: gid, teamScore: ascore, opponentScore: hscore},
+		)
+	}
 }
 
 func (f *FakeDB) DeleteTeamScore(gameID int) {

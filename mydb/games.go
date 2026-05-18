@@ -15,12 +15,13 @@ type Game struct {
 	Location     string
 	Start        time.Time
 	Umpire       string
-	AwayScore    int
-	HomeScore    int
-	Scored       bool
+	AwayScore        int
+	HomeScore        int
+	Scored           bool
+	ScrimmageTeamID  int // team ID for whom this game doesn't count; 0 = counts for both
 }
 
-const gameSelect = `SELECT id, tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire, home_score, away_score FROM games`
+const gameSelect = `SELECT id, tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire, home_score, away_score, COALESCE(scrimmage_team_id,0) FROM games`
 
 func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 	var out []Game
@@ -29,7 +30,7 @@ func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 		var hid, aid, did int
 		var homeScore, awayScore sql.NullInt64
 		var startTime sql.NullTime
-		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &startTime, &g.Umpire, &homeScore, &awayScore); err != nil {
+		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &startTime, &g.Umpire, &homeScore, &awayScore, &g.ScrimmageTeamID); err != nil {
 			slog.Error("scanGames", "err", err)
 			continue
 		}
@@ -101,6 +102,13 @@ func (me *MyDB) DelGame(id int) {
 	me.DB.Exec(`DELETE FROM games WHERE id=$1`, id)
 }
 
+func (me *MyDB) SetGameScrimmage(gameID, teamID int) {
+	_, err := me.DB.Exec(`UPDATE games SET scrimmage_team_id=$1 WHERE id=$2`, teamID, gameID)
+	if err != nil {
+		slog.Error("SetGameScrimmage", "err", err)
+	}
+}
+
 func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
 	var st interface{}
 	if !startTime.IsZero() {
@@ -143,8 +151,12 @@ func (me *MyDB) ScoreGame(gid, hscore, ascore int) {
 	}
 	game := me.ReturnGameByID(gid)
 	me.DeleteTeamScore(game.ID)
-	me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
-	me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
+	if game.ScrimmageTeamID != game.HomeTeam.ID {
+		me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, hscore, ascore)
+	}
+	if game.ScrimmageTeamID != game.AwayTeam.ID {
+		me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, ascore, hscore)
+	}
 }
 
 func (me *MyDB) DeleteTeamScore(gameID int) {
