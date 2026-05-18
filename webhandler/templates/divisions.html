@@ -28,8 +28,8 @@
 <tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Home Team Score</th><th>Away Team Score</th></tr>
 {{range .Games}}
 <tr>
-  <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}</td>
-  <td>{{.AwayTeam.Name}} {{.AwayTeam.Coach}}</td>
+  <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .HomeTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
+  <td>{{.AwayTeam.Name}} {{.AwayTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .AwayTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
   <td>{{.Location}}</td>
   <td>{{formatTime .Start}}</td>
   <td>{{.Umpire}}</td>
