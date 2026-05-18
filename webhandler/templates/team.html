@@ -5,8 +5,8 @@
 <tr><th>Home</th><th>Away</th><th>Location</th><th>Start time</th><th>Umpire</th></tr>
 {{range .Games}}
 <tr>
-  <td>{{.HomeTeam.Name}}</td>
-  <td>{{.AwayTeam.Name}}</td>
+  <td>{{.HomeTeam.Name}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .HomeTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
+  <td>{{.AwayTeam.Name}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .AwayTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
   <td>{{.Location}}</td>
   <td>{{formatTime .Start}}</td>
   <td>{{.Umpire}}</td>

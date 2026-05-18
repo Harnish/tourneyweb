@@ -5,9 +5,9 @@
 {{range .Games}}
 <tr>
   <td>{{.Division.Name}}</td>
-  <td>{{.HomeTeam.Name}} - {{.HomeTeam.Coach}}</td>
+  <td>{{.HomeTeam.Name}} - {{.HomeTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .HomeTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
   <td>{{.HomeScore}}</td>
-  <td>{{.AwayTeam.Name}} - {{.AwayTeam.Coach}}</td>
+  <td>{{.AwayTeam.Name}} - {{.AwayTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .AwayTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
   <td>{{.AwayScore}}</td>
   <td>{{.Location}}</td>
   <td>{{formatTime .Start}}</td>

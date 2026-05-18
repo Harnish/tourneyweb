@@ -54,6 +54,7 @@
       <option value="double">Double (each pair plays home &amp; away)</option>
     </select>
   </td></tr>
+  <tr><td>Max Games Per Team</td><td><input type="number" name="max_games_per_team" min="1" placeholder="leave blank for full round-robin" style="width:180px"> <small style="color:#888;">(overrides round robin type)</small></td></tr>
   <tr><td></td><td><input type="submit" value="Generate Schedule" onclick="return confirm('Generate {{len .Teams}} team round-robin? Existing games will not be removed.')"></td></tr>
 </table>
 </form>
