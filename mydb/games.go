@@ -126,8 +126,12 @@ func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location 
 	game := me.ReturnGameByID(id)
 	if game.Scored {
 		me.DeleteTeamScore(id)
-		me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, game.HomeScore, game.AwayScore)
-		me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, game.AwayScore, game.HomeScore)
+		if game.ScrimmageTeamID != game.HomeTeam.ID {
+			me.AddTeamScore(game.TournamentID, game.Division.ID, game.HomeTeam.ID, game.AwayTeam.ID, game.ID, game.HomeScore, game.AwayScore)
+		}
+		if game.ScrimmageTeamID != game.AwayTeam.ID {
+			me.AddTeamScore(game.TournamentID, game.Division.ID, game.AwayTeam.ID, game.HomeTeam.ID, game.ID, game.AwayScore, game.HomeScore)
+		}
 	}
 }
 

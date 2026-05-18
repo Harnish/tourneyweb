@@ -44,6 +44,47 @@ func TestSetGameScrimmage_SkipsStatsForScrimmageTeam(t *testing.T) {
 	}
 }
 
+func TestUpdateGame_PreservesScrimmageAfterEdit(t *testing.T) {
+	db := NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "here", "", time.Time{}, "active")
+	db.AddDivision(tid, "12U")
+	var did int
+	for id := range db.divisions {
+		did = id
+	}
+	db.AddTeam(tid, did, "Eagles", "")
+	db.AddTeam(tid, did, "Cubs", "")
+	var teamIDs []int
+	for id := range db.teams {
+		teamIDs = append(teamIDs, id)
+	}
+	homeID, awayID := teamIDs[0], teamIDs[1]
+
+	gid := db.AddGame(tid, did, homeID, awayID, "field1", time.Time{}, "")
+	db.SetGameScrimmage(gid, awayID)
+	db.ScoreGame(gid, 5, 2)
+
+	// Edit game (location change) — this triggers rescoring in UpdateGame
+	db.UpdateGame(gid, did, homeID, awayID, "field2", time.Time{}, "")
+
+	allTeams := db.ReturnTeamsByDivisionIDWithStats(did)
+	var homeWins, awayLosses int
+	for _, tm := range allTeams {
+		if tm.ID == homeID {
+			homeWins = tm.Wins
+		}
+		if tm.ID == awayID {
+			awayLosses = tm.Losses
+		}
+	}
+	if homeWins != 1 {
+		t.Errorf("home team: want 1 win after edit, got %d", homeWins)
+	}
+	if awayLosses != 0 {
+		t.Errorf("scrimmage team: want 0 losses after edit, got %d", awayLosses)
+	}
+}
+
 func TestSetGameScrimmage_BothTeamsCountWhenNoScrimmage(t *testing.T) {
 	db := NewFakeDB()
 	tid := db.AddTournament("T", "baseball", "here", "", time.Time{}, "active")

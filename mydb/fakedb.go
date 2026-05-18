@@ -500,10 +500,16 @@ func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location
 	f.games[id] = g
 	if g.Scored {
 		f.removeGamesByTeamLocked(id)
-		f.gamesByTeam = append(f.gamesByTeam,
-			gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.HomeTeam.ID, opponentID: g.AwayTeam.ID, gameID: id, teamScore: g.HomeScore, opponentScore: g.AwayScore},
-			gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.AwayTeam.ID, opponentID: g.HomeTeam.ID, gameID: id, teamScore: g.AwayScore, opponentScore: g.HomeScore},
-		)
+		if g.ScrimmageTeamID != g.HomeTeam.ID {
+			f.gamesByTeam = append(f.gamesByTeam,
+				gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.HomeTeam.ID, opponentID: g.AwayTeam.ID, gameID: id, teamScore: g.HomeScore, opponentScore: g.AwayScore},
+			)
+		}
+		if g.ScrimmageTeamID != g.AwayTeam.ID {
+			f.gamesByTeam = append(f.gamesByTeam,
+				gameByTeamRow{id: f.newID(), tournamentID: g.TournamentID, divisionID: g.Division.ID, teamID: g.AwayTeam.ID, opponentID: g.HomeTeam.ID, gameID: id, teamScore: g.AwayScore, opponentScore: g.HomeScore},
+			)
+		}
 	}
 }
 
