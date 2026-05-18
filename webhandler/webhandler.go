@@ -304,11 +304,15 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 	me.DB.ScoreGame(gid, hscore, ascore)
 	if hscore != ascore {
 		game := me.DB.ReturnGameByID(gid)
-		winnerID := game.HomeTeam.ID
-		if ascore > hscore {
-			winnerID = game.AwayTeam.ID
+		if game.ID == 0 {
+			slog.Error("RecordScore: could not re-fetch game after scoring", "gid", gid)
+		} else {
+			winnerID := game.HomeTeam.ID
+			if ascore > hscore {
+				winnerID = game.AwayTeam.ID
+			}
+			me.AdvanceBracket(gid, winnerID)
 		}
-		me.AdvanceBracket(gid, winnerID)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }

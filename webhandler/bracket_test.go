@@ -141,3 +141,37 @@ func TestAdvanceBracket_FinalCompletes(t *testing.T) {
 		t.Fatal("bracket should be complete after final is scored")
 	}
 }
+
+func TestAdvanceBracket_BottomSlot(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "here", "", time.Time{}, "active")
+	db.AddDivision(tid, "12U")
+	did := db.ReturnDivisions(tid)[0].ID
+	db.AddTeam(tid, did, "Eagles", "")
+	db.AddTeam(tid, did, "Cubs", "")
+	teamList := db.ReturnTeamsByDivisionID(did)
+	env := &Env{DB: db}
+
+	bid := db.CreateBracket(did, "single_elimination", 4)
+	db.SetBracketStatus(bid, "active")
+
+	// Round 1, position 2 (even → bottom slot of parent)
+	bg2 := db.AddBracketGame(bid, 1, 2)
+	db.SetBracketGameTeams(bg2, teamList[0].ID, teamList[1].ID, false, false)
+	// Final (round 2, position 1)
+	finalID := db.AddBracketGame(bid, 2, 1)
+
+	gid := db.AddGame(tid, did, teamList[0].ID, teamList[1].ID, "", time.Time{}, "")
+	db.SetBracketGameGameID(bg2, gid)
+	db.ScoreGame(gid, 5, 2)
+
+	env.AdvanceBracket(gid, teamList[0].ID)
+
+	finalState := db.GetBracketGameByID(finalID)
+	if finalState.BottomTeamID != teamList[0].ID {
+		t.Errorf("final bottom team: got %d, want %d", finalState.BottomTeamID, teamList[0].ID)
+	}
+	if finalState.TopTeamID != 0 {
+		t.Errorf("final top team should still be 0 (TBD), got %d", finalState.TopTeamID)
+	}
+}

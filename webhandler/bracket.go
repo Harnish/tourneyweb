@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"net/http"
 	"strconv"
@@ -262,6 +263,11 @@ func (me *Env) ManageBracketLock(w http.ResponseWriter, r *http.Request, ps http
 func (me *Env) AdvanceBracket(gameID, winnerTeamID int) {
 	bg := me.DB.GetBracketGameByGameID(gameID)
 	if bg.ID == 0 {
+		return
+	}
+	if bg.WinnerTeamID != 0 {
+		slog.Error("AdvanceBracket: game already advanced, re-scoring not supported",
+			"bracketGameID", bg.ID, "existingWinner", bg.WinnerTeamID, "newWinner", winnerTeamID)
 		return
 	}
 
