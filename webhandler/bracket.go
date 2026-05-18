@@ -258,3 +258,36 @@ func (me *Env) ManageBracketLock(w http.ResponseWriter, r *http.Request, ps http
 
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 }
+
+func (me *Env) AdvanceBracket(gameID, winnerTeamID int) {
+	bg := me.DB.GetBracketGameByGameID(gameID)
+	if bg.ID == 0 {
+		return
+	}
+
+	me.DB.SetBracketGameWinner(bg.ID, winnerTeamID)
+
+	parentRound := bg.Round + 1
+	parentPos := (bg.Position + 1) / 2
+	parent := me.DB.GetBracketGameByRoundPosition(bg.BracketID, parentRound, parentPos)
+	if parent.ID == 0 {
+		// This was the final — mark bracket complete.
+		me.DB.SetBracketStatus(bg.BracketID, "complete")
+		return
+	}
+
+	if bg.Position%2 == 1 {
+		me.DB.SetBracketGameTopTeam(parent.ID, winnerTeamID)
+	} else {
+		me.DB.SetBracketGameBottomTeam(parent.ID, winnerTeamID)
+	}
+
+	// If parent now has both teams and no game yet, create a placeholder game.
+	parent = me.DB.GetBracketGameByID(parent.ID)
+	if parent.TopTeamID != 0 && parent.BottomTeamID != 0 && parent.GameID == 0 {
+		bracket := me.DB.GetBracketByID(bg.BracketID)
+		div := me.DB.ReturnDivisionByID(bracket.DivisionID)
+		gid := me.DB.AddGame(div.TournamentID, div.ID, parent.TopTeamID, parent.BottomTeamID, "", time.Time{}, "")
+		me.DB.SetBracketGameGameID(parent.ID, gid)
+	}
+}

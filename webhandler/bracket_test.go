@@ -3,6 +3,9 @@ package webhandler
 import (
 	"reflect"
 	"testing"
+	"time"
+
+	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
 
 func TestNextPowerOf2(t *testing.T) {
@@ -67,5 +70,74 @@ func TestRoundLabel(t *testing.T) {
 		if got := roundLabel(c.round, c.total); got != c.want {
 			t.Errorf("roundLabel(%d,%d) = %q, want %q", c.round, c.total, got, c.want)
 		}
+	}
+}
+
+func TestAdvanceBracket_BasicWin(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "here", "", time.Time{}, "active")
+	db.AddDivision(tid, "12U")
+	did := db.ReturnDivisions(tid)[0].ID
+
+	for _, name := range []string{"Eagles", "Cubs", "Yankees", "Mets"} {
+		db.AddTeam(tid, did, name, "")
+	}
+	teamList := db.ReturnTeamsByDivisionID(did)
+
+	env := &Env{DB: db}
+
+	bid := db.CreateBracket(did, "single_elimination", 4)
+	db.SetBracketStatus(bid, "active")
+
+	// Round 1, position 1: team0 vs team1
+	bg1 := db.AddBracketGame(bid, 1, 1)
+	db.SetBracketGameTeams(bg1, teamList[0].ID, teamList[1].ID, false, false)
+	// Round 1, position 2: team2 vs team3
+	db.AddBracketGame(bid, 1, 2)
+	// Round 2 (final), position 1: TBD
+	finalID := db.AddBracketGame(bid, 2, 1)
+
+	gid := db.AddGame(tid, did, teamList[0].ID, teamList[1].ID, "", time.Time{}, "")
+	db.SetBracketGameGameID(bg1, gid)
+	db.ScoreGame(gid, 5, 2) // teamList[0] wins (home)
+
+	env.AdvanceBracket(gid, teamList[0].ID)
+
+	// bg1 should have winner set
+	bg1state := db.GetBracketGameByID(bg1)
+	if bg1state.WinnerTeamID != teamList[0].ID {
+		t.Errorf("bg1 winner: got %d, want %d", bg1state.WinnerTeamID, teamList[0].ID)
+	}
+
+	// Final's top slot should be filled (position 1 is odd → top)
+	finalState := db.GetBracketGameByID(finalID)
+	if finalState.TopTeamID != teamList[0].ID {
+		t.Errorf("final top team: got %d, want %d", finalState.TopTeamID, teamList[0].ID)
+	}
+}
+
+func TestAdvanceBracket_FinalCompletes(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "here", "", time.Time{}, "active")
+	db.AddDivision(tid, "12U")
+	did := db.ReturnDivisions(tid)[0].ID
+	db.AddTeam(tid, did, "Eagles", "")
+	db.AddTeam(tid, did, "Cubs", "")
+	teamList := db.ReturnTeamsByDivisionID(did)
+	env := &Env{DB: db}
+
+	// 2-team bracket: single final game
+	bid := db.CreateBracket(did, "single_elimination", 2)
+	db.SetBracketStatus(bid, "active")
+	finalBGID := db.AddBracketGame(bid, 1, 1)
+	db.SetBracketGameTeams(finalBGID, teamList[0].ID, teamList[1].ID, false, false)
+	gid := db.AddGame(tid, did, teamList[0].ID, teamList[1].ID, "", time.Time{}, "")
+	db.SetBracketGameGameID(finalBGID, gid)
+	db.ScoreGame(gid, 3, 1)
+
+	env.AdvanceBracket(gid, teamList[0].ID)
+
+	if db.GetBracketByID(bid).Status != "complete" {
+		t.Fatal("bracket should be complete after final is scored")
 	}
 }
