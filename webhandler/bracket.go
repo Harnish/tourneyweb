@@ -297,3 +297,58 @@ func (me *Env) AdvanceBracket(gameID, winnerTeamID int) {
 		me.DB.SetBracketGameGameID(parent.ID, gid)
 	}
 }
+
+func (me *Env) PrintBracket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, ok := me.tournamentFromRoute(w, r, ps)
+	if !ok {
+		return
+	}
+	did, err := strconv.Atoi(ps.ByName("did"))
+	if err != nil {
+		http.Error(w, "bad division id", http.StatusBadRequest)
+		return
+	}
+	div := me.DB.ReturnDivisionByID(did)
+	if div.TournamentID != t.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	bracket := me.DB.GetBracketByDivisionID(did)
+	if bracket.ID == 0 {
+		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/divisions/%d", t.ID, did), http.StatusSeeOther)
+		return
+	}
+
+	size := bracket.Size
+	totalRounds := int(math.Log2(float64(size)))
+	if totalRounds == 0 {
+		totalRounds = 1
+	}
+	allGames := me.DB.GetBracketGames(bracket.ID)
+
+	gamesByRound := make(map[int][]mydb.BracketGame)
+	for _, bg := range allGames {
+		gamesByRound[bg.Round] = append(gamesByRound[bg.Round], bg)
+	}
+
+	rounds := make([]bracketRound, totalRounds)
+	for rnd := 1; rnd <= totalRounds; rnd++ {
+		games := gamesByRound[rnd]
+		var connectors []struct{}
+		if rnd > 1 {
+			connectors = make([]struct{}, len(games))
+		}
+		rounds[rnd-1] = bracketRound{
+			Label:      roundLabel(rnd, totalRounds),
+			Games:      games,
+			Connectors: connectors,
+		}
+	}
+
+	me.render(w, "bracket", bracketData{
+		baseData: newBaseWithTournament(r, t),
+		Division: div,
+		Bracket:  bracket,
+		Rounds:   rounds,
+	})
+}

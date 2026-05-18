@@ -1,6 +1,9 @@
 {{define "divisions"}}
 {{template "header" .}}
 <H1>{{.Division.Name}}</H1>
+{{if eq .Division.Phase "bracket"}}
+<p><a href="/tournaments/{{.Tournament.ID}}/divisions/{{.Division.ID}}/bracket">View Bracket →</a></p>
+{{end}}
 <h2>Teams</h2>
 <table>
 <tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th><th>Games Played</th></tr>

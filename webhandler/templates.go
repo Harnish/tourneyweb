@@ -290,6 +290,19 @@ type manageBracketSeedData struct {
 	Seeds    []mydb.BracketSeed
 }
 
+type bracketRound struct {
+	Label      string
+	Games      []mydb.BracketGame
+	Connectors []struct{} // one entry per game; range over to render connector lines
+}
+
+type bracketData struct {
+	baseData
+	Division mydb.Division
+	Bracket  mydb.Bracket
+	Rounds   []bracketRound
+}
+
 type manageTeamsData struct {
 	baseData
 	Divisions       []mydb.Division

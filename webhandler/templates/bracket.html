@@ -1,0 +1,102 @@
+{{define "bracket"}}
+{{template "header" .}}
+<h1>{{.Division.Name}} — Bracket</h1>
+<p style="color:#666;font-size:0.9em;">Single elimination · {{.Bracket.Size}}-team bracket</p>
+
+<style>
+.bracket { display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:1em; }
+.b-round-wrap { display:flex; flex-direction:column; }
+.b-round-label { font-size:0.7em; text-transform:uppercase; letter-spacing:0.07em; color:#888; font-weight:600; text-align:center; margin-bottom:0.5em; white-space:nowrap; }
+.b-round { display:flex; flex-direction:column; justify-content:space-evenly; flex:1; gap:12px; }
+.matchup { display:flex; flex-direction:column; }
+.team-slot {
+  border:1px solid #d0d4dc; background:#fff; padding:6px 10px;
+  font-size:0.82em; width:150px; display:flex; justify-content:space-between;
+  align-items:center; gap:0.4em; box-sizing:border-box;
+}
+.team-slot:first-child { border-radius:4px 4px 0 0; border-bottom:none; }
+.team-slot:last-child  { border-radius:0 0 4px 4px; }
+.team-slot.winner { background:#eff6ff; border-color:#2563eb; font-weight:600; color:#1d4ed8; }
+.team-slot.tbd    { background:#fafafa; color:#aaa; font-style:italic; border-style:dashed; }
+.team-slot.bye    { background:#f3f4f6; color:#999; border-style:dashed; }
+.score { font-size:0.75em; color:#666; }
+.score.win { color:#2563eb; font-weight:700; }
+.connector-col { display:flex; flex-direction:column; justify-content:space-evenly; width:24px; }
+.connector { display:flex; flex-direction:column; flex:1; min-height:40px; }
+.connector-top    { flex:1; border-right:2px solid #ccc; border-bottom:2px solid #ccc; border-radius:0 0 4px 0; }
+.connector-bottom { flex:1; border-right:2px solid #ccc; border-top:2px solid #ccc; border-radius:0 4px 0 0; }
+.champion-box { border:2px solid #d97706; background:#fffbeb; padding:10px 14px; border-radius:6px; text-align:center; font-size:0.85em; color:#92400e; font-weight:700; min-width:80px; }
+</style>
+
+<div class="bracket">
+{{range $ri, $round := .Rounds}}
+  {{if $ri}}
+  <div class="connector-col">
+    {{range $round.Connectors}}
+    <div class="connector">
+      <div class="connector-top"></div>
+      <div class="connector-bottom"></div>
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <div class="b-round-wrap">
+    <div class="b-round-label">{{$round.Label}}</div>
+    <div class="b-round">
+    {{range $round.Games}}
+      <div class="matchup">
+        {{if .TopIsBye}}
+        <div class="team-slot bye">— bye —</div>
+        {{else if .TopTeamID}}
+          {{if and .WinnerTeamID (eq .WinnerTeamID .TopTeamID)}}
+          <div class="team-slot winner">
+            <span>{{.TopTeamName}}</span>
+            {{if .Game.Scored}}<span class="score win">{{.Game.HomeScore}}</span>{{end}}
+          </div>
+          {{else}}
+          <div class="team-slot">
+            <span>{{.TopTeamName}}</span>
+            {{if .Game.Scored}}<span class="score">{{.Game.HomeScore}}</span>{{end}}
+          </div>
+          {{end}}
+        {{else}}
+        <div class="team-slot tbd">TBD</div>
+        {{end}}
+
+        {{if .BottomIsBye}}
+        <div class="team-slot bye">— bye —</div>
+        {{else if .BottomTeamID}}
+          {{if and .WinnerTeamID (eq .WinnerTeamID .BottomTeamID)}}
+          <div class="team-slot winner">
+            <span>{{.BottomTeamName}}</span>
+            {{if .Game.Scored}}<span class="score win">{{.Game.AwayScore}}</span>{{end}}
+          </div>
+          {{else}}
+          <div class="team-slot">
+            <span>{{.BottomTeamName}}</span>
+            {{if .Game.Scored}}<span class="score">{{.Game.AwayScore}}</span>{{end}}
+          </div>
+          {{end}}
+        {{else}}
+        <div class="team-slot tbd">TBD</div>
+        {{end}}
+      </div>
+    {{end}}
+    </div>
+  </div>
+{{end}}
+
+  {{if eq .Bracket.Status "complete"}}
+  <div style="display:flex;align-items:center;padding-left:8px;">
+    <div style="width:20px;border-top:2px solid #d97706;"></div>
+  </div>
+  <div style="display:flex;align-items:center;">
+    <div class="champion-box">&#127942;<br>Champion</div>
+  </div>
+  {{end}}
+</div>
+
+<p><a href="/tournaments/{{.Tournament.ID}}/divisions/{{.Division.ID}}">← Back to Division</a></p>
+{{template "footer" .}}
+{{end}}

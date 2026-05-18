@@ -71,6 +71,7 @@ func main() {
 	router.POST("/create-tournament", wh.NewTournament)
 	router.GET("/tournaments/:tid", wh.TournamentHome)
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
+	router.GET("/tournaments/:tid/divisions/:did/bracket", wh.PrintBracket)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
 	router.GET("/tournaments/:tid/games", wh.Games)
 	router.GET("/tournaments/:tid/extras", wh.TournamentExtras)
