@@ -175,8 +175,10 @@ var pgmigrations = []string{
 		division_id   INT NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
 		format        TEXT NOT NULL DEFAULT 'single_elimination',
 		status        TEXT NOT NULL DEFAULT 'seeding',
-		size          INT  NOT NULL
+		size          INT  NOT NULL,
+		UNIQUE (division_id)
 	)`,
+	`ALTER TABLE brackets ADD CONSTRAINT IF NOT EXISTS brackets_division_id_key UNIQUE (division_id)`,
 	`CREATE TABLE IF NOT EXISTS bracket_seeds (
 		id          SERIAL PRIMARY KEY,
 		bracket_id  INT NOT NULL REFERENCES brackets(id) ON DELETE CASCADE,
