@@ -243,15 +243,7 @@ func (me *MyDB) GetBracketGameByRoundPosition(bracketID, round, position int) Br
 	return bg
 }
 
-func (me *MyDB) GetBracketGames(bracketID int) []BracketGame {
-	rows, err := me.DB.Query(
-		bracketGameSelect+` WHERE bg.bracket_id=$1 ORDER BY bg.round, bg.position`,
-		bracketID,
-	)
-	if err != nil {
-		slog.Error("GetBracketGames", "err", err)
-		return nil
-	}
+func (me *MyDB) scanBracketGames(rows *sql.Rows) []BracketGame {
 	var out []BracketGame
 	for rows.Next() {
 		var bg BracketGame
@@ -262,7 +254,7 @@ func (me *MyDB) GetBracketGames(bracketID int) []BracketGame {
 			&bg.GameID, &bg.WinnerTeamID,
 			&bg.TopTeamName, &bg.BottomTeamName, &bg.WinnerTeamName,
 		); err != nil {
-			slog.Error("GetBracketGames scan", "err", err)
+			slog.Error("scanBracketGames", "err", err)
 			continue
 		}
 		if bg.GameID != 0 {
@@ -272,4 +264,16 @@ func (me *MyDB) GetBracketGames(bracketID int) []BracketGame {
 	}
 	rows.Close()
 	return out
+}
+
+func (me *MyDB) GetBracketGames(bracketID int) []BracketGame {
+	rows, err := me.DB.Query(
+		bracketGameSelect+` WHERE bg.bracket_id=$1 ORDER BY bg.round, bg.position`,
+		bracketID,
+	)
+	if err != nil {
+		slog.Error("GetBracketGames", "err", err)
+		return nil
+	}
+	return me.scanBracketGames(rows)
 }

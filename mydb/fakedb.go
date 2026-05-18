@@ -1181,9 +1181,6 @@ func (f *FakeDB) SetBracketGameGameID(id, gameID int) {
 	defer f.mu.Unlock()
 	if bg, ok := f.bracketGames[id]; ok {
 		bg.GameID = gameID
-		if g, ok2 := f.games[gameID]; ok2 {
-			bg.Game = g
-		}
 		f.bracketGames[id] = bg
 	}
 }
@@ -1191,7 +1188,13 @@ func (f *FakeDB) SetBracketGameGameID(id, gameID int) {
 func (f *FakeDB) GetBracketGameByID(id int) BracketGame {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.bracketGames[id]
+	bg := f.bracketGames[id]
+	if bg.GameID != 0 {
+		if g, ok := f.games[bg.GameID]; ok {
+			bg.Game = g
+		}
+	}
+	return bg
 }
 
 func (f *FakeDB) GetBracketGameByGameID(gameID int) BracketGame {
@@ -1199,6 +1202,9 @@ func (f *FakeDB) GetBracketGameByGameID(gameID int) BracketGame {
 	defer f.mu.Unlock()
 	for _, bg := range f.bracketGames {
 		if bg.GameID == gameID {
+			if g, ok := f.games[bg.GameID]; ok {
+				bg.Game = g
+			}
 			return bg
 		}
 	}
@@ -1210,6 +1216,11 @@ func (f *FakeDB) GetBracketGameByRoundPosition(bracketID, round, position int) B
 	defer f.mu.Unlock()
 	for _, bg := range f.bracketGames {
 		if bg.BracketID == bracketID && bg.Round == round && bg.Position == position {
+			if bg.GameID != 0 {
+				if g, ok := f.games[bg.GameID]; ok {
+					bg.Game = g
+				}
+			}
 			return bg
 		}
 	}
@@ -1222,6 +1233,11 @@ func (f *FakeDB) GetBracketGames(bracketID int) []BracketGame {
 	var out []BracketGame
 	for _, bg := range f.bracketGames {
 		if bg.BracketID == bracketID {
+			if bg.GameID != 0 {
+				if g, ok := f.games[bg.GameID]; ok {
+					bg.Game = g
+				}
+			}
 			out = append(out, bg)
 		}
 	}
