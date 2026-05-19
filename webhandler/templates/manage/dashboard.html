@@ -17,6 +17,52 @@
   <li><a href="/tournaments/{{.Tournament.ID}}/manage/news">News</a></li>
   {{if .IsDraft}}<li><a href="/tournaments/{{.Tournament.ID}}/manage/publish">Publish Tournament</a></li>{{end}}
 </ul>
+
+<h2>Default Division Ranking Order</h2>
+{{if eq .Tournament.Status "published"}}
+<p style="color:#888;font-size:0.9rem">Ranking order is locked after publishing.</p>
+{{else}}
+  {{if .HasDivisions}}
+  <p style="font-size:0.9rem;color:#666">This updates the default for new divisions only — existing divisions must be edited manually.</p>
+  {{end}}
+{{end}}
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage" id="dashboard-form">
+{{.CSRFField}}
+<p>Check criteria to include them. Use ↑/↓ to set the tiebreaker order (top = first tiebreaker).</p>
+<ul id="ranking-list" style="list-style:none;padding:0;max-width:500px;">
+{{range .AllCriteria}}
+<li style="display:flex;align-items:center;gap:0.5em;margin-bottom:0.3em;padding:0.5em 0.75em;background:var(--tw-bg-card,#f9f9f9);border:1px solid var(--tw-border,#ddd);border-radius:4px;">
+  <input type="checkbox" value="{{.Key}}"{{if .Checked}} checked{{end}}{{if eq $.Tournament.Status "published"}} disabled{{end}}>
+  <span style="flex:1">{{.Label}}</span>
+  <button type="button" onclick="moveUp(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;"{{if eq $.Tournament.Status "published"}} disabled{{end}}>↑</button>
+  <button type="button" onclick="moveDown(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;"{{if eq $.Tournament.Status "published"}} disabled{{end}}>↓</button>
+</li>
+{{end}}
+</ul>
+<input type="hidden" name="default_ranking_criteria" id="dashboard_ranking_input">
+{{if ne .Tournament.Status "published"}}
+<input type="submit" value="Save Default Ranking">
+{{end}}
+</form>
+
 <p style="margin-top:1.25rem"><a href="/tournaments/{{.Tournament.ID}}" class="tw-back">&larr; View Public Page</a></p>
+<script>
+document.getElementById('dashboard-form').addEventListener('submit', function() {
+  var checks = document.querySelectorAll('#ranking-list input[type=checkbox]');
+  var active = [];
+  checks.forEach(function(cb) { if (cb.checked) active.push(cb.value); });
+  document.getElementById('dashboard_ranking_input').value = active.join(',');
+});
+function moveUp(btn) {
+  var li = btn.closest('li');
+  var prev = li.previousElementSibling;
+  if (prev) li.parentNode.insertBefore(li, prev);
+}
+function moveDown(btn) {
+  var li = btn.closest('li');
+  var next = li.nextElementSibling;
+  if (next) li.parentNode.insertBefore(next, li);
+}
+</script>
 {{template "footer" .}}
 {{end}}

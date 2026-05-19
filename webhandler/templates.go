@@ -278,7 +278,9 @@ type errorData struct {
 
 type manageDashboardData struct {
 	baseData
-	IsDraft bool
+	IsDraft      bool
+	AllCriteria  []CriterionUIRow
+	HasDivisions bool
 }
 
 type managePublishData struct {
