@@ -116,5 +116,6 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		baseData: newBaseWithTournament(r, t),
 		Team:     team,
 		Games:    me.DB.AllGamesByTeam(tid),
+		Players:  me.DB.GetPlayersByTeamID(tid),
 	})
 }

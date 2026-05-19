@@ -121,8 +121,23 @@ type divisionData struct {
 
 type teamData struct {
 	baseData
-	Team  mydb.Team
-	Games []mydb.Game
+	Team    mydb.Team
+	Games   []mydb.Game
+	Players []mydb.Player
+}
+
+type rosterData struct {
+	baseData
+	Team          mydb.Team
+	Players       []mydb.Player
+	DisableDelete bool
+}
+
+type rosterEditData struct {
+	baseData
+	Team   mydb.Team
+	Player mydb.Player
+	IsNew  bool
 }
 
 type gamesData struct {
