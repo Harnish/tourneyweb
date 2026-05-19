@@ -21,7 +21,10 @@ func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httpro
 			http.Error(w, "Division name required", http.StatusBadRequest)
 			return
 		}
-		me.DB.AddDivision(t.ID, name)
+		divID := me.DB.AddDivision(t.ID, name)
+		if len(t.DefaultRankingCriteria) > 0 {
+			me.DB.UpdateDivision(divID, name, t.DefaultRankingCriteria)
+		}
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
