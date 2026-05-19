@@ -219,6 +219,14 @@ func (f *FakeDB) SetTournamentRules(id int, html string) {
 	}
 }
 
+func (f *FakeDB) SetTournamentDefaultRanking(id int, criteria []string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	t := f.tournaments[id]
+	t.DefaultRankingCriteria = criteria
+	f.tournaments[id] = t
+}
+
 // --- Divisions ---
 
 func (f *FakeDB) AddDivision(tournamentID int, name string) {

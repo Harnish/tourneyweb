@@ -3,29 +3,47 @@ package mydb
 import (
 	"database/sql"
 	"log/slog"
+	"strings"
 	"time"
 )
 
 type Tournament struct {
-	ID         int
-	Name       string
-	Sport      string
-	Location   string
-	StartDate  time.Time
-	Notes      string
-	ExtrasHTML string
-	RulesHTML  string
-	Status     string
+	ID                     int
+	Name                   string
+	Sport                  string
+	Location               string
+	StartDate              time.Time
+	Notes                  string
+	ExtrasHTML             string
+	RulesHTML              string
+	Status                 string
+	DefaultRankingCriteria []string
+}
+
+func parseTournamentRanking(s sql.NullString) []string {
+	if !s.Valid || s.String == "" {
+		return nil
+	}
+	var out []string
+	for _, k := range strings.Split(s.String, ",") {
+		k = strings.TrimSpace(k)
+		if k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 func scanTournaments(rows *sql.Rows) []Tournament {
 	var out []Tournament
 	for rows.Next() {
 		var t Tournament
-		if err := rows.Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes, &t.ExtrasHTML, &t.RulesHTML, &t.Status); err != nil {
+		var defRanking sql.NullString
+		if err := rows.Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes, &t.ExtrasHTML, &t.RulesHTML, &t.Status, &defRanking); err != nil {
 			slog.Error("scanTournaments", "err", err)
 			continue
 		}
+		t.DefaultRankingCriteria = parseTournamentRanking(defRanking)
 		out = append(out, t)
 	}
 	rows.Close()
@@ -46,7 +64,7 @@ func (me *MyDB) AddTournament(name, sport, location, notes string, date time.Tim
 
 func (me *MyDB) ReturnTournaments() []Tournament {
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments ORDER BY start_date DESC`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments ORDER BY start_date DESC`,
 	)
 	if err != nil {
 		slog.Error("ReturnTournaments", "err", err)
@@ -57,18 +75,20 @@ func (me *MyDB) ReturnTournaments() []Tournament {
 
 func (me *MyDB) ReturnTournamentByID(id int) Tournament {
 	var t Tournament
+	var defRanking sql.NullString
 	err := me.DB.QueryRow(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE id=$1`, id,
-	).Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes, &t.ExtrasHTML, &t.RulesHTML, &t.Status)
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE id=$1`, id,
+	).Scan(&t.ID, &t.Name, &t.Sport, &t.Location, &t.StartDate, &t.Notes, &t.ExtrasHTML, &t.RulesHTML, &t.Status, &defRanking)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error("ReturnTournamentByID", "err", err)
 	}
+	t.DefaultRankingCriteria = parseTournamentRanking(defRanking)
 	return t
 }
 
 func (me *MyDB) ReturnTournamentsComingUp() []Tournament {
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE status='published' AND start_date >= CURRENT_DATE AND start_date <= CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE status='published' AND start_date >= CURRENT_DATE AND start_date <= CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC`,
 	)
 	if err != nil {
 		slog.Error("ReturnTournamentsComingUp", "err", err)
@@ -79,7 +99,7 @@ func (me *MyDB) ReturnTournamentsComingUp() []Tournament {
 
 func (me *MyDB) ReturnTournamentsRecent() []Tournament {
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE status='published' AND start_date >= CURRENT_DATE - INTERVAL '7 days' AND start_date < CURRENT_DATE ORDER BY start_date DESC`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE status='published' AND start_date >= CURRENT_DATE - INTERVAL '7 days' AND start_date < CURRENT_DATE ORDER BY start_date DESC`,
 	)
 	if err != nil {
 		slog.Error("ReturnTournamentsRecent", "err", err)
@@ -97,7 +117,7 @@ func (me *MyDB) ReturnTournamentsFuture(page int) ([]Tournament, int) {
 		slog.Error("ReturnTournamentsFuture count", "err", err)
 	}
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE status='published' AND start_date > CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC LIMIT 20 OFFSET $1`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE status='published' AND start_date > CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
 	)
 	if err != nil {
@@ -116,7 +136,7 @@ func (me *MyDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 		slog.Error("ReturnTournamentsPast count", "err", err)
 	}
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE status='published' AND start_date < CURRENT_DATE - INTERVAL '7 days' ORDER BY start_date DESC LIMIT 20 OFFSET $1`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE status='published' AND start_date < CURRENT_DATE - INTERVAL '7 days' ORDER BY start_date DESC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
 	)
 	if err != nil {
@@ -128,7 +148,7 @@ func (me *MyDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 
 func (me *MyDB) ReturnDraftTournaments() []Tournament {
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status FROM tournaments WHERE status='draft' ORDER BY start_date ASC`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria FROM tournaments WHERE status='draft' ORDER BY start_date ASC`,
 	)
 	if err != nil {
 		slog.Error("ReturnDraftTournaments", "err", err)
@@ -162,5 +182,16 @@ func (me *MyDB) SetTournamentRules(id int, html string) {
 	_, err := me.DB.Exec(`UPDATE tournaments SET rules_html=$1 WHERE id=$2`, html, id)
 	if err != nil {
 		slog.Error("SetTournamentRules", "err", err)
+	}
+}
+
+func (me *MyDB) SetTournamentDefaultRanking(id int, criteria []string) {
+	var val interface{}
+	if len(criteria) > 0 {
+		val = strings.Join(criteria, ",")
+	}
+	_, err := me.DB.Exec(`UPDATE tournaments SET default_ranking_criteria=$1 WHERE id=$2`, val, id)
+	if err != nil {
+		slog.Error("SetTournamentDefaultRanking", "err", err)
 	}
 }

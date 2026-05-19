@@ -17,6 +17,7 @@ type DB interface {
 	UpdateTournament(id int, name, sport, location, notes string, date time.Time)
 	SetTournamentExtras(id int, html string)
 	SetTournamentRules(id int, html string)
+	SetTournamentDefaultRanking(id int, criteria []string)
 
 	// Divisions
 	AddDivision(tournamentID int, name string)
