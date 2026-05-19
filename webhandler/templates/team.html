@@ -13,5 +13,19 @@
 </tr>
 {{end}}
 </table>
+{{if .Players}}
+<h2>Roster</h2>
+<table>
+<tr><th>#</th><th>Name</th><th>Handed</th><th>Position</th></tr>
+{{range .Players}}
+<tr>
+  <td>{{.Number}}</td>
+  <td>{{.DisplayName}}</td>
+  <td>{{.Handed}}</td>
+  <td>{{.Position}}</td>
+</tr>
+{{end}}
+</table>
+{{end}}
 {{template "footer" .}}
 {{end}}

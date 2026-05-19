@@ -1,0 +1,29 @@
+{{define "roster"}}
+{{template "header" .}}
+<h1>Roster — {{.Team.Name}}</h1>
+{{if .Players}}
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>#</th><th>Name</th><th>Handed</th><th>Position</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+{{range .Players}}
+<tr>
+  <td>{{.Number}}</td>
+  <td>{{.First}} {{.Last}}</td>
+  <td>{{.Handed}}</td>
+  <td>{{.Position}}</td>
+  <td><a href="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.TeamID}}/roster/{{.ID}}/edit">Edit</a></td>
+  {{if not $.DisableDelete}}<td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.TeamID}}/roster/{{.ID}}/delete" onsubmit="return confirm('Delete this player?')">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete">
+    </form>
+  </td>{{end}}
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No players on roster yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/new">Add Player</a></p>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/teams">Back to Teams</a></p>
+{{template "footer" .}}
+{{end}}

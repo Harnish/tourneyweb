@@ -22,12 +22,13 @@
   {{$teams := index $.TeamsByDivision $did}}
   {{if $teams}}
   <table border="1" cellpadding="4" cellspacing="0">
-  <tr><th>Name</th><th>Coach</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+  <tr><th>Name</th><th>Coach</th><th>Edit</th><th>Roster</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
   {{range $teams}}
   <tr>
     <td>{{.Name}}</td>
     <td>{{.Coach}}</td>
     <td><a href="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.ID}}/edit">Edit</a></td>
+    <td><a href="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.ID}}/roster">Roster</a></td>
     {{if not $.DisableDelete}}<td>
       <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/teams/{{.ID}}/delete" onsubmit="return confirm('Delete this team?')">
         {{$.CSRFField}}

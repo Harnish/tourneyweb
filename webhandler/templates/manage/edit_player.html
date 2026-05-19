@@ -1,0 +1,24 @@
+{{define "rosterEdit"}}
+{{template "header" .}}
+<h1>{{if .IsNew}}Add Player{{else}}Edit Player{{end}} — {{.Team.Name}}</h1>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/{{if not .IsNew}}{{.Player.ID}}/{{end}}{{if .IsNew}}new{{else}}edit{{end}}">
+{{.CSRFField}}
+<table>
+  <tr><td>Jersey #</td><td><input type="text" name="number" value="{{.Player.Number}}"></td></tr>
+  <tr><td>First Name <span style="color:red">*</span></td><td><input type="text" name="first" value="{{.Player.First}}" required></td></tr>
+  <tr><td>Last Name <span style="color:red">*</span></td><td><input type="text" name="last" value="{{.Player.Last}}" required></td></tr>
+  <tr><td>Handed</td><td>
+    <select name="handed">
+      <option value=""{{if eq .Player.Handed ""}} selected{{end}}>—</option>
+      <option value="L"{{if eq .Player.Handed "L"}} selected{{end}}>L</option>
+      <option value="R"{{if eq .Player.Handed "R"}} selected{{end}}>R</option>
+      <option value="S"{{if eq .Player.Handed "S"}} selected{{end}}>S</option>
+    </select>
+  </td></tr>
+  <tr><td>Position</td><td><input type="text" name="position" value="{{.Player.Position}}"></td></tr>
+  <tr><td></td><td><input type="submit" value="Save Player"></td></tr>
+</table>
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster">Back to Roster</a></p>
+{{template "footer" .}}
+{{end}}
