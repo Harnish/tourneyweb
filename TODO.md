@@ -14,7 +14,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
-- **[P2/M]** News UI — the `event_news` table is defined in the schema but has no routes or display
 - **[P3/M]** Client-side table sorting — allow clicking column headers to sort standings and game lists
 - **[P3/L]** Calendar view — display games on a calendar grouped by date
 - **[P3/L]** Bracket/playoff support — see Major Features below
@@ -25,26 +24,10 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 These are multi-sprint architectural additions. Each depends on the ones above it.
 
-### Rankings
-
-- **[P2/M]** Configurable ranking algorithm per division — Tournament Director selects the tiebreaker order from a preset list. Supported criteria (in addition to the two already coded):
-  - Win percentage (wins / games played)
-  - Run differential (runs for minus runs against, capped per game)
-  - Fewest runs allowed per game
-  - Head-to-head record (already partially implemented)
-  - Fewest runs allowed in head-to-head games
-  - Coin flip / random seed as final fallback
-  - Forfeits treated as losses with fixed score (e.g., 7-0)
-  - Store selected algorithm order in DB per division; default to current `WinsRunsAgainstRunsEarnedHead2Head` behavior.
-
 ### Brackets
 
 - **[P2/L]** Visual bracket display — render single-elimination and double-elimination brackets as SVG or structured HTML; seeds drawn from division standings. Tournament Director chooses format per division. Bracket advances automatically when scores are entered.
 - **[P2/M]** Bracket seeding and generation — UI to review auto-seeded bracket, manually adjust seed order via drag-and-drop, then lock and publish.
-
-### Division Rules
-
-- **[P2/M]** Per-division rules editor — Tournament Director can author rules for each division using a rich-text editor; stored as HTML in a TEXT column. Public division page renders rules below the standings.
 
 ### Roster & QR Codes
 
@@ -54,9 +37,6 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 ---
 
 ## Bugs
-
-- **[P1/S]** Map pin not appearing on add/edit location forms — Leaflet click-to-place pin does not render in the admin location forms; likely a container height or JS load order issue
-
 ---
 
 ## Ops / Deployment
@@ -67,6 +47,15 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Default ranking criteria at creation** — Directors/admins set a default division ranking order when creating a tournament; applied automatically to new divisions; locked on publish with admin override; manage dashboard editable until publish
+- **Bracket transition in director views** — Directors can start bracket phase from manage/divisions; Start Bracket button, phase column, and bracket status links added to director manage view
+- **Roster management** — Coaches manage player rosters (name, number, position, handedness); public team pages show condensed roster (first initial + last name); 6 routes under `/tournaments/:tid/manage/teams/:teamid/roster`
+- **Configurable rankings** — Directors configure tiebreaker order per division via ordered checklist (9 criteria: wins, win pct, head-to-head, run diff, runs against, RA/game, runs for, H2H RA, coin flip); stored as JSON in DB; public division page shows "Ranked by: …" label
+- **Map pin fix** — Leaflet marker icon fixed via `L.Icon.Default.mergeOptions()` with explicit CDN URLs; interactive map pickers added to director manage/locations and manage/edit_location forms (previously had only bare lat/lng inputs)
+- **Per-division rules editor** — Tournament Director authors rules per division with Quill WYSIWYG; public division page shows division rules with fallback to tournament-level rules; `rules_html` column on both `divisions` and `tournaments` tables
+- **News UI** — per-tournament news CRUD for directors at `/tournaments/:tid/manage/news`; admin global news at `/admin/news`; public display on tournament home page
+- **Dark navy + gold theme** — full CSS rewrite with custom nav, card/table/form overrides, Bootstrap integration; replaces default Bootstrap look
+- **Public fields page** — `/tournaments/:tid/fields` lists all tournament field locations with Google Maps links; surfaced as a main category on the tournament home page
 - **Tournament Event Extras** — per-tournament freeform page (`/tournaments/:tid/extras`) editable by directors via Quill WYSIWYG at `/tournaments/:tid/manage/extras`; replaces hardcoded `/hrderbyinfo` route; `extras_html` column added to `tournaments` table via migration
 - **Structured logging** — all `log.Println`/`log.Fatalf`/`log.Printf` replaced with `log/slog`; JSON handler set as default in `main()`; request logs include method/path/proto/ip as fields; `github.com/davecgh/go-spew` dependency removed
 - **Proper game start time** — `start_time` migrated from TEXT to TIMESTAMPTZ; forms use `datetime-local` input; displays formatted as "Jan 2, 2006 3:04 PM"; zero value renders as empty string
