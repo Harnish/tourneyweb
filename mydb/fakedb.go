@@ -229,7 +229,7 @@ func (f *FakeDB) SetTournamentDefaultRanking(id int, criteria []string) {
 
 // --- Divisions ---
 
-func (f *FakeDB) AddDivision(tournamentID int, name string) {
+func (f *FakeDB) AddDivision(tournamentID int, name string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
@@ -240,6 +240,7 @@ func (f *FakeDB) AddDivision(tournamentID int, name string) {
 		RankingCriteria: DefaultRankingCriteria,
 		Phase:           "pool",
 	}
+	return id
 }
 
 func (f *FakeDB) DelDivision(id int) {

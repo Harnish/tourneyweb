@@ -20,7 +20,7 @@ type DB interface {
 	SetTournamentDefaultRanking(id int, criteria []string)
 
 	// Divisions
-	AddDivision(tournamentID int, name string)
+	AddDivision(tournamentID int, name string) int
 	DelDivision(id int)
 	UpdateDivision(id int, name string, criteria []string)
 	SetDivisionRules(id int, html string)

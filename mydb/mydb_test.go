@@ -27,3 +27,16 @@ func TestSetTournamentDefaultRankingEmpty(t *testing.T) {
 		t.Errorf("expected nil/empty DefaultRankingCriteria on new tournament, got %v", got.DefaultRankingCriteria)
 	}
 }
+
+func TestAddDivisionReturnsID(t *testing.T) {
+	db := NewFakeDB()
+	tid := db.AddTournament("Test", "Baseball", "Here", "", time.Time{}, "draft")
+	id1 := db.AddDivision(tid, "Division A")
+	if id1 <= 0 {
+		t.Errorf("expected positive ID from AddDivision, got %d", id1)
+	}
+	id2 := db.AddDivision(tid, "Division B")
+	if id2 <= 0 || id2 == id1 {
+		t.Errorf("expected unique positive ID, got %d (first was %d)", id2, id1)
+	}
+}

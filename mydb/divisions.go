@@ -30,14 +30,16 @@ func parseCriteria(s sql.NullString) []string {
 	return out
 }
 
-func (me *MyDB) AddDivision(tournamentID int, name string) {
-	_, err := me.DB.Exec(
-		`INSERT INTO divisions (tournament_id, name) VALUES ($1,$2)`,
+func (me *MyDB) AddDivision(tournamentID int, name string) int {
+	var id int
+	err := me.DB.QueryRow(
+		`INSERT INTO divisions (tournament_id, name) VALUES ($1,$2) RETURNING id`,
 		tournamentID, name,
-	)
+	).Scan(&id)
 	if err != nil {
 		slog.Error("AddDivision", "err", err)
 	}
+	return id
 }
 
 func (me *MyDB) DelDivision(id int) {
