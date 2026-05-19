@@ -61,6 +61,15 @@ func (u TWUser) IsCoachFor(tid int) bool {
 	return false
 }
 
+func (u TWUser) IsCoachForTeam(teamID int) bool {
+	for _, r := range u.Roles {
+		if r.Role == "coach" && r.TeamID == teamID {
+			return true
+		}
+	}
+	return false
+}
+
 func (u TWUser) CanManage(tid int) bool { return u.IsAdmin || u.IsDirectorFor(tid) }
 func (u TWUser) CanScore(tid int) bool {
 	return u.IsAdmin || u.IsDirectorFor(tid) || u.IsStaffFor(tid)
@@ -130,16 +139,22 @@ func (me *Env) RequestLogger(h http.Handler) http.Handler {
 		}
 
 		// /tournaments/:tid/manage/* requires CanManage for that tournament.
+		// Exception: /roster paths are gated at the handler level (coaches need access).
 		if strings.Contains(r.URL.Path, "/manage/") || strings.HasSuffix(r.URL.Path, "/manage") {
 			tidStr := extractTID(r.URL.Path)
 			if tidStr != "" {
 				tid, err := strconv.Atoi(tidStr)
-				if err != nil || !user.CanManage(tid) {
+				isRosterPath := strings.Contains(r.URL.Path, "/roster")
+				if err != nil || (!user.CanManage(tid) && !isRosterPath) {
 					if !user.LoggedIn() {
 						http.Redirect(w, r, "/login", http.StatusSeeOther)
 					} else {
 						me.renderError(w, r, http.StatusForbidden, "Not Authorized", "You must be a tournament director to access this page.")
 					}
+					return
+				}
+				if isRosterPath && !user.LoggedIn() {
+					http.Redirect(w, r, "/login", http.StatusSeeOther)
 					return
 				}
 			}
