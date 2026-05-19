@@ -198,6 +198,15 @@ var pgmigrations = []string{
 		winner_team_id   INT
 	)`,
 	`ALTER TABLE games ADD COLUMN IF NOT EXISTS scrimmage_team_id INT NULL`,
+	`CREATE TABLE IF NOT EXISTS players (
+		id         SERIAL PRIMARY KEY,
+		team_id    INT  NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+		number     TEXT NOT NULL DEFAULT '',
+		first_name TEXT NOT NULL,
+		last_name  TEXT NOT NULL,
+		handed     TEXT NOT NULL DEFAULT '',
+		position   TEXT NOT NULL DEFAULT ''
+	)`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {

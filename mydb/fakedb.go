@@ -27,6 +27,7 @@ type FakeDB struct {
 	brackets      map[int]Bracket
 	bracketSeeds  []BracketSeed
 	bracketGames  map[int]BracketGame
+	players       map[int]Player
 }
 
 type gameByTeamRow struct {
@@ -60,6 +61,7 @@ func NewFakeDB() *FakeDB {
 		loginAttempts: make(map[string]LoginAttempt),
 		brackets:      make(map[int]Bracket),
 		bracketGames:  make(map[int]BracketGame),
+		players:       make(map[int]Player),
 	}
 }
 
@@ -1278,4 +1280,51 @@ func (f *FakeDB) SetDivisionPhase(id int, phase string) {
 		d.Phase = phase
 		f.divisions[id] = d
 	}
+}
+
+// --- Players ---
+
+func (f *FakeDB) AddPlayer(teamID int, number, first, last, handed, position string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.newID()
+	f.players[id] = Player{ID: id, TeamID: teamID, Number: number, First: first, Last: last, Handed: handed, Position: position}
+	return id
+}
+
+func (f *FakeDB) GetPlayersByTeamID(teamID int) []Player {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []Player
+	for _, p := range f.players {
+		if p.TeamID == teamID {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func (f *FakeDB) GetPlayerByID(id int) (Player, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	p, ok := f.players[id]
+	return p, ok
+}
+
+func (f *FakeDB) UpdatePlayer(id int, number, first, last, handed, position string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	p := f.players[id]
+	p.Number = number
+	p.First = first
+	p.Last = last
+	p.Handed = handed
+	p.Position = position
+	f.players[id] = p
+}
+
+func (f *FakeDB) DeletePlayer(id int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.players, id)
 }

@@ -41,6 +41,13 @@ type DB interface {
 	TeamScoredAgainst(id int) int
 	GamesPlayedByTeam(id int) int
 
+	// Players
+	AddPlayer(teamID int, number, first, last, handed, position string) int
+	GetPlayersByTeamID(teamID int) []Player
+	GetPlayerByID(id int) (Player, bool)
+	UpdatePlayer(id int, number, first, last, handed, position string)
+	DeletePlayer(id int)
+
 	// Games
 	AddGame(tournamentID, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) int
 	AllGamesByDivision(divisionID int) []Game
