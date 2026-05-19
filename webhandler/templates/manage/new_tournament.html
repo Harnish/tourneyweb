@@ -1,7 +1,7 @@
 {{define "newTournament"}}
 {{template "header" .}}
 <h1>Create Tournament</h1>
-<form method="post" action="/create-tournament">
+<form method="post" action="/create-tournament" id="new-tournament-form">
 {{.CSRFField}}
 <table>
   <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
@@ -9,8 +9,40 @@
   <tr><td>Location/Venue</td><td><input type="text" name="location" required></td></tr>
   <tr><td>Start Date</td><td><input type="date" name="start_date" required></td></tr>
   <tr><td>Notes</td><td><input type="text" name="notes"></td></tr>
-  <tr><td></td><td><input type="submit" value="Create Tournament"></td></tr>
 </table>
+<h3>Default Division Ranking Order</h3>
+<p>Applied automatically when new divisions are created.</p>
+<ul id="new-ranking-list" style="list-style:none;padding:0;max-width:500px;">
+{{range .AllCriteria}}
+<li style="display:flex;align-items:center;gap:0.5em;margin-bottom:0.3em;padding:0.5em 0.75em;background:var(--tw-bg-card,#f9f9f9);border:1px solid var(--tw-border,#ddd);border-radius:4px;">
+  <input type="checkbox" value="{{.Key}}"{{if .Checked}} checked{{end}}>
+  <span style="flex:1">{{.Label}}</span>
+  <button type="button" onclick="newMoveUp(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;">↑</button>
+  <button type="button" onclick="newMoveDown(this)" style="padding:0 6px;background:none;border:1px solid #ccc;border-radius:3px;cursor:pointer;">↓</button>
+</li>
+{{end}}
+</ul>
+<input type="hidden" name="default_ranking_criteria" id="new_ranking_input">
+<br>
+<input type="submit" value="Create Tournament">
 </form>
+<script>
+document.getElementById('new-tournament-form').addEventListener('submit', function() {
+  var checks = document.querySelectorAll('#new-ranking-list input[type=checkbox]');
+  var active = [];
+  checks.forEach(function(cb) { if (cb.checked) active.push(cb.value); });
+  document.getElementById('new_ranking_input').value = active.join(',');
+});
+function newMoveUp(btn) {
+  var li = btn.closest('li');
+  var prev = li.previousElementSibling;
+  if (prev) li.parentNode.insertBefore(li, prev);
+}
+function newMoveDown(btn) {
+  var li = btn.closest('li');
+  var next = li.nextElementSibling;
+  if (next) li.parentNode.insertBefore(next, li);
+}
+</script>
 {{template "footer" .}}
 {{end}}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -94,6 +95,7 @@ func (me *Env) AdminTournaments(w http.ResponseWriter, r *http.Request, ps httpr
 	me.render(w, "adminTournaments", adminTournamentsData{
 		baseData:    newBase(r),
 		Tournaments: me.DB.ReturnTournaments(),
+		AllCriteria: AllCriteriaForUI(mydb.DefaultRankingCriteria),
 	})
 }
 
@@ -116,6 +118,17 @@ func (me *Env) CreateTournament(w http.ResponseWriter, r *http.Request, ps httpr
 	user := userFromContext(r.Context())
 	if user.LoggedIn() {
 		me.DB.AssignRole(user.ID, id, "director", 0)
+		criteriaStr := r.FormValue("default_ranking_criteria")
+		var criteria []string
+		for _, k := range strings.Split(criteriaStr, ",") {
+			k = strings.TrimSpace(k)
+			if _, ok := criteriaRegistry[k]; ok {
+				criteria = append(criteria, k)
+			}
+		}
+		if len(criteria) > 0 {
+			me.DB.SetTournamentDefaultRanking(id, criteria)
+		}
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d", id), http.StatusSeeOther)
 }
@@ -137,7 +150,10 @@ func (me *Env) NewTournamentForm(w http.ResponseWriter, r *http.Request, ps http
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	me.render(w, "newTournament", newBase(r))
+	me.render(w, "newTournament", newTournamentData{
+		baseData:    newBase(r),
+		AllCriteria: AllCriteriaForUI(mydb.DefaultRankingCriteria),
+	})
 }
 
 func (me *Env) NewTournament(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -165,6 +181,17 @@ func (me *Env) NewTournament(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 	id := me.DB.AddTournament(name, sport, location, notes, date, status)
 	me.DB.AssignRole(user.ID, id, "director", 0)
+	criteriaStr := r.FormValue("default_ranking_criteria")
+	var criteria []string
+	for _, k := range strings.Split(criteriaStr, ",") {
+		k = strings.TrimSpace(k)
+		if _, ok := criteriaRegistry[k]; ok {
+			criteria = append(criteria, k)
+		}
+	}
+	if len(criteria) > 0 {
+		me.DB.SetTournamentDefaultRanking(id, criteria)
+	}
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage", id), http.StatusSeeOther)
 }
 

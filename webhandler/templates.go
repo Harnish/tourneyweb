@@ -104,6 +104,7 @@ type tournamentFieldsData struct {
 type adminTournamentsData struct {
 	baseData
 	Tournaments []mydb.Tournament
+	AllCriteria []CriterionUIRow
 }
 
 type adminTournamentViewData struct {
@@ -196,6 +197,11 @@ type adminGamesData struct {
 
 type editTournamentData struct {
 	baseData
+}
+
+type newTournamentData struct {
+	baseData
+	AllCriteria []CriterionUIRow
 }
 
 type editDivisionData struct {
