@@ -1,6 +1,9 @@
 package mydb
 
-import "log/slog"
+import (
+	"database/sql"
+	"log/slog"
+)
 
 type Player struct {
 	ID       int
@@ -59,7 +62,11 @@ func (me *MyDB) GetPlayerByID(id int) (Player, bool) {
 		`SELECT id, team_id, number, first_name, last_name, handed, position FROM players WHERE id=$1`,
 		id,
 	).Scan(&p.ID, &p.TeamID, &p.Number, &p.First, &p.Last, &p.Handed, &p.Position)
+	if err == sql.ErrNoRows {
+		return Player{}, false
+	}
 	if err != nil {
+		slog.Error("GetPlayerByID", "err", err)
 		return Player{}, false
 	}
 	return p, true

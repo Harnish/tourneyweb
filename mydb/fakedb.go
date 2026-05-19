@@ -1301,6 +1301,12 @@ func (f *FakeDB) GetPlayersByTeamID(teamID int) []Player {
 			out = append(out, p)
 		}
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Last != out[j].Last {
+			return out[i].Last < out[j].Last
+		}
+		return out[i].First < out[j].First
+	})
 	return out
 }
 
