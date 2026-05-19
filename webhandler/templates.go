@@ -153,6 +153,7 @@ type loginData struct {
 type adminDivisionsData struct {
 	baseData
 	Divisions     []mydb.Division
+	Brackets      map[int]mydb.Bracket
 	DisableDelete bool
 }
 
