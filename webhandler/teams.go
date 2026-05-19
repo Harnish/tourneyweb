@@ -102,12 +102,12 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	if !ok {
 		return
 	}
-	tid, err := strconv.Atoi(ps.ByName("teamid"))
+	teamID, err := strconv.Atoi(ps.ByName("teamid"))
 	if err != nil {
 		http.Error(w, "Bad Team ID", http.StatusBadRequest)
 		return
 	}
-	team := me.DB.ReturnTeamByID(tid)
+	team := me.DB.ReturnTeamByID(teamID)
 	if team.ID == 0 {
 		http.Error(w, "Team not found", http.StatusNotFound)
 		return
@@ -115,7 +115,7 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	me.render(w, "team", teamData{
 		baseData: newBaseWithTournament(r, t),
 		Team:     team,
-		Games:    me.DB.AllGamesByTeam(tid),
-		Players:  me.DB.GetPlayersByTeamID(tid),
+		Games:    me.DB.AllGamesByTeam(teamID),
+		Players:  me.DB.GetPlayersByTeamID(teamID),
 	})
 }

@@ -154,6 +154,8 @@ func (me *Env) RosterDelete(w http.ResponseWriter, r *http.Request, ps httproute
 		http.Error(w, "Player not found", http.StatusNotFound)
 		return
 	}
-	me.DB.DeletePlayer(pid)
+	if !me.DisableDelete {
+		me.DB.DeletePlayer(pid)
+	}
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/teams/%d/roster", t.ID, teamID), http.StatusSeeOther)
 }
