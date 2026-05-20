@@ -25,6 +25,9 @@ var defaultBanner []byte
 //go:embed style.css
 var defaultCSS []byte
 
+//go:embed sort.js
+var defaultJS []byte
+
 //go:embed favicon.ico
 var defaultFavico []byte
 
@@ -50,6 +53,7 @@ func main() {
 	})
 	// Static assets
 	router.GET("/style.css", PrintCSS)
+	router.GET("/sort.js", PrintJS)
 	router.GET("/favicon.ico", PrintFavIco)
 	router.GET("/img/topimage.jpg", PrintBannerLogo)
 	// Auth routes
@@ -212,6 +216,11 @@ func PrintBannerLogo(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 func PrintCSS(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-type", mime.TypeByExtension(".css"))
 	w.Write(defaultCSS)
+}
+
+func PrintJS(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-type", mime.TypeByExtension(".js"))
+	w.Write(defaultJS)
 }
 
 func LoadBanner(path string) {
