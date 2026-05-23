@@ -5,8 +5,8 @@
 <p><a href="/tournaments/{{.Tournament.ID}}/divisions/{{.Division.ID}}/bracket">View Bracket →</a></p>
 {{end}}
 <h2>Teams</h2>
-<table>
-<tr><th>Rank</th><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th><th>Runs Against</th><th>Runs For</th><th>Games Played</th></tr>
+<table class="tw-sortable">
+<tr><th data-sort="number">Rank</th><th>Team Name</th><th>Coach</th><th data-sort="number">Wins</th><th data-sort="number">Losses</th><th data-sort="number">Runs Against</th><th data-sort="number">Runs For</th><th data-sort="number">Games Played</th></tr>
 {{range $i, $row := .Teams}}
 <tr>
   <td>{{inc $i}}</td>
@@ -24,8 +24,8 @@
 <p style="font-size:0.85em;color:#888;margin-top:0.25em;">Ranked by: {{.RankingLabel}}</p>
 {{end}}
 <h2>Games</h2>
-<table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Home Team Score</th><th>Away Team Score</th></tr>
+<table class="tw-sortable">
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th data-sort="number">Home Team Score</th><th data-sort="number">Away Team Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .HomeTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>

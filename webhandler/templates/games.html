@@ -1,7 +1,7 @@
 {{define "games"}}
 {{template "header" .}}
-<table border="1" cellpadding="1" cellspacing="0">
-<tr><th>Division</th><th>Home Team</th><th>Home Team Score</th><th>Away Team</th><th>Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th>{{if $.User.CanScore $.Tournament.ID}}<th></th>{{end}}</tr>
+<table border="1" cellpadding="1" cellspacing="0" class="tw-sortable">
+<tr><th>Division</th><th>Home Team</th><th data-sort="number">Home Team Score</th><th>Away Team</th><th data-sort="number">Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th>{{if $.User.CanScore $.Tournament.ID}}<th></th>{{end}}</tr>
 {{range .Games}}
 <tr>
   <td>{{.Division.Name}}</td>

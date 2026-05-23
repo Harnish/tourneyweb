@@ -1,7 +1,7 @@
 {{define "team"}}
 {{template "header" .}}
 <br>{{.Team.Name}} {{.Team.Coach}} {{.Team.Division.Name}}<br>
-<table>
+<table class="tw-sortable">
 <tr><th>Home</th><th>Away</th><th>Location</th><th>Start time</th><th>Umpire</th></tr>
 {{range .Games}}
 <tr>
@@ -15,8 +15,8 @@
 </table>
 {{if .Players}}
 <h2>Roster</h2>
-<table>
-<tr><th>#</th><th>Name</th><th>Handed</th><th>Position</th></tr>
+<table class="tw-sortable">
+<tr><th data-sort="number">#</th><th>Name</th><th>Handed</th><th>Position</th></tr>
 {{range .Players}}
 <tr>
   <td>{{.Number}}</td>
