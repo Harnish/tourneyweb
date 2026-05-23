@@ -2,8 +2,8 @@
 {{template "header" .}}
 <h1>Roster — {{.Team.Name}}</h1>
 {{if .Players}}
-<table border="1" cellpadding="4" cellspacing="0">
-<tr><th>#</th><th>Name</th><th>Handed</th><th>Position</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
+<table border="1" cellpadding="4" cellspacing="0" class="tw-sortable">
+<tr><th data-sort="number">#</th><th>Name</th><th>Handed</th><th>Position</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
 {{range .Players}}
 <tr>
   <td>{{.Number}}</td>

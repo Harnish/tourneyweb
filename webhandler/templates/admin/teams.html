@@ -18,7 +18,8 @@
 </form>
 {{range .Divisions}}
 <h2>{{.Name}}</h2>
-<table>
+<table class="tw-sortable">
+<tr><th>Name</th><th>Coach</th><th></th>{{if not $.DisableDelete}}<th></th>{{end}}</tr>
 {{range index $.TeamsByDivision .ID}}
 <tr>
   <td>{{.Name}}</td>

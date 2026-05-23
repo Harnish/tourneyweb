@@ -21,7 +21,7 @@
   {{$did := .ID}}
   {{$teams := index $.TeamsByDivision $did}}
   {{if $teams}}
-  <table border="1" cellpadding="4" cellspacing="0">
+  <table border="1" cellpadding="4" cellspacing="0" class="tw-sortable">
   <tr><th>Name</th><th>Coach</th><th>Edit</th><th>Roster</th>{{if not $.DisableDelete}}<th>Delete</th>{{end}}</tr>
   {{range $teams}}
   <tr>

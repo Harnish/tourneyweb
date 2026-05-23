@@ -18,7 +18,7 @@
 
 <h2>Locations</h2>
 {{if .Locations}}
-<table border="1" cellpadding="4" cellspacing="0">
+<table border="1" cellpadding="4" cellspacing="0" class="tw-sortable">
 <tr><th>Name</th><th>Address</th><th>Available For</th><th>Edit</th>{{if not .DisableDelete}}<th>Delete</th>{{end}}</tr>
 {{range .Locations}}
 <tr>

@@ -2,8 +2,8 @@
 {{template "header" .}}
 <H1>{{.Division.Name}}</H1>
 <p><a href="/admin/tournaments/{{.Tournament.ID}}/divisions/{{.DivisionID}}/edit">Edit Division</a></p>
-<table>
-<tr><th>Team Name</th><th>Coach</th><th>Wins</th><th>Losses</th></tr>
+<table class="tw-sortable">
+<tr><th>Team Name</th><th>Coach</th><th data-sort="number">Wins</th><th data-sort="number">Losses</th></tr>
 {{range .Teams}}
 <tr>
   <td>{{.Name}}</td>
@@ -17,8 +17,8 @@
 <form action="/admin/tournaments/{{.Tournament.ID}}/teams"><input type="submit" value="Add Team"></form>
 <br>
 <h2>Games</h2>
-<table>
-<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th>Home Score</th><th>Away Score</th></tr>
+<table class="tw-sortable">
+<tr><th>Home Team</th><th>Away Team</th><th>Location</th><th>Start time</th><th>Umpire</th><th>Score Game</th><th>Edit</th>{{if not $.DisableDelete}}<th>Delete Game</th>{{end}}<th data-sort="number">Home Score</th><th data-sort="number">Away Score</th></tr>
 {{range .Games}}
 <tr>
   <td>{{.HomeTeam.Name}} {{.HomeTeam.Coach}}{{if and .ScrimmageTeamID (eq .ScrimmageTeamID .HomeTeam.ID)}} <em style="color:#888;font-size:0.85em;">(non-counting)</em>{{end}}</td>
