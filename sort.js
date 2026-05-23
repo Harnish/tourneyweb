@@ -6,9 +6,10 @@
 
     var activeCol = -1, ascending = true;
 
-    ths.forEach(function (th, col) {
+    ths.forEach(function (th) {
       th.style.cursor = 'pointer';
       th.addEventListener('click', function () {
+        var col = th.cellIndex;
         if (activeCol === col) {
           ascending = !ascending;
         } else {
