@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
-	"net/smtp"
-	"strings"
-	"time"
+	"strconv"
+
+	"gopkg.in/gomail.v2"
 )
 
 type EmailService struct {
@@ -31,30 +31,23 @@ func NewEmailService(host, port, username, password, fromEmail, baseURL string) 
 }
 
 func (s *EmailService) sendEmail(toEmail, subject, htmlBody string) error {
-	addr := fmt.Sprintf("%s:%s", s.smtpHost, s.smtpPort)
-	auth := smtp.PlainAuth("", s.smtpUsername, s.smtpPassword, s.smtpHost)
+	port, _ := strconv.Atoi(s.smtpPort)
 
-	msgIDBytes := make([]byte, 16)
-	rand.Read(msgIDBytes)
-	senderDomain := "mail"
-	if idx := strings.LastIndex(s.fromEmail, "@"); idx >= 0 {
-		senderDomain = s.fromEmail[idx+1:]
-	}
-	msgID := fmt.Sprintf("<%s@%s>", hex.EncodeToString(msgIDBytes), senderDomain)
-	safeSubject := strings.ReplaceAll(strings.ReplaceAll(subject, "\r", ""), "\n", "")
+	m := gomail.NewMessage()
+	m.SetHeader("From", fmt.Sprintf("TourneyWeb <%s>", s.fromEmail))
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", htmlBody)
 
-	msg := fmt.Sprintf(
-		"From: TourneyWeb <%s>\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\nMessage-ID: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=\"UTF-8\"\r\n\r\n%s",
-		s.fromEmail, toEmail, safeSubject,
-		time.Now().Format(time.RFC1123Z),
-		msgID, htmlBody,
-	)
+	d := gomail.NewDialer(s.smtpHost, port, s.smtpUsername, s.smtpPassword)
+	d.SSL = port == 465
 
-	if err := smtp.SendMail(addr, auth, s.fromEmail, []string{toEmail}, []byte(msg)); err != nil {
-		slog.Error("email send failed", "to", toEmail, "subject", safeSubject, "err", err)
+	slog.Info("smtp: sending", "to", toEmail, "subject", subject)
+	if err := d.DialAndSend(m); err != nil {
+		slog.Error("smtp: send failed", "to", toEmail, "subject", subject, "err", err)
 		return err
 	}
-	slog.Info("email sent", "to", toEmail, "subject", safeSubject)
+	slog.Info("smtp: sent ok", "to", toEmail, "subject", subject)
 	return nil
 }
 
