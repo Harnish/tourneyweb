@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o tourneyweb .
 
-FROM alpine:3.21
+FROM alpine:3.24
 
 RUN addgroup -S tourneyweb && adduser -S -G tourneyweb tourneyweb
 

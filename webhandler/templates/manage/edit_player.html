@@ -1,7 +1,7 @@
 {{define "rosterEdit"}}
 {{template "header" .}}
 <h1>{{if .IsNew}}Add Player{{else}}Edit Player{{end}} — {{.Team.Name}}</h1>
-<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/{{if not .IsNew}}{{.Player.ID}}/{{end}}{{if .IsNew}}new{{else}}edit{{end}}">
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/{{if .IsNew}}new{{else}}players/{{.Player.ID}}/edit{{end}}">
 {{.CSRFField}}
 <table>
   <tr><td>Jersey #</td><td><input type="text" name="number" value="{{.Player.Number}}"></td></tr>
