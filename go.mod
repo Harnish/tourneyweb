@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gorilla/csrf v1.7.3
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rivo/sessions v0.0.0-20180420064926-e18b9ef80f84
 	golang.org/x/crypto v0.53.0
