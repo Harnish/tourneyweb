@@ -157,6 +157,14 @@ type loginData struct {
 	Error string
 }
 
+type helpData struct {
+	baseData
+}
+
+type aboutData struct {
+	baseData
+}
+
 type adminDivisionsData struct {
 	baseData
 	Divisions     []mydb.Division

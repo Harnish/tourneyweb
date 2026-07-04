@@ -1,0 +1,22 @@
+{{define "about"}}
+{{template "header" .}}
+<h1>About TourneyWeb</h1>
+<p>TourneyWeb is an open-source tournament management app. Built originally for baseball, it works for any sport with scheduled games between two teams: divisions, teams, games, standings, and elimination brackets, all in one place.</p>
+
+<h2>Features</h2>
+<ul>
+  <li>Multi-tournament, multi-division scheduling with per-team standings (wins, losses, runs)</li>
+  <li>Configurable tiebreaker rankings per division</li>
+  <li>Single- and double-elimination brackets with automatic seeding and score-driven advancement</li>
+  <li>Role-based access: directors, staff (score entry), and coaches (roster management)</li>
+  <li>Player rosters, team QR codes, and printable team sheets</li>
+  <li>Field/location maps, per-division rules, news, and freeform event pages</li>
+</ul>
+
+<h2>Open Source</h2>
+<p>TourneyWeb is free and open source, written in Go. Source code, issue tracker, and contribution guide live on GitHub:</p>
+<p><a href="https://github.com/Harnish/tourneyweb">github.com/Harnish/tourneyweb</a></p>
+
+<p>Need help using the app? See the <a href="/help">Help</a> page.</p>
+{{template "footer" .}}
+{{end}}

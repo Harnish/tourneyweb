@@ -1,0 +1,44 @@
+{{define "help"}}
+{{template "header" .}}
+<h1>Help</h1>
+<p>A quick guide to running a tournament in TourneyWeb, organized by role.</p>
+
+<h2>Tournament Directors</h2>
+<ol>
+  <li><strong>Create a tournament</strong> — "+ New Tournament" in the nav bar. Set the sport, location, start date, and a default division ranking order (applied to new divisions automatically).</li>
+  <li><strong>Add divisions</strong> — from <em>Manage &rarr; Divisions</em>, add one division per age group / skill level.</li>
+  <li><strong>Add teams</strong> — from <em>Manage &rarr; Teams</em>, assign each team to a division.</li>
+  <li><strong>Schedule games</strong> — from a division's <em>Manage Games</em> page, add games with location, date/time, and umpire.</li>
+  <li><strong>Enter scores</strong> — directors and staff can score games from the public games page; standings update immediately.</li>
+  <li><strong>Configure rankings</strong> — per division, choose the tiebreaker order (wins, head-to-head, runs allowed, run differential, etc.) from the division edit page. The public division page shows "Ranked by: &hellip;".</li>
+  <li><strong>Run a bracket</strong> — once pool play is done, click <em>Start Bracket</em> on the division. Choose:
+    <ul>
+      <li><strong>Single elimination</strong> — any team count; uneven counts get byes in round 1.</li>
+      <li><strong>Double elimination</strong> — only offered when the team count is an exact power of 2 (4, 8, 16, 32). Teams get a second life in the losers bracket; if the losers-bracket team wins the grand final, a bracket-reset game decides the champion.</li>
+    </ul>
+    Review the auto-seeded order on the seed page (drag rows or use the &uarr;/&darr; buttons), then <strong>Lock Bracket</strong> to generate games. Scores entered afterward automatically advance winners (and losers, for double elimination) through the bracket.
+  </li>
+  <li><strong>Invite staff and coaches</strong> — from <em>Manage &rarr; Roles</em>, invite people by email; the role is applied automatically when they register. <code>director</code> gets full tournament management, <code>staff</code> can enter scores, <code>coach</code> manages one team's roster.</li>
+  <li><strong>Fields, rules, news, extras</strong> — add field locations (with a map pin) under <em>Manage &rarr; Locations</em>, write per-division rules, post news, and add a freeform "extras" page from the tournament's manage menu.</li>
+</ol>
+
+<h2>Coaches</h2>
+<ul>
+  <li><strong>Roster</strong> — from your team's roster page, add players (name, number, position, handedness). The public team page shows a condensed roster (first initial + last name).</li>
+  <li><strong>Team QR code &amp; printable sheet</strong> — every team page has a QR code linking to that team's public page, and a <em>Printable Team Sheet</em> link with the roster and a print button — handy to hand out or post at the field.</li>
+</ul>
+
+<h2>Staff</h2>
+<ul>
+  <li>Staff see a <strong>Score</strong> link on the public games page for any game in their assigned tournament, and can enter final scores there.</li>
+</ul>
+
+<h2>Everyone</h2>
+<ul>
+  <li>The tournament home page lists divisions, standings, fields, and news. Division and team pages are public — no login required to view schedules, standings, or brackets.</li>
+  <li>If a tournament is running with <code>disabledelete</code> turned on, delete buttons are hidden everywhere to prevent accidental changes during a live event.</li>
+</ul>
+
+<p>Questions or found a bug? See the <a href="/about">About</a> page for the project's GitHub repository.</p>
+{{template "footer" .}}
+{{end}}

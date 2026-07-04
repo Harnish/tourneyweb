@@ -56,6 +56,8 @@ func main() {
 	router.GET("/sort.js", PrintJS)
 	router.GET("/favicon.ico", PrintFavIco)
 	router.GET("/img/topimage.jpg", PrintBannerLogo)
+	router.GET("/help", wh.HelpPage)
+	router.GET("/about", wh.AboutPage)
 	// Auth routes
 	router.GET("/login", wh.LoginForm)
 	router.POST("/login", wh.Login)
