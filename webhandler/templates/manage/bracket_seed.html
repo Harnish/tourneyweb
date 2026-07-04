@@ -1,7 +1,7 @@
 {{define "bracketSeed"}}
 {{template "header" .}}
 <h1>{{.Division.Name}} — Seed Review</h1>
-<p>Reorder teams by clicking ↑/↓. Byes are fixed at the bottom. Save your order, then lock the bracket to generate games.</p>
+<p>Drag teams (or click ↑/↓) to reorder. Byes are fixed at the bottom. Save your order, then lock the bracket to generate games.</p>
 
 <form id="seed-form" method="post" action="/tournaments/{{.Tournament.ID}}/manage/divisions/{{.Division.ID}}/bracket/seed">
 {{.CSRFField}}
@@ -10,7 +10,8 @@
 <div id="seed-list" style="max-width:420px;">
 {{range .Seeds}}
   {{if .TeamID}}
-  <div class="seed-item" data-team-id="{{.TeamID}}" style="display:flex;align-items:center;gap:0.5em;padding:8px 12px;border:1px solid #ccc;background:#fff;margin-bottom:4px;border-radius:4px;">
+  <div class="seed-item" draggable="true" data-team-id="{{.TeamID}}" style="display:flex;align-items:center;gap:0.5em;padding:8px 12px;border:1px solid #ccc;background:#fff;margin-bottom:4px;border-radius:4px;cursor:grab;">
+    <span style="color:#bbb;">⠿</span>
     <span class="seed-num" style="color:#999;width:1.8em;text-align:right;font-size:0.85em;">#{{.Seed}}</span>
     <span style="flex:1;">{{.TeamName}}</span>
     <button type="button" onclick="moveUp(this)" style="padding:2px 8px;">↑</button>
@@ -64,6 +65,25 @@ function renumber() {
     el.textContent = "#" + (i + 1);
   });
 }
+
+var dragged = null;
+document.querySelectorAll(".seed-item[draggable]").forEach(function(el) {
+  el.addEventListener("dragstart", function(e) {
+    dragged = el;
+    e.dataTransfer.effectAllowed = "move";
+  });
+  el.addEventListener("dragover", function(e) {
+    e.preventDefault();
+    if (!dragged || dragged === el || el.classList.contains("bye")) return;
+    var rect = el.getBoundingClientRect();
+    var before = (e.clientY - rect.top) < rect.height / 2;
+    el.parentNode.insertBefore(dragged, before ? el : el.nextSibling);
+  });
+  el.addEventListener("dragend", function() {
+    dragged = null;
+    renumber();
+  });
+});
 document.getElementById("seed-form").addEventListener("submit", function(e) {
   e.preventDefault();
   var ids = Array.from(document.querySelectorAll(".seed-item:not(.bye)")).map(function(el) {

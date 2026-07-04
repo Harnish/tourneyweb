@@ -298,6 +298,7 @@ type manageDivisionsData struct {
 	baseData
 	Divisions     []mydb.Division
 	Brackets      map[int]mydb.Bracket // division ID → bracket
+	CanDoubleElim map[int]bool         // division ID → team count is exact power of 2
 	DisableDelete bool
 }
 
@@ -322,9 +323,12 @@ type bracketRound struct {
 
 type bracketData struct {
 	baseData
-	Division mydb.Division
-	Bracket  mydb.Bracket
-	Rounds   []bracketRound
+	Division     mydb.Division
+	Bracket      mydb.Bracket
+	Rounds       []bracketRound
+	LosersRounds []bracketRound
+	FinalRounds  []bracketRound
+	SeedLabel    string
 }
 
 type manageTeamsData struct {

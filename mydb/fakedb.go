@@ -1146,11 +1146,11 @@ func (f *FakeDB) UpdateBracketSeeds(bracketID int, teamIDs []int) {
 	}
 }
 
-func (f *FakeDB) AddBracketGame(bracketID, round, position int) int {
+func (f *FakeDB) AddBracketGame(bracketID, round, position int, side string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.bracketGames[id] = BracketGame{ID: id, BracketID: bracketID, Round: round, Position: position}
+	f.bracketGames[id] = BracketGame{ID: id, BracketID: bracketID, Side: side, Round: round, Position: position}
 	return id
 }
 
@@ -1243,11 +1243,11 @@ func (f *FakeDB) GetBracketGameByGameID(gameID int) BracketGame {
 	return BracketGame{}
 }
 
-func (f *FakeDB) GetBracketGameByRoundPosition(bracketID, round, position int) BracketGame {
+func (f *FakeDB) GetBracketGameByRoundPosition(bracketID int, side string, round, position int) BracketGame {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, bg := range f.bracketGames {
-		if bg.BracketID == bracketID && bg.Round == round && bg.Position == position {
+		if bg.BracketID == bracketID && bg.Side == side && bg.Round == round && bg.Position == position {
 			if bg.GameID != 0 {
 				if g, ok := f.games[bg.GameID]; ok {
 					bg.Game = g
@@ -1274,6 +1274,9 @@ func (f *FakeDB) GetBracketGames(bracketID int) []BracketGame {
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
+		if out[i].Side != out[j].Side {
+			return out[i].Side < out[j].Side
+		}
 		if out[i].Round != out[j].Round {
 			return out[i].Round < out[j].Round
 		}

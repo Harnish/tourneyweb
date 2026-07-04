@@ -24,15 +24,9 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 These are multi-sprint architectural additions. Each depends on the ones above it.
 
-### Brackets
-
-- **[P2/L]** Visual bracket display — render single-elimination and double-elimination brackets as SVG or structured HTML; seeds drawn from division standings. Tournament Director chooses format per division. Bracket advances automatically when scores are entered.
-- **[P2/M]** Bracket seeding and generation — UI to review auto-seeded bracket, manually adjust seed order via drag-and-drop, then lock and publish.
-
 ### Roster & QR Codes
 
-- **[P2/M]** Player roster management — coaches can manage their team's roster (player name, number, date of birth) via a coach-role UI. Public views show only first initial + last name and omit DOB. Requires auth+roles to ship first.
-- **[P2/S]** Team QR code — coaches can upload a custom QR code image or generate one server-side (via `github.com/skip2/go-qrcode`) linking to the team's public page. Displayed on the team detail page and a printable team sheet. Requires roster feature.
+- **[P2/S]** Team QR code — coaches can upload a custom QR code image or generate one server-side (via `github.com/skip2/go-qrcode`) linking to the team's public page. Displayed on the team detail page and a printable team sheet. Roster feature has shipped, so this is unblocked.
 
 ---
 
@@ -47,6 +41,8 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Double-elimination brackets** — Directors choose single- or double-elimination when starting a bracket (double-elim gated to team counts that are an exact power of 2); losers bracket, grand final, and bracket-reset game (if the losers-bracket entrant wins the grand final) all auto-generate and cascade on scoring; public bracket page renders Winners/Losers/Grand Final sections
+- **Visual bracket display + drag-and-drop seeding** — single-elimination bracket tree with connectors, bye/TBD/winner states, and "Seeded by: …" label; seed review page supports native drag-and-drop reorder in addition to ↑/↓ buttons
 - **Default ranking criteria at creation** — Directors/admins set a default division ranking order when creating a tournament; applied automatically to new divisions; locked on publish with admin override; manage dashboard editable until publish
 - **Bracket transition in director views** — Directors can start bracket phase from manage/divisions; Start Bracket button, phase column, and bracket status links added to director manage view
 - **Roster management** — Coaches manage player rosters (name, number, position, handedness); public team pages show condensed roster (first initial + last name); 6 routes under `/tournaments/:tid/manage/teams/:teamid/roster`

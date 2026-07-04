@@ -31,18 +31,22 @@ func (me *Env) ManageDivisions(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 	divisions := me.DB.ReturnDivisions(t.ID)
 	brackets := make(map[int]mydb.Bracket)
+	canDoubleElim := make(map[int]bool)
 	for _, d := range divisions {
 		if d.Phase == "bracket" {
 			b := me.DB.GetBracketByDivisionID(d.ID)
 			if b.ID != 0 {
 				brackets[d.ID] = b
 			}
+		} else {
+			canDoubleElim[d.ID] = isPowerOfTwo(len(me.DB.ReturnTeamsByDivisionID(d.ID)))
 		}
 	}
 	me.render(w, "manageDivisions", manageDivisionsData{
 		baseData:      newBaseWithTournament(r, t),
 		Divisions:     divisions,
 		Brackets:      brackets,
+		CanDoubleElim: canDoubleElim,
 		DisableDelete: me.DisableDelete,
 	})
 }

@@ -24,6 +24,7 @@ type BracketSeed struct {
 type BracketGame struct {
 	ID             int
 	BracketID      int
+	Side           string // "winners" | "losers" | "final"
 	Round          int
 	Position       int
 	TopTeamID      int
@@ -127,11 +128,11 @@ func (me *MyDB) UpdateBracketSeeds(bracketID int, teamIDs []int) {
 	}
 }
 
-func (me *MyDB) AddBracketGame(bracketID, round, position int) int {
+func (me *MyDB) AddBracketGame(bracketID, round, position int, side string) int {
 	var id int
 	err := me.DB.QueryRow(
-		`INSERT INTO bracket_games (bracket_id, round, position) VALUES ($1,$2,$3) RETURNING id`,
-		bracketID, round, position,
+		`INSERT INTO bracket_games (bracket_id, round, position, side) VALUES ($1,$2,$3,$4) RETURNING id`,
+		bracketID, round, position, side,
 	).Scan(&id)
 	if err != nil {
 		slog.Error("AddBracketGame", "err", err)
@@ -185,7 +186,7 @@ func (me *MyDB) SetBracketGameGameID(id, gameID int) {
 }
 
 const bracketGameSelect = `
-	SELECT bg.id, bg.bracket_id, bg.round, bg.position,
+	SELECT bg.id, bg.bracket_id, bg.side, bg.round, bg.position,
 	       COALESCE(bg.top_team_id,0), COALESCE(bg.bottom_team_id,0),
 	       bg.top_is_bye, bg.bottom_is_bye,
 	       COALESCE(bg.game_id,0), COALESCE(bg.winner_team_id,0),
@@ -198,7 +199,7 @@ const bracketGameSelect = `
 func scanBracketGame(row *sql.Row) (BracketGame, error) {
 	var bg BracketGame
 	err := row.Scan(
-		&bg.ID, &bg.BracketID, &bg.Round, &bg.Position,
+		&bg.ID, &bg.BracketID, &bg.Side, &bg.Round, &bg.Position,
 		&bg.TopTeamID, &bg.BottomTeamID,
 		&bg.TopIsBye, &bg.BottomIsBye,
 		&bg.GameID, &bg.WinnerTeamID,
@@ -229,10 +230,10 @@ func (me *MyDB) GetBracketGameByGameID(gameID int) BracketGame {
 	return bg
 }
 
-func (me *MyDB) GetBracketGameByRoundPosition(bracketID, round, position int) BracketGame {
+func (me *MyDB) GetBracketGameByRoundPosition(bracketID int, side string, round, position int) BracketGame {
 	bg, err := scanBracketGame(me.DB.QueryRow(
-		bracketGameSelect+` WHERE bg.bracket_id=$1 AND bg.round=$2 AND bg.position=$3`,
-		bracketID, round, position,
+		bracketGameSelect+` WHERE bg.bracket_id=$1 AND bg.side=$2 AND bg.round=$3 AND bg.position=$4`,
+		bracketID, side, round, position,
 	))
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error("GetBracketGameByRoundPosition", "err", err)
@@ -248,7 +249,7 @@ func (me *MyDB) scanBracketGames(rows *sql.Rows) []BracketGame {
 	for rows.Next() {
 		var bg BracketGame
 		if err := rows.Scan(
-			&bg.ID, &bg.BracketID, &bg.Round, &bg.Position,
+			&bg.ID, &bg.BracketID, &bg.Side, &bg.Round, &bg.Position,
 			&bg.TopTeamID, &bg.BottomTeamID,
 			&bg.TopIsBye, &bg.BottomIsBye,
 			&bg.GameID, &bg.WinnerTeamID,
@@ -268,7 +269,7 @@ func (me *MyDB) scanBracketGames(rows *sql.Rows) []BracketGame {
 
 func (me *MyDB) GetBracketGames(bracketID int) []BracketGame {
 	rows, err := me.DB.Query(
-		bracketGameSelect+` WHERE bg.bracket_id=$1 ORDER BY bg.round, bg.position`,
+		bracketGameSelect+` WHERE bg.bracket_id=$1 ORDER BY bg.side, bg.round, bg.position`,
 		bracketID,
 	)
 	if err != nil {

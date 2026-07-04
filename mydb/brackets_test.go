@@ -87,7 +87,7 @@ func TestBracketGames(t *testing.T) {
 	}
 
 	bid := db.CreateBracket(did, "single_elimination", 4)
-	bgid := db.AddBracketGame(bid, 1, 1)
+	bgid := db.AddBracketGame(bid, 1, 1, "winners")
 	if bgid == 0 {
 		t.Fatal("AddBracketGame returned 0")
 	}

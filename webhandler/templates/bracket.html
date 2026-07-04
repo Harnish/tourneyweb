@@ -1,7 +1,7 @@
 {{define "bracket"}}
 {{template "header" .}}
 <h1>{{.Division.Name}} — Bracket</h1>
-<p style="color:#666;font-size:0.9em;">Single elimination · {{.Bracket.Size}}-team bracket</p>
+<p style="color:#666;font-size:0.9em;">{{if eq .Bracket.Format "double_elimination"}}Double elimination{{else}}Single elimination{{end}} · {{.Bracket.Size}}-team bracket</p>
 
 <style>
 .bracket { display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:1em; }
@@ -25,11 +25,40 @@
 .connector { display:flex; flex-direction:column; flex:1; min-height:40px; }
 .connector-top    { flex:1; border-right:2px solid #ccc; border-bottom:2px solid #ccc; border-radius:0 0 4px 0; }
 .connector-bottom { flex:1; border-right:2px solid #ccc; border-top:2px solid #ccc; border-radius:0 4px 0 0; }
-.champion-box { border:2px solid #d97706; background:#fffbeb; padding:10px 14px; border-radius:6px; text-align:center; font-size:0.85em; color:#92400e; font-weight:700; min-width:80px; }
+.champion-box { border:2px solid #d97706; background:#fffbeb; padding:10px 14px; border-radius:6px; text-align:center; font-size:0.85em; color:#92400e; font-weight:700; min-width:80px; display:inline-block; margin-top:0.75em; }
+.b-section-label { font-size:0.95em; color:#444; font-weight:600; margin:1.5em 0 0.25em; }
 </style>
 
+{{if eq .Bracket.Format "double_elimination"}}
+<div class="b-section-label">Winners Bracket</div>
+{{template "bracketTree" .Rounds}}
+
+<div class="b-section-label">Losers Bracket</div>
+{{template "bracketTree" .LosersRounds}}
+
+<div class="b-section-label">Grand Final</div>
+{{template "bracketTree" .FinalRounds}}
+
+{{if eq .Bracket.Status "complete"}}
+<div class="champion-box">&#127942;<br>Champion</div>
+{{end}}
+{{else}}
+{{template "bracketTree" .Rounds}}
+
+{{if eq .Bracket.Status "complete"}}
+<div class="champion-box">&#127942;<br>Champion</div>
+{{end}}
+{{end}}
+
+<p style="color:#888;font-size:0.85em;">Seeded by: {{.SeedLabel}}</p>
+
+<p><a href="/tournaments/{{.Tournament.ID}}/divisions/{{.Division.ID}}">← Back to Division</a></p>
+{{template "footer" .}}
+{{end}}
+
+{{define "bracketTree"}}
 <div class="bracket">
-{{range $ri, $round := .Rounds}}
+{{range $ri, $round := .}}
   {{if $ri}}
   <div class="connector-col">
     {{range $round.Connectors}}
@@ -86,17 +115,5 @@
     </div>
   </div>
 {{end}}
-
-  {{if eq .Bracket.Status "complete"}}
-  <div style="display:flex;align-items:center;padding-left:8px;">
-    <div style="width:20px;border-top:2px solid #d97706;"></div>
-  </div>
-  <div style="display:flex;align-items:center;">
-    <div class="champion-box">&#127942;<br>Champion</div>
-  </div>
-  {{end}}
 </div>
-
-<p><a href="/tournaments/{{.Tournament.ID}}/divisions/{{.Division.ID}}">← Back to Division</a></p>
-{{template "footer" .}}
 {{end}}

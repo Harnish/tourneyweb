@@ -197,6 +197,7 @@ var pgmigrations = []string{
 		game_id          INT,
 		winner_team_id   INT
 	)`,
+	`ALTER TABLE bracket_games ADD COLUMN IF NOT EXISTS side TEXT NOT NULL DEFAULT 'winners'`,
 	`ALTER TABLE games ADD COLUMN IF NOT EXISTS scrimmage_team_id INT NULL`,
 	`CREATE TABLE IF NOT EXISTS players (
 		id         SERIAL PRIMARY KEY,

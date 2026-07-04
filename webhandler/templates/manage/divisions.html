@@ -21,7 +21,10 @@
     {{if eq .Phase "pool"}}
     <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/divisions/{{.ID}}/bracket/start" style="display:inline;">
       {{$.CSRFField}}
-      <button type="submit">Start Bracket</button>
+      <button type="submit" name="format" value="single_elimination">Start Single-Elim Bracket</button>
+      {{if index $.CanDoubleElim .ID}}
+      <button type="submit" name="format" value="double_elimination">Start Double-Elim Bracket</button>
+      {{end}}
     </form>
     {{else}}
       {{with index $.Brackets .ID}}

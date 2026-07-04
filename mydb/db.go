@@ -103,7 +103,7 @@ type DB interface {
 	AddBracketSeed(bracketID, seed, teamID int)
 	GetBracketSeeds(bracketID int) []BracketSeed
 	UpdateBracketSeeds(bracketID int, teamIDs []int)
-	AddBracketGame(bracketID, round, position int) int
+	AddBracketGame(bracketID, round, position int, side string) int
 	SetBracketGameTeams(id, topTeamID, bottomTeamID int, topIsBye, bottomIsBye bool)
 	SetBracketGameTopTeam(id, teamID int)
 	SetBracketGameBottomTeam(id, teamID int)
@@ -111,7 +111,7 @@ type DB interface {
 	SetBracketGameGameID(id, gameID int)
 	GetBracketGameByID(id int) BracketGame
 	GetBracketGameByGameID(gameID int) BracketGame
-	GetBracketGameByRoundPosition(bracketID, round, position int) BracketGame
+	GetBracketGameByRoundPosition(bracketID int, side string, round, position int) BracketGame
 	GetBracketGames(bracketID int) []BracketGame
 
 	// News
