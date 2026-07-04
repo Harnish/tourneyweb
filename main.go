@@ -180,10 +180,15 @@ func main() {
 
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
+	plaintextHTTP := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, csrf.PlaintextHTTPRequest(r))
+		})
+	}
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: wh.RequestLogger(csrfMiddleware(router)),
+		Handler: wh.RequestLogger(plaintextHTTP(csrfMiddleware(router))),
 	}
 
 	go func() {
