@@ -42,7 +42,7 @@ func main() {
 		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
 		cfg.FromEmail, cfg.BaseURL,
 	)
-	wh := webhandler.New(db, email, cfg.DisableDelete, cfg.DisableEmailVerification)
+	wh := webhandler.New(db, email, cfg.DisableDelete, cfg.DisableEmailVerification, cfg.BaseURL)
 	slog.Info("listening", "port", cfg.Port)
 	LoadBanner(cfg.BannerImagePath)
 
@@ -77,6 +77,8 @@ func main() {
 	router.GET("/tournaments/:tid/divisions/:did", wh.PrintDivision)
 	router.GET("/tournaments/:tid/divisions/:did/bracket", wh.PrintBracket)
 	router.GET("/tournaments/:tid/teams/:teamid", wh.ShowTeam)
+	router.GET("/tournaments/:tid/teams/:teamid/qr.png", wh.TeamQRCode)
+	router.GET("/tournaments/:tid/teams/:teamid/sheet", wh.TeamSheet)
 	router.GET("/tournaments/:tid/games", wh.Games)
 	router.GET("/tournaments/:tid/extras", wh.TournamentExtras)
 	router.GET("/tournaments/:tid/fields", wh.TournamentFields)

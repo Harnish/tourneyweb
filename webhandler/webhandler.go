@@ -85,15 +85,17 @@ type Env struct {
 	Email                    *EmailService
 	DisableDelete            bool
 	DisableEmailVerification bool
+	BaseURL                  string
 }
 
-func New(db mydb.DB, email *EmailService, dd, disableEmailVerification bool) *Env {
+func New(db mydb.DB, email *EmailService, dd, disableEmailVerification bool, baseURL string) *Env {
 	db.PruneLoginAttempts()
 	return &Env{
 		DB:                       db,
 		Email:                    email,
 		DisableDelete:            dd,
 		DisableEmailVerification: disableEmailVerification,
+		BaseURL:                  baseURL,
 	}
 }
 

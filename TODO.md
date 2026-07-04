@@ -24,10 +24,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 These are multi-sprint architectural additions. Each depends on the ones above it.
 
-### Roster & QR Codes
-
-- **[P2/S]** Team QR code — coaches can upload a custom QR code image or generate one server-side (via `github.com/skip2/go-qrcode`) linking to the team's public page. Displayed on the team detail page and a printable team sheet. Roster feature has shipped, so this is unblocked.
-
 ---
 
 ## Bugs
@@ -41,6 +37,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Team QR code** — server-generated QR code (via `github.com/skip2/go-qrcode`) linking to the team's public page; shown on the team detail page (`/tournaments/:tid/teams/:teamid/qr.png`) and on a new printable team sheet (`/tournaments/:tid/teams/:teamid/sheet`) with roster and a print button
 - **Double-elimination brackets** — Directors choose single- or double-elimination when starting a bracket (double-elim gated to team counts that are an exact power of 2); losers bracket, grand final, and bracket-reset game (if the losers-bracket entrant wins the grand final) all auto-generate and cascade on scoring; public bracket page renders Winners/Losers/Grand Final sections
 - **Visual bracket display + drag-and-drop seeding** — single-elimination bracket tree with connectors, bye/TBD/winner states, and "Seeded by: …" label; seed review page supports native drag-and-drop reorder in addition to ↑/↓ buttons
 - **Default ranking criteria at creation** — Directors/admins set a default division ranking order when creating a tournament; applied automatically to new divisions; locked on publish with admin override; manage dashboard editable until publish

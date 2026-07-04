@@ -27,5 +27,9 @@
 {{end}}
 </table>
 {{end}}
+<p>
+  <img src="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/qr.png" alt="QR code linking to this team page" width="120" height="120">
+  <br><a href="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/sheet">Printable Team Sheet</a>
+</p>
 {{template "footer" .}}
 {{end}}

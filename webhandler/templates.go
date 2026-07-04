@@ -127,6 +127,12 @@ type teamData struct {
 	Players []mydb.Player
 }
 
+type teamSheetData struct {
+	baseData
+	Team    mydb.Team
+	Players []mydb.Player
+}
+
 type rosterData struct {
 	baseData
 	Team          mydb.Team

@@ -1,0 +1,28 @@
+{{define "teamSheet"}}
+{{template "header" .}}
+<style>
+@media print {
+  .tw-nav, .tw-footer, .no-print { display: none !important; }
+}
+</style>
+<button class="no-print" onclick="window.print()">Print</button>
+<h1>{{.Team.Name}}</h1>
+<p>{{if .Team.Coach}}{{.Team.Coach}} &middot; {{end}}{{.Team.Division.Name}}</p>
+<img src="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/qr.png" alt="QR code linking to this team page" width="160" height="160">
+{{if .Players}}
+<h2>Roster</h2>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>#</th><th>Name</th><th>Handed</th><th>Position</th></tr>
+{{range .Players}}
+<tr>
+  <td>{{.Number}}</td>
+  <td>{{.DisplayName}}</td>
+  <td>{{.Handed}}</td>
+  <td>{{.Position}}</td>
+</tr>
+{{end}}
+</table>
+{{end}}
+<p class="no-print"><a href="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}">← Back to Team</a></p>
+{{template "footer" .}}
+{{end}}
