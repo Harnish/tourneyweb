@@ -1,0 +1,47 @@
+{{define "calendar"}}
+{{template "header" .}}
+<h1>{{.Tournament.Name}} — Calendar</h1>
+
+<style>
+.cal-nav { display:flex; align-items:center; gap:1em; margin-bottom:1em; }
+.cal-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:1px; background:var(--tw-border); border:1px solid var(--tw-border); }
+.cal-dow { background:var(--tw-bg-nav); color:var(--tw-muted); font-size:0.75em; text-transform:uppercase; letter-spacing:0.05em; padding:6px 8px; text-align:center; }
+.cal-day { background:var(--tw-bg-card); min-height:90px; padding:4px 6px; font-size:0.8em; }
+.cal-day.out { opacity:0.4; }
+.cal-day.today { outline:2px solid var(--tw-gold); outline-offset:-2px; }
+.cal-daynum { color:var(--tw-muted); font-weight:600; margin-bottom:2px; }
+.cal-game { display:block; margin-bottom:2px; line-height:1.25; }
+.cal-game-time { color:var(--tw-muted); }
+</style>
+
+<div class="cal-nav">
+  <a href="?month={{.PrevMonth}}">&larr; Prev</a>
+  <strong>{{.MonthLabel}}</strong>
+  <a href="?month={{.NextMonth}}">Next &rarr;</a>
+  <a href="/tournaments/{{.Tournament.ID}}/games" style="margin-left:auto;">Full Schedule</a>
+</div>
+
+<div class="cal-grid">
+  <div class="cal-dow">Sun</div>
+  <div class="cal-dow">Mon</div>
+  <div class="cal-dow">Tue</div>
+  <div class="cal-dow">Wed</div>
+  <div class="cal-dow">Thu</div>
+  <div class="cal-dow">Fri</div>
+  <div class="cal-dow">Sat</div>
+  {{range .Weeks}}
+    {{range .}}
+    <div class="cal-day{{if not .InMonth}} out{{end}}{{if eq (.Date.Format "2006-01-02") $.Today}} today{{end}}">
+      <div class="cal-daynum">{{.Date.Day}}</div>
+      {{range .Games}}
+      <a class="cal-game" href="/tournaments/{{$.Tournament.ID}}/teams/{{.HomeTeam.ID}}">
+        <span class="cal-game-time">{{.Start.Format "3:04 PM"}}</span> {{.HomeTeam.Name}} vs {{.AwayTeam.Name}}
+      </a>
+      {{end}}
+    </div>
+    {{end}}
+  {{end}}
+</div>
+
+{{template "footer" .}}
+{{end}}

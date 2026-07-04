@@ -4,6 +4,7 @@
 <p>{{.Tournament.Sport}} | {{.Tournament.Location}} | {{.Tournament.StartDate.Format "Jan 2, 2006"}}</p>
 {{if .Tournament.Notes}}<p>{{.Tournament.Notes}}</p>{{end}}
 {{if .Tournament.ExtrasHTML}}<p><a href="/tournaments/{{.Tournament.ID}}/extras">Event Extras</a></p>{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/calendar">&#128197; Calendar</a></p>
 {{if .Fields}}
 <p><a href="/tournaments/{{.Tournament.ID}}/fields">&#127979; Fields ({{len .Fields}})</a></p>
 {{else if or .IsAdmin (.User.IsDirectorFor .Tournament.ID)}}

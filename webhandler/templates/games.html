@@ -1,5 +1,6 @@
 {{define "games"}}
 {{template "header" .}}
+<p><a href="/tournaments/{{.Tournament.ID}}/calendar">&#128197; Calendar view</a></p>
 <table border="1" cellpadding="1" cellspacing="0" class="tw-sortable">
 <tr><th>Division</th><th>Home Team</th><th data-sort="number">Home Team Score</th><th>Away Team</th><th data-sort="number">Away Team Score</th><th>Location</th><th>Start Time</th><th>Umpire</th>{{if $.User.CanScore $.Tournament.ID}}<th></th>{{end}}</tr>
 {{range .Games}}

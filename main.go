@@ -82,6 +82,7 @@ func main() {
 	router.GET("/tournaments/:tid/teams/:teamid/qr.png", wh.TeamQRCode)
 	router.GET("/tournaments/:tid/teams/:teamid/sheet", wh.TeamSheet)
 	router.GET("/tournaments/:tid/games", wh.Games)
+	router.GET("/tournaments/:tid/calendar", wh.Calendar)
 	router.GET("/tournaments/:tid/extras", wh.TournamentExtras)
 	router.GET("/tournaments/:tid/fields", wh.TournamentFields)
 	router.GET("/map", wh.MapView)

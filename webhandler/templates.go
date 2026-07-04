@@ -152,6 +152,21 @@ type gamesData struct {
 	Games []mydb.Game
 }
 
+type calendarDay struct {
+	Date    time.Time
+	InMonth bool
+	Games   []mydb.Game
+}
+
+type calendarData struct {
+	baseData
+	MonthLabel string
+	Weeks      [][]calendarDay
+	PrevMonth  string
+	NextMonth  string
+	Today      string // "2006-01-02", for highlighting today's cell
+}
+
 type loginData struct {
 	baseData
 	Error string

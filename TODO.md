@@ -14,16 +14,6 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
-- **[P3/M]** Client-side table sorting — allow clicking column headers to sort standings and game lists
-- **[P3/L]** Calendar view — display games on a calendar grouped by date
-- **[P3/L]** Bracket/playoff support — see Major Features below
-
----
-
-## Major Features
-
-These are multi-sprint architectural additions. Each depends on the ones above it.
-
 ---
 
 ## Bugs
@@ -37,6 +27,7 @@ These are multi-sprint architectural additions. Each depends on the ones above i
 
 ## Recently Completed
 
+- **Calendar view** — `/tournaments/:tid/calendar` shows a month grid of all games across every division, with prev/next month navigation, today highlighting, and a link back to the full schedule
 - **Team QR code** — server-generated QR code (via `github.com/skip2/go-qrcode`) linking to the team's public page; shown on the team detail page (`/tournaments/:tid/teams/:teamid/qr.png`) and on a new printable team sheet (`/tournaments/:tid/teams/:teamid/sheet`) with roster and a print button
 - **Double-elimination brackets** — Directors choose single- or double-elimination when starting a bracket (double-elim gated to team counts that are an exact power of 2); losers bracket, grand final, and bracket-reset game (if the losers-bracket entrant wins the grand final) all auto-generate and cascade on scoring; public bracket page renders Winners/Losers/Grand Final sections
 - **Visual bracket display + drag-and-drop seeding** — single-elimination bracket tree with connectors, bye/TBD/winner states, and "Seeded by: …" label; seed review page supports native drag-and-drop reorder in addition to ↑/↓ buttons
