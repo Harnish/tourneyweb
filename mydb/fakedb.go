@@ -335,6 +335,15 @@ func (f *FakeDB) UpdateTeam(id, divisionID int, name, coach string) {
 	}
 }
 
+func (f *FakeDB) SetTeamGameChanger(id int, gcURL string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if t, ok := f.teams[id]; ok {
+		t.GameChangerURL = gcURL
+		f.teams[id] = t
+	}
+}
+
 func (f *FakeDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 	f.mu.Lock()
 	defer f.mu.Unlock()

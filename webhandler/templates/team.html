@@ -27,6 +27,12 @@
 {{end}}
 </table>
 {{end}}
+{{if .Team.GameChangerURL}}
+<p>
+  <a href="{{.Team.GameChangerURL}}" rel="noopener noreferrer" target="_blank">Follow this team on GameChanger</a>
+  <br><img src="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/gc-qr.png" alt="QR code linking to this team's GameChanger page" width="120" height="120">
+</p>
+{{end}}
 <p>
   <img src="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/qr.png" alt="QR code linking to this team page" width="120" height="120">
   <br><a href="/tournaments/{{.Tournament.ID}}/teams/{{.Team.ID}}/sheet">Printable Team Sheet</a>
