@@ -33,6 +33,7 @@ type DB interface {
 	DelTeam(id int)
 	ReturnTeamsByTournamentID(tournamentID int) []Team
 	UpdateTeam(id, divisionID int, name, coach string)
+	SetTeamGameChanger(id int, gcURL string)
 	ReturnTeamsByDivisionID(divisionID int) []Team
 	ReturnTeamsByDivisionIDWithStats(divisionID int) []Team
 	ReturnTeamByID(id int) Team

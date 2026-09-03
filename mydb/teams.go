@@ -15,6 +15,8 @@ type Team struct {
 	Losses       int
 	RunsAgainst  int
 	RunsFor      int
+
+	GameChangerURL string
 }
 
 func (me *MyDB) AddTeam(tournamentID, divisionID int, name, coach string) {
@@ -33,7 +35,7 @@ func (me *MyDB) DelTeam(id int) {
 
 func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
 	rows, err := me.DB.Query(
-		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE tournament_id=$1 ORDER BY name`,
+		`SELECT id, tournament_id, name, coach, division_id, COALESCE(gamechanger_url,'') FROM teams WHERE tournament_id=$1 ORDER BY name`,
 		tournamentID,
 	)
 	if err != nil {
@@ -44,7 +46,7 @@ func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
 	for rows.Next() {
 		var t Team
 		var did int
-		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did); err != nil {
+		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did, &t.GameChangerURL); err != nil {
 			slog.Error("ReturnTeamsByTournamentID scan", "err", err)
 			continue
 		}
@@ -65,9 +67,16 @@ func (me *MyDB) UpdateTeam(id, divisionID int, name, coach string) {
 	}
 }
 
+func (me *MyDB) SetTeamGameChanger(id int, gcURL string) {
+	_, err := me.DB.Exec(`UPDATE teams SET gamechanger_url=$1 WHERE id=$2`, gcURL, id)
+	if err != nil {
+		slog.Error("SetTeamGameChanger", "err", err)
+	}
+}
+
 func (me *MyDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 	rows, err := me.DB.Query(
-		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE division_id=$1`,
+		`SELECT id, tournament_id, name, coach, division_id, COALESCE(gamechanger_url,'') FROM teams WHERE division_id=$1`,
 		divisionID,
 	)
 	if err != nil {
@@ -78,7 +87,7 @@ func (me *MyDB) ReturnTeamsByDivisionID(divisionID int) []Team {
 	for rows.Next() {
 		var t Team
 		var did int
-		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did); err != nil {
+		if err := rows.Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did, &t.GameChangerURL); err != nil {
 			slog.Error("ReturnTeamsByDivisionID scan", "err", err)
 			continue
 		}
@@ -104,8 +113,8 @@ func (me *MyDB) ReturnTeamByID(id int) Team {
 	var t Team
 	var did int
 	err := me.DB.QueryRow(
-		`SELECT id, tournament_id, name, coach, division_id FROM teams WHERE id=$1`, id,
-	).Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did)
+		`SELECT id, tournament_id, name, coach, division_id, COALESCE(gamechanger_url,'') FROM teams WHERE id=$1`, id,
+	).Scan(&t.ID, &t.TournamentID, &t.Name, &t.Coach, &did, &t.GameChangerURL)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error("ReturnTeamByID", "err", err)
 		return t

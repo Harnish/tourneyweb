@@ -24,6 +24,15 @@
 <p>No players on roster yet.</p>
 {{end}}
 <p><a href="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/new">Add Player</a></p>
+
+<h2>GameChanger Link</h2>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams/{{.Team.ID}}/roster/gamechanger">
+  {{.CSRFField}}
+  <input type="url" name="gamechanger_url" size="60" placeholder="https://web.gamechanger.io/teams/..."
+         value="{{.Team.GameChangerURL}}">
+  <input type="submit" value="Save">
+  <br><small>Full gamechanger.io URL. Leave blank to remove. Shown on the public team page with a QR code.</small>
+</form>
 <p><a href="/tournaments/{{.Tournament.ID}}/manage/teams">Back to Teams</a></p>
 {{template "footer" .}}
 {{end}}

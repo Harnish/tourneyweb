@@ -209,6 +209,7 @@ var pgmigrations = []string{
 		position   TEXT NOT NULL DEFAULT ''
 	)`,
 	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS default_ranking_criteria TEXT`,
+	`ALTER TABLE teams ADD COLUMN IF NOT EXISTS gamechanger_url TEXT NOT NULL DEFAULT ''`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {
