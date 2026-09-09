@@ -1,6 +1,6 @@
 module gitlab.joe.beardedgeek.org/harnish/tourneyweb
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/gorilla/csrf v1.7.3
@@ -8,7 +8,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rivo/sessions v0.0.0-20180420064926-e18b9ef80f84
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 )
