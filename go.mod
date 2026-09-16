@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/gorilla/csrf v1.7.3
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rivo/sessions v0.0.0-20180420064926-e18b9ef80f84
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
