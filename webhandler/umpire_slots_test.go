@@ -367,3 +367,29 @@ func TestVerifyBlockedForDraftTournament(t *testing.T) {
 		t.Fatalf("draft tournaments must not verify umpires: %d", w.Code)
 	}
 }
+
+func TestPickerShowsExpiredWarningButStaysSelectable(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.db.SetUmpireVerified(f.tid, f.ann, 1, true)
+	f.db.SetUmpireExpiredFlag(f.tid, f.ann, 1, true)
+	tr := f.db.ReturnTournamentByID(f.tid)
+	var ann umpireOption
+	for _, o := range f.env.slotBlock(tr, f.did, nil).Umpires {
+		if o.UserID == f.ann {
+			ann = o
+		}
+	}
+	if !strings.Contains(ann.Label, "expired") || strings.Contains(ann.Label, "verified") || ann.Blocked {
+		t.Fatalf("expired umpire: warn, drop verified badge, stay assignable: %+v", ann)
+	}
+	if msg := f.env.validateSlots([]slotChoice{{1, f.ann, ""}}, f.game.Start, f.game.ID); msg != "" {
+		t.Fatalf("expired umpires must still be assignable: %q", msg)
+	}
+	f.db.SetUmpireCertExpiry(f.bob, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	for _, o := range f.env.slotBlock(tr, f.did, nil).Umpires {
+		if o.UserID == f.bob && !strings.Contains(o.Label, "expired") {
+			t.Fatalf("a passed expiration date warns too: %+v", o)
+		}
+	}
+}

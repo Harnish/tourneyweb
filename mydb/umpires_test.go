@@ -270,3 +270,99 @@ func TestDeclinedSlotIsTerminal(t *testing.T) {
 		t.Fatal("status must stay declined")
 	}
 }
+
+func TestCertLinkedAtSetWhenLinkChanges(t *testing.T) {
+	db := mydb.NewFakeDB()
+	id := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireProfile(id, true, "")
+	if u, _ := db.GetUmpire(id); !u.LinkedAt.IsZero() {
+		t.Fatal("nothing linked yet")
+	}
+	db.SetUmpireProfile(id, true, "https://a.example")
+	u, _ := db.GetUmpire(id)
+	if u.LinkedAt.IsZero() {
+		t.Fatal("linking a URL must set LinkedAt")
+	}
+	first := u.LinkedAt
+	time.Sleep(2 * time.Millisecond)
+	db.SetUmpireProfile(id, true, "https://a.example") // unchanged
+	if u, _ := db.GetUmpire(id); !u.LinkedAt.Equal(first) {
+		t.Fatal("re-saving the same link must not reset LinkedAt")
+	}
+	db.SetUmpireProfile(id, true, "https://b.example")
+	if u, _ := db.GetUmpire(id); !u.LinkedAt.After(first) {
+		t.Fatal("changing the link must reset LinkedAt")
+	}
+}
+
+func TestCertChangeClearsExpiredFlags(t *testing.T) {
+	db := mydb.NewFakeDB()
+	id := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireProfile(id, true, "https://a.example")
+	db.SetUmpireExpiredFlag(1, id, 99, true)
+	db.SetUmpireExpiredFlag(2, id, 99, true)
+	db.SetUmpireProfile(id, true, "https://a.example")
+	if !db.ExpiredFlagUmpireIDs(1)[id] {
+		t.Fatal("unchanged link keeps flags")
+	}
+	db.SetUmpireCertImage(id, []byte{1, 2, 3}, "image/png")
+	if db.ExpiredFlagUmpireIDs(1)[id] || db.ExpiredFlagUmpireIDs(2)[id] {
+		t.Fatal("a new image clears flags in every tournament")
+	}
+	db.SetUmpireExpiredFlag(1, id, 99, true)
+	db.SetUmpireProfile(id, true, "https://c.example")
+	if db.ExpiredFlagUmpireIDs(1)[id] {
+		t.Fatal("a new link clears flags")
+	}
+}
+
+func TestExpiredFlagPerTournament(t *testing.T) {
+	db := mydb.NewFakeDB()
+	id := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireExpiredFlag(1, id, 99, true)
+	if !db.ExpiredFlagUmpireIDs(1)[id] || db.ExpiredFlagUmpireIDs(2)[id] {
+		t.Fatal("flag applies to one tournament only")
+	}
+	db.SetUmpireExpiredFlag(1, id, 99, false)
+	if db.ExpiredFlagUmpireIDs(1)[id] {
+		t.Fatal("clear should remove the flag")
+	}
+}
+
+func TestCertExpiryDate(t *testing.T) {
+	db := mydb.NewFakeDB()
+	id := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireProfile(id, true, "")
+	d := time.Date(2027, 3, 1, 0, 0, 0, 0, time.UTC)
+	db.SetUmpireCertExpiry(id, d)
+	if u, _ := db.GetUmpire(id); !u.ExpiresOn.Equal(d) {
+		t.Fatalf("got %v", u.ExpiresOn)
+	}
+	db.SetUmpireCertExpiry(id, time.Time{})
+	if u, _ := db.GetUmpire(id); !u.ExpiresOn.IsZero() {
+		t.Fatal("zero clears the date")
+	}
+}
+
+func TestUmpireCertExpired(t *testing.T) {
+	today := time.Date(2026, 10, 16, 15, 0, 0, 0, time.UTC)
+	cases := []struct {
+		name    string
+		exp     time.Time
+		flagged bool
+		want    bool
+	}{
+		{"no date, no flag", time.Time{}, false, false},
+		{"date yesterday", time.Date(2026, 10, 15, 0, 0, 0, 0, time.UTC), false, true},
+		{"date today is still valid", time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC), false, false},
+		{"date tomorrow", time.Date(2026, 10, 17, 0, 0, 0, 0, time.UTC), false, false},
+		{"flagged, no date", time.Time{}, true, true},
+		{"flagged and future date", time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC), true, true},
+	}
+	for _, c := range cases {
+		u := mydb.Umpire{ExpiresOn: c.exp}
+		if got := u.Expired(c.flagged, today); got != c.want {
+			t.Errorf("%s: got %v want %v", c.name, got, c.want)
+		}
+	}
+}

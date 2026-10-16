@@ -12,6 +12,9 @@
   {{if .HasCertImage}}<a href="/umpires/{{.User.ID}}/certificate">Current certificate</a> <label><input type="checkbox" name="remove_cert"> remove</label><br>{{end}}
   <input type="file" name="cert_image" accept="image/jpeg,image/png,application/pdf"> <small>JPG, PNG or PDF, up to 5 MB</small>
 </td></tr>
+<tr><td>Certification expires</td><td><input type="date" name="cert_expires" value="{{.ExpiresOn}}">
+  {{if .Expired}}<strong style="color:#c60">&#9888; your certification has expired &mdash; update your link or image</strong>{{end}}
+  {{if .LinkedOn}}<br><small>Linked on {{.LinkedOn}}</small>{{end}}</td></tr>
 <tr><td></td><td><input type="submit" value="Save"></td></tr>
 </table>
 <p><small>Directors and site admins can see your certification link and image so they can verify you before assigning games.</small></p>

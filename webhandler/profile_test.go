@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -195,5 +196,45 @@ func TestProfilePageRenders(t *testing.T) {
 	env.Profile(w, req, nil)
 	if w.Code != http.StatusOK || !bytes.Contains(w.Body.Bytes(), []byte("https://assoc.example/una")) || !bytes.Contains(w.Body.Bytes(), []byte("checked")) {
 		t.Fatalf("code=%d body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestProfileSavesAndClearsExpiry(t *testing.T) {
+	env, db, u := profileEnv(t)
+	post := func(exp string) int {
+		return postProfile(env, u, map[string]string{"is_umpire": "on", "cert_url": "https://a.example", "cert_expires": exp}, nil).Code
+	}
+	if c := post("2027-03-01"); c != http.StatusSeeOther {
+		t.Fatalf("got %d", c)
+	}
+	if got, _ := db.GetUmpire(u.ID); got.ExpiresOn.Format("2006-01-02") != "2027-03-01" {
+		t.Fatalf("got %v", got.ExpiresOn)
+	}
+	if c := post("not-a-date"); c != http.StatusBadRequest {
+		t.Fatalf("invalid date: got %d want 400", c)
+	}
+	if got, _ := db.GetUmpire(u.ID); got.ExpiresOn.Format("2006-01-02") != "2027-03-01" {
+		t.Fatal("rejected save must change nothing")
+	}
+	post("")
+	if got, _ := db.GetUmpire(u.ID); !got.ExpiresOn.IsZero() {
+		t.Fatal("blank clears the date")
+	}
+}
+
+func TestProfilePageShowsLinkedDateAndExpiredNote(t *testing.T) {
+	env, db, u := profileEnv(t)
+	db.SetUmpireProfile(u.ID, true, "https://a.example")
+	db.SetUmpireCertExpiry(u.ID, time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC))
+	req := httptest.NewRequest(http.MethodGet, "/profile", nil)
+	req = req.WithContext(context.WithValue(req.Context(), contextKey{}, u))
+	w := httptest.NewRecorder()
+	env.Profile(w, req, nil)
+	body := w.Body.String()
+	if !strings.Contains(body, "Linked on "+time.Now().Format("Jan 2, 2006")) {
+		t.Error("want the linked date")
+	}
+	if !strings.Contains(body, "expired") || !strings.Contains(body, `value="2020-01-01"`) {
+		t.Errorf("want expired note and the date prefilled: %s", body)
 	}
 }

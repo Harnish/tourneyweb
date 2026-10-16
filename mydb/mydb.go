@@ -117,6 +117,13 @@ var pgtables = []string{
 		UNIQUE(game_id, slot),
 		CHECK ((user_id IS NOT NULL) <> (free_name <> ''))
 	)`,
+	`CREATE TABLE IF NOT EXISTS umpire_expired_flags (
+		user_id       INTEGER NOT NULL REFERENCES users(id),
+		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+		flagged_by    INTEGER,
+		flagged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		PRIMARY KEY (user_id, tournament_id)
+	)`,
 	`CREATE TABLE IF NOT EXISTS umpire_verifications (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
@@ -231,6 +238,8 @@ var pgmigrations = []string{
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_url TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image BYTEA`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image_type TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_linked_at TIMESTAMPTZ`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_expires_on DATE`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS umpires_needed INTEGER NOT NULL DEFAULT 1`,
 	`INSERT INTO game_umpires (game_id, slot, free_name, status)
 	 SELECT id, 1, umpire, 'accepted' FROM games g

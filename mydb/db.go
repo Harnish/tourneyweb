@@ -137,6 +137,9 @@ type DB interface {
 	ListUmpires() []Umpire
 	SetUmpireVerified(tournamentID, userID, byUserID int, verified bool)
 	VerifiedUmpireIDs(tournamentID int) map[int]bool
+	SetUmpireCertExpiry(userID int, expiresOn time.Time)
+	SetUmpireExpiredFlag(tournamentID, userID, byUserID int, flagged bool)
+	ExpiredFlagUmpireIDs(tournamentID int) map[int]bool
 	DivisionUmpiresNeeded(divisionID int) int
 	SetDivisionUmpiresNeeded(divisionID, n int)
 

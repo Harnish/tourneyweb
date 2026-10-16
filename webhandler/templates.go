@@ -72,6 +72,9 @@ type profileData struct {
 	CertURL      string
 	HasCertImage bool
 	Saved        bool
+	LinkedOn     string // e.g. "Oct 16, 2026"; empty if nothing linked
+	ExpiresOn    string // yyyy-mm-dd for the date input
+	Expired      bool
 }
 
 type divisionTeamRow struct {
@@ -350,8 +353,7 @@ type manageDivisionEditData struct {
 
 type manageUmpiresData struct {
 	baseData
-	Umpires  []mydb.Umpire
-	Verified map[int]bool
+	Rows []manageUmpireRow
 }
 
 type manageBracketSeedData struct {

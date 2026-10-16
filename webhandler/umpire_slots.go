@@ -64,10 +64,12 @@ func (me *Env) slotBlock(t mydb.Tournament, divisionID int, game *mydb.Game) slo
 	var opts []umpireOption
 	have := map[int]bool{}
 	if t.Status != "draft" {
-		verified := me.DB.VerifiedUmpireIDs(t.ID)
+		verified, flagged, now := me.DB.VerifiedUmpireIDs(t.ID), me.DB.ExpiredFlagUmpireIDs(t.ID), time.Now()
 		for _, u := range me.DB.ListUmpires() {
 			o := umpireOption{UserID: u.UserID, Label: u.Name}
-			if verified[u.UserID] {
+			if u.Expired(flagged[u.UserID], now) { // warn only; expired umpires stay assignable
+				o.Label += " ⚠ expired"
+			} else if verified[u.UserID] {
 				o.Label += " ✔ verified"
 			}
 			o.Blocked = game != nil && me.DB.UmpireConflict(u.UserID, game.Start, gid)

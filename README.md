@@ -33,7 +33,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Role-based access control** — three roles per tournament: `director` (full tournament management), `staff` (score entry only), `coach` (reserved); site-wide `admin` flag for system administration
 - **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
-- **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament; assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
+- **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament and flag expired certifications (umpires can also set their own expiration date; expired umpires show a warning but stay assignable); assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
 - **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
 - **Delete confirmation** — browser confirm dialogs guard all delete operations
 - **Delete lock** — optional `disabledelete` flag prevents accidental deletions during live tournaments
