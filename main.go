@@ -132,6 +132,8 @@ func main() {
 	router.GET("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/delete", wh.ManageDeleteGame)
+	router.GET("/tournaments/:tid/manage/umpires", wh.ManageUmpires)
+	router.POST("/tournaments/:tid/manage/umpires/:uid/verify", wh.ManageUmpireVerify)
 	router.GET("/tournaments/:tid/manage/news", wh.ManageNews)
 	router.POST("/tournaments/:tid/manage/news", wh.ManageNews)
 	router.GET("/tournaments/:tid/manage/news/:nid/edit", wh.ManageNewsEdit)

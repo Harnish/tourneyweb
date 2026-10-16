@@ -6,6 +6,7 @@
 {{.CSRFField}}
 <table>
   <tr><td>Name</td><td><input type="text" name="name" value="{{.Division.Name}}" required></td></tr>
+  <tr><td>Umpires per game</td><td><input type="number" name="umpires_needed" value="{{.UmpiresNeeded}}" min="1" max="4"></td></tr>
 </table>
 <h3>Standings Ranking Order</h3>
 <p>Check criteria to include them. Use ↑/↓ to set the tiebreaker order (top = first tiebreaker).</p>

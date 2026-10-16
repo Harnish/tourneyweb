@@ -1,0 +1,31 @@
+{{define "manageUmpires"}}
+{{template "header" .}}
+<h2>Umpires &mdash; {{.Tournament.Name}}</h2>
+<p>Everyone who registered as an umpire. Verifying marks them as vetted for <em>this tournament only</em>; unverified umpires can still be assigned.</p>
+{{if .Umpires}}
+<table>
+<tr><th>Name</th><th>Email</th><th>Certification link</th><th>Certificate image</th><th>Status</th><th></th></tr>
+{{range .Umpires}}
+<tr>
+  <td>{{.Name}}</td>
+  <td>{{.Email}}</td>
+  <td>{{if .CertURL}}<a href="{{.CertURL}}" target="_blank" rel="noopener noreferrer">{{.CertURL}}</a>{{end}}</td>
+  <td>{{if .HasCertImage}}<a href="/umpires/{{.UserID}}/certificate">View</a>{{end}}</td>
+  {{$v := index $.Verified .UserID}}
+  <td>{{if $v}}&#10004; verified{{else}}unverified{{end}}</td>
+  <td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpires/{{.UserID}}/verify" style="margin:0">
+      {{$.CSRFField}}
+      <input type="hidden" name="verified" value="{{if $v}}0{{else}}1{{end}}">
+      <input type="submit" value="{{if $v}}Unverify{{else}}Verify{{end}}">
+    </form>
+  </td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No one has registered as an umpire yet. Users can do this from their profile page.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back</a></p>
+{{template "footer" .}}
+{{end}}

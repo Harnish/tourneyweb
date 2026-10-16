@@ -341,8 +341,15 @@ type manageDivisionsData struct {
 
 type manageDivisionEditData struct {
 	baseData
-	Division    mydb.Division
-	AllCriteria []CriterionUIRow
+	Division      mydb.Division
+	AllCriteria   []CriterionUIRow
+	UmpiresNeeded int
+}
+
+type manageUmpiresData struct {
+	baseData
+	Umpires  []mydb.Umpire
+	Verified map[int]bool
 }
 
 type manageBracketSeedData struct {

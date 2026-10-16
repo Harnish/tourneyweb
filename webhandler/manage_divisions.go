@@ -88,13 +88,17 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		}
 		me.DB.UpdateDivision(did, name, criteria)
 		me.DB.SetDivisionRules(did, r.FormValue("rules_html"))
+		if n, err := strconv.Atoi(r.FormValue("umpires_needed")); err == nil {
+			me.DB.SetDivisionUmpiresNeeded(did, n)
+		}
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
 	me.render(w, "manageDivisionEdit", manageDivisionEditData{
-		baseData:    newBaseWithTournament(r, t),
-		Division:    division,
-		AllCriteria: AllCriteriaForUI(division.RankingCriteria),
+		baseData:      newBaseWithTournament(r, t),
+		Division:      division,
+		AllCriteria:   AllCriteriaForUI(division.RankingCriteria),
+		UmpiresNeeded: me.DB.DivisionUmpiresNeeded(did),
 	})
 }
 
