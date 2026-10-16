@@ -287,3 +287,83 @@ func TestDraftTournamentRejectsRegisteredUmpires(t *testing.T) {
 		t.Error("draft tournaments get no registered-umpire list")
 	}
 }
+
+func slotHolders(f *slotFx) map[int]string {
+	out := map[int]string{}
+	for _, s := range f.db.GameUmpires(f.game.ID) {
+		switch {
+		case s.Status == "declined":
+			out[s.Slot] = "declined:" + s.UserName
+		case s.UserID > 0:
+			out[s.Slot] = s.UserName
+		default:
+			out[s.Slot] = s.FreeName
+		}
+	}
+	return out
+}
+
+func TestApplySlotsMoveUmpireBetweenSlots(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, 0, "Free")
+	f.db.AssignUmpire(f.game.ID, 2, f.ann, "")
+	if msg := f.env.applySlots(f.game, []slotChoice{{1, f.ann, ""}, {2, 0, ""}}); msg != "" {
+		t.Fatal(msg)
+	}
+	if got := slotHolders(f); len(got) != 1 || got[1] != "Ann" {
+		t.Fatalf("Ann must end up in slot 1, got %v", got)
+	}
+}
+
+func TestApplySlotsSwapUmpires(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	f.db.AssignUmpire(f.game.ID, 2, f.bob, "")
+	if msg := f.env.applySlots(f.game, []slotChoice{{1, f.bob, ""}, {2, f.ann, ""}}); msg != "" {
+		t.Fatal(msg)
+	}
+	if got := slotHolders(f); got[1] != "Bob" || got[2] != "Ann" {
+		t.Fatalf("swap failed: %v", got)
+	}
+}
+
+func TestApplySlotsDeclinedUmpireReassignedToOtherSlot(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	f.db.RespondUmpireSlot(f.game.ID, 1, f.ann, false)
+	if msg := f.env.applySlots(f.game, []slotChoice{{1, 0, ""}, {2, f.ann, ""}}); msg != "" {
+		t.Fatal(msg)
+	}
+	if got := slotHolders(f); got[2] != "Ann" || got[1] != "" && got[1] != "declined:Ann" {
+		t.Fatalf("got %v", got)
+	}
+	if s := f.db.GameUmpires(f.game.ID); len(s) != 1 || s[0].Slot != 2 {
+		t.Fatalf("the stale declined row must be cleared when the umpire is reassigned: %+v", s)
+	}
+}
+
+func TestApplySlotsReportsAssignFailure(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	tm := f.db.ReturnTeamsByDivisionID(f.did)
+	other := f.db.AddGame(f.tid, f.did, tm[0].ID, tm[1].ID, "F2", f.game.Start.Add(30*time.Minute), "")
+	f.db.AssignUmpire(other, 1, f.ann, "")
+	if msg := f.env.applySlots(f.game, []slotChoice{{1, f.ann, ""}}); msg == "" {
+		t.Fatal("a failed assignment must be reported, not swallowed")
+	}
+}
+
+func TestVerifyBlockedForDraftTournament(t *testing.T) {
+	env, db, _, _, uid, dir := umpFixture(t)
+	draft := db.AddTournament("Draft", "baseball", "L", "", time.Now(), "draft")
+	dir.Roles = append(dir.Roles, TournamentRole{TournamentID: draft, Role: "director"})
+	w := httptest.NewRecorder()
+	env.ManageUmpireVerify(w, directorReq("POST", "verified=1", dir),
+		httprouter.Params{{Key: "tid", Value: strconv.Itoa(draft)}, {Key: "uid", Value: strconv.Itoa(uid)}})
+	if w.Code != http.StatusForbidden || db.VerifiedUmpireIDs(draft)[uid] {
+		t.Fatalf("draft tournaments must not verify umpires: %d", w.Code)
+	}
+}

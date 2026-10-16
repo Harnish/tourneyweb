@@ -412,7 +412,10 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 	newID := me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, "")
-	me.applySlots(me.DB.ReturnGameByID(newID), choices)
+	if msg := me.applySlots(me.DB.ReturnGameByID(newID), choices); msg != "" {
+		http.Error(w, msg, http.StatusConflict)
+		return
+	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
 }
 
@@ -476,7 +479,10 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
 		updated := me.DB.ReturnGameByID(gid)
 		me.notifyGameChanged(game, updated)
-		me.applySlots(updated, choices)
+		if msg := me.applySlots(updated, choices); msg != "" {
+			http.Error(w, msg, http.StatusConflict)
+			return
+		}
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 		return
 	}

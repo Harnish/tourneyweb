@@ -29,6 +29,10 @@ func (me *Env) ManageUmpireVerify(w http.ResponseWriter, r *http.Request, ps htt
 	if !ok {
 		return
 	}
+	if t.Status == "draft" {
+		http.Error(w, "Umpires can be verified once the tournament is approved and published.", http.StatusForbidden)
+		return
+	}
 	uid, err := strconv.Atoi(ps.ByName("uid"))
 	if err != nil {
 		http.Error(w, "Bad user ID", http.StatusBadRequest)

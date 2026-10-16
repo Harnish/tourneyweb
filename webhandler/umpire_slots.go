@@ -163,52 +163,66 @@ func (me *Env) validateSlots(choices []slotChoice, start time.Time, gameID int) 
 }
 
 // applySlots writes the chosen slots for g and emails registered umpires who were assigned or removed.
-func (me *Env) applySlots(g mydb.Game, choices []slotChoice) {
-	old := map[int]mydb.UmpireSlot{}
-	for _, s := range me.DB.GameUmpires(g.ID) {
-		old[s.Slot] = s
-	}
-	line := gameLine(g)
-	removed := func(o mydb.UmpireSlot) {
-		if o.UserID > 0 && o.Status != "declined" {
-			me.notifyUmpire(o.UserEmail, "Removed from a game", "You are no longer assigned to: "+line)
+// It returns a user-facing error ("" when every assignment succeeded). Slots whose holder changes are
+// cleared first, so an umpire can be moved or swapped between slots of the same game.
+func (me *Env) applySlots(g mydb.Game, choices []slotChoice) string {
+	byslot := map[int]slotChoice{}
+	chosen := map[int]bool{} // registered users named anywhere in the submission
+	for _, c := range choices {
+		byslot[c.Slot] = c
+		if c.UserID > 0 {
+			chosen[c.UserID] = true
 		}
 	}
-	for _, c := range choices {
-		o, had := old[c.Slot]
+	line := gameLine(g)
+	old := map[int]mydb.UmpireSlot{}
+	for _, s := range me.DB.GameUmpires(g.ID) {
+		c, ok := byslot[s.Slot]
+		if !ok {
+			continue
+		}
+		old[s.Slot] = s
+		keep := false
 		switch {
-		case c.UserID == 0 && c.Name == "":
-			if had && o.Status != "declined" { // a declined slot stays visible until refilled
-				me.DB.ClearUmpireSlot(g.ID, c.Slot)
-				removed(o)
-			}
-		case c.UserID > 0:
-			if had && o.UserID == c.UserID && o.Status != "declined" {
-				continue
-			}
-			if err := me.DB.AssignUmpire(g.ID, c.Slot, c.UserID, ""); err != nil {
-				slogAssignErr(g.ID, c.Slot, err)
-				continue
-			}
-			if had {
-				removed(o)
-			}
+		case s.UserID > 0 && s.Status == "declined":
+			keep = c.UserID == 0 && c.Name == "" && !chosen[s.UserID] // declined record stays until refilled
+		case s.UserID > 0:
+			keep = c.UserID == s.UserID
+		default:
+			keep = c.UserID == 0 && c.Name == s.FreeName
+		}
+		if keep {
+			continue
+		}
+		me.DB.ClearUmpireSlot(g.ID, s.Slot)
+		delete(old, s.Slot)
+		if s.UserID > 0 && s.Status != "declined" {
+			me.notifyUmpire(s.UserEmail, "Removed from a game", "You are no longer assigned to: "+line)
+		}
+	}
+	var failed []string
+	for _, c := range choices {
+		if c.UserID == 0 && c.Name == "" {
+			continue
+		}
+		if o, had := old[c.Slot]; had && ((c.UserID > 0 && o.UserID == c.UserID) || (c.UserID == 0 && o.UserID == 0 && o.FreeName == c.Name)) {
+			continue // unchanged
+		}
+		if err := me.DB.AssignUmpire(g.ID, c.Slot, c.UserID, c.Name); err != nil {
+			slogAssignErr(g.ID, c.Slot, err)
+			failed = append(failed, fmt.Sprintf("slot %d: %v", c.Slot, err))
+			continue
+		}
+		if c.UserID > 0 {
 			if u, ok := me.DB.GetUmpire(c.UserID); ok {
 				me.notifyUmpire(u.Email, "You have been scheduled to umpire", "Please accept or decline: "+line)
 			}
-		default:
-			if had && o.UserID == 0 && o.FreeName == c.Name {
-				continue
-			}
-			if err := me.DB.AssignUmpire(g.ID, c.Slot, 0, c.Name); err != nil {
-				slogAssignErr(g.ID, c.Slot, err)
-				continue
-			}
-			if had {
-				removed(o)
-			}
 		}
 	}
+	if len(failed) > 0 {
+		return "Some umpire assignments could not be saved (" + strings.Join(failed, "; ") + ")."
+	}
+	return ""
 }
 
 // notifyGameChanged re-requests confirmation when a game's time or place changes.
