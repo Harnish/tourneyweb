@@ -35,7 +35,7 @@
     {{end}}
   </td></tr>
   <tr><td>Date/Time</td><td><input type="datetime-local" name="datetime" value="{{formatDateTimeLocal .Game.Start}}"></td></tr>
-  <tr><td>Umpire</td><td><input type="text" name="umpire" value="{{.Game.Umpire}}"></td></tr>
+  <tr><td>Umpires</td><td>{{template "umpireSlots" .Ump}}</td></tr>
   <tr><td>{{.CSRFField}}</td></tr>
   <tr><td></td><td><input type="submit" value="Save"></td></tr>
 </table>

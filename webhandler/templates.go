@@ -218,6 +218,7 @@ type createGameData struct {
 	Games         []mydb.Game
 	Locations     []mydb.Location
 	DisableDelete bool
+	Ump slotBlock
 }
 
 type scoreGameData struct {
@@ -258,6 +259,7 @@ type editGameData struct {
 	Teams     []mydb.Team
 	Divisions []mydb.Division
 	Locations []mydb.Location
+	Ump slotBlock
 }
 
 // Auth template data types
@@ -407,6 +409,7 @@ type manageCreateGameData struct {
 	Games         []mydb.Game
 	Locations     []mydb.Location
 	DisableDelete bool
+	Ump slotBlock
 }
 
 type manageEditGameData struct {
@@ -415,6 +418,7 @@ type manageEditGameData struct {
 	Teams     []mydb.Team
 	Divisions []mydb.Division
 	Locations []mydb.Location
+	Ump slotBlock
 }
 
 type adminQueueData struct {
