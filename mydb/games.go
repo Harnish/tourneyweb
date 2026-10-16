@@ -19,9 +19,10 @@ type Game struct {
 	HomeScore        int
 	Scored           bool
 	ScrimmageTeamID  int // team ID for whom this game doesn't count; 0 = counts for both
+	ScoreStatus      string // "" unscored, reported, confirmed, disputed, final
 }
 
-const gameSelect = `SELECT id, tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire, home_score, away_score, COALESCE(scrimmage_team_id,0) FROM games`
+const gameSelect = `SELECT id, tournament_id, division_id, home_team_id, away_team_id, location, start_time, umpire, home_score, away_score, COALESCE(scrimmage_team_id,0), score_status FROM games`
 
 func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 	var out []Game
@@ -30,7 +31,7 @@ func (me *MyDB) scanGames(rows *sql.Rows) []Game {
 		var hid, aid, did int
 		var homeScore, awayScore sql.NullInt64
 		var startTime sql.NullTime
-		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &startTime, &g.Umpire, &homeScore, &awayScore, &g.ScrimmageTeamID); err != nil {
+		if err := rows.Scan(&g.ID, &g.TournamentID, &did, &hid, &aid, &g.Location, &startTime, &g.Umpire, &homeScore, &awayScore, &g.ScrimmageTeamID, &g.ScoreStatus); err != nil {
 			slog.Error("scanGames", "err", err)
 			continue
 		}
@@ -99,6 +100,8 @@ func (me *MyDB) ReturnGameByID(gameID int) Game {
 }
 
 func (me *MyDB) DelGame(id int) {
+	// games_by_team references games without a cascade, so a scored game could never be deleted
+	me.DB.Exec(`DELETE FROM games_by_team WHERE game_id=$1`, id)
 	me.DB.Exec(`DELETE FROM games WHERE id=$1`, id)
 }
 

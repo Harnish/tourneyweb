@@ -282,3 +282,49 @@ func TestUmpirePayPostgres(t *testing.T) {
 		t.Fatal("reassign must reset absent")
 	}
 }
+
+func TestScoreReportsPostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	tid := d.AddTournament("SR "+sfx, "baseball", "L", "", time.Now(), "published")
+	did := d.AddDivision(tid, "10U")
+	d.AddTeam(tid, did, "A", "")
+	d.AddTeam(tid, did, "B", "")
+	tm := d.ReturnTeamsByDivisionID(did)
+	g := d.AddGame(tid, did, tm[0].ID, tm[1].ID, "F", time.Now(), "")
+	if d.ReturnGameByID(g).ScoreStatus != "" {
+		t.Fatal("default unscored")
+	}
+	d.SaveScoreReport(g, "coach_away", 1, 2, 4)
+	time.Sleep(5 * time.Millisecond)
+	d.SaveScoreReport(g, "coach_home", 2, 4, 2)
+	time.Sleep(5 * time.Millisecond)
+	d.SaveScoreReport(g, "coach_away", 3, 9, 9)
+	got := d.ScoreReportsForGame(g)
+	if len(got) != 2 || got[0].Reporter != "coach_away" || got[0].HomeScore != 9 || got[0].UserID != 3 {
+		t.Fatalf("order/edit: %+v", got)
+	}
+	if !got[0].UpdatedAt.After(got[0].ReportedAt) {
+		t.Fatal("edit sets UpdatedAt, keeps ReportedAt")
+	}
+	d.SetGameScoreStatus(g, "disputed")
+	if d.ReturnGameByID(g).ScoreStatus != "disputed" {
+		t.Fatal("status")
+	}
+	// migration: an already-scored game with no status becomes final, idempotently
+	d.ScoreGame(g, 5, 4)
+	db := d.(*mydb.MyDB)
+	db.DB.Exec(`UPDATE games SET score_status='' WHERE id=$1`, g)
+	mydb.New(url, false)
+	if d.ReturnGameByID(g).ScoreStatus != "final" {
+		t.Fatalf("scored game should migrate to final, got %q", d.ReturnGameByID(g).ScoreStatus)
+	}
+	d.DelGame(g)
+	if len(d.ScoreReportsForGame(g)) != 0 {
+		t.Fatal("cascade on delete")
+	}
+}

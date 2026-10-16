@@ -143,6 +143,16 @@ var pgtables = []string{
 		notified_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		PRIMARY KEY (user_id, tournament_id)
 	)`,
+	`CREATE TABLE IF NOT EXISTS game_score_reports (
+		game_id     INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+		reporter    TEXT NOT NULL,
+		user_id     INTEGER NOT NULL,
+		home_score  INTEGER NOT NULL,
+		away_score  INTEGER NOT NULL,
+		reported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		PRIMARY KEY (game_id, reporter)
+	)`,
 	`CREATE TABLE IF NOT EXISTS umpire_verifications (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
@@ -259,6 +269,8 @@ var pgmigrations = []string{
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image_type TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS withdrawn BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+	`ALTER TABLE games ADD COLUMN IF NOT EXISTS score_status TEXT NOT NULL DEFAULT ''`,
+	`UPDATE games SET score_status='final' WHERE home_score IS NOT NULL AND score_status=''`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS pay_per_game_cents INTEGER NOT NULL DEFAULT 0`,
 	`ALTER TABLE game_umpires ADD COLUMN IF NOT EXISTS absent BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS mute_score_notices BOOLEAN NOT NULL DEFAULT false`,
