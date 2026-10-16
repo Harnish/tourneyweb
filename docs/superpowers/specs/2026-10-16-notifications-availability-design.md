@@ -51,7 +51,7 @@ fire-and-forget emails), so this builds one and moves the existing umpire emails
 - **Upcoming** = tournaments with status not `draft` and `start_date` today or later, ordered by date. Listed on the umpire's `/umpire` page above their games. Only users flagged as umpire see the section.
 - **Availability** is one row per (user, tournament) with an optional note (max 200 chars). Withdrawing deletes the row. No dates/field preferences.
 - **Who is notified of a volunteer:** users with the `director` role on that tournament (same rule as the decline notice). Each (re)volunteer by the same umpire notifies once; editing only the note does not re-notify.
-- **Inbox:** `/notifications` lists newest first (cap 100), with "mark all read"; opening one via its link marks it read (`GET /notifications/:id` marks read then redirects to the stored link, owner only).
+- **Inbox:** `/notifications` lists newest first (cap 100), with "mark all read"; opening one via its link marks it read (`GET /notifications/:id` marks read then redirects to the stored link, owner only; it is a GET so CSRF protection does not apply — accepted, the only effect is marking your own notification read).
 - **Unread count** in the nav is loaded per request for logged-in users (one COUNT query).
 - **Email keeps its current content/links**; the helper takes the same subject/message plus a link path (e.g. `/umpire`).
 - **Retention:** keep everything; no pruning in v1.
@@ -66,7 +66,8 @@ fire-and-forget emails), so this builds one and moves the existing umpire emails
 - **Withdrawing** is always allowed, sends no notification, and does not touch existing slot assignments.
 - **Who can volunteer:** any user flagged as umpire, including ones with an expired certification (directors see the flag).
 - **Manage-umpires page:** volunteers are sorted to the top of the list with a "volunteered" badge and their note; everyone else stays listed below as today.
-- **Notify once:** the upsert reports whether the row was new (`INSERT ... ON CONFLICT DO UPDATE ... RETURNING (xmax = 0)` in Postgres); only a new row notifies. Best-effort against double-clicks is acceptable.
+- **Notify once:** only a first volunteer notifies; editing the note never does. Withdrawing keeps a tombstone row (`withdrawn`, `notified_at`), and re-volunteering notifies again only after a 24-hour cooldown, so a withdraw/volunteer loop can't spam directors.
+- **Withdraw** is always allowed (own row only), even if the user is no longer flagged as umpire or the tournament moved/became a draft.
 - **Failure behavior:** the in-app row is written synchronously; the email goes out in the background and failures are only logged. A user without an email, or whose email fails, still gets the in-app row.
 
 ## Data model (suggested)
