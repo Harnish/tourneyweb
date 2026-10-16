@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -47,6 +48,14 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			http.Error(w, "Certification link must start with http:// or https://", http.StatusBadRequest)
 			return
 		}
+		var expires time.Time
+		if v := strings.TrimSpace(r.FormValue("cert_expires")); v != "" {
+			var err error
+			if expires, err = time.Parse("2006-01-02", v); err != nil {
+				http.Error(w, "Expiration date must be a valid date (YYYY-MM-DD)", http.StatusBadRequest)
+				return
+			}
+		}
 		var image []byte
 		var contentType string
 		if file, _, err := r.FormFile("cert_image"); err == nil {
@@ -65,6 +74,7 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			}
 		}
 		me.DB.SetUmpireProfile(user.ID, r.FormValue("is_umpire") != "", certURL)
+		me.DB.SetUmpireCertExpiry(user.ID, expires)
 		if r.FormValue("remove_cert") != "" {
 			me.DB.SetUmpireCertImage(user.ID, nil, "")
 		}
@@ -75,7 +85,17 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 	u, isUmpire := me.DB.GetUmpire(user.ID)
+	var linkedOn, expiresOn string
+	if !u.LinkedAt.IsZero() {
+		linkedOn = u.LinkedAt.Format("Jan 2, 2006")
+	}
+	if !u.ExpiresOn.IsZero() {
+		expiresOn = u.ExpiresOn.Format("2006-01-02")
+	}
 	me.render(w, "profile", profileData{
+		LinkedOn:     linkedOn,
+		ExpiresOn:    expiresOn,
+		Expired:      isUmpire && u.Expired(false, time.Now()),
 		baseData:     newBase(r),
 		IsUmpire:     isUmpire,
 		CertURL:      u.CertURL,

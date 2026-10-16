@@ -29,6 +29,17 @@ type Umpire struct {
 	Email        string
 	CertURL      string
 	HasCertImage bool
+	LinkedAt     time.Time // when the current link/image was added; zero if none
+	ExpiresOn    time.Time // optional, set by the umpire; zero if unset
+}
+
+// Expired reports whether the certification counts as expired: flagged by a director (per tournament)
+// or past the umpire's own expiration date (valid through that date).
+func (u Umpire) Expired(flagged bool, now time.Time) bool {
+	if flagged {
+		return true
+	}
+	return !u.ExpiresOn.IsZero() && now.Format("2006-01-02") > u.ExpiresOn.Format("2006-01-02")
 }
 
 // UmpireSlot is one umpire position on a game. UserID 0 means a free-form name.
@@ -49,15 +60,82 @@ func clampUmpiresNeeded(n int) int {
 }
 
 func (me *MyDB) SetUmpireProfile(userID int, isUmpire bool, certURL string) {
-	if _, err := me.DB.Exec(`UPDATE users SET is_umpire=$1, cert_url=$2 WHERE id=$3`, isUmpire, certURL, userID); err != nil {
+	tx, err := me.DB.Begin()
+	if err != nil {
 		slog.Error("SetUmpireProfile", "err", err)
+		return
+	}
+	defer tx.Rollback()
+	var old string
+	if err := tx.QueryRow(`SELECT cert_url FROM users WHERE id=$1 FOR UPDATE`, userID).Scan(&old); err != nil {
+		slog.Error("SetUmpireProfile", "err", err)
+		return
+	}
+	if _, err := tx.Exec(`UPDATE users SET is_umpire=$1, cert_url=$2 WHERE id=$3`, isUmpire, certURL, userID); err != nil {
+		slog.Error("SetUmpireProfile", "err", err)
+		return
+	}
+	if old != certURL { // a new link restarts the certification: new linked date, director flags cleared
+		tx.Exec(`UPDATE users SET cert_linked_at = CASE WHEN $2::text = '' AND cert_image IS NULL THEN NULL ELSE NOW() END WHERE id=$1`, userID, certURL)
+		tx.Exec(`DELETE FROM umpire_expired_flags WHERE user_id=$1`, userID)
+	}
+	if err := tx.Commit(); err != nil {
+		slog.Error("SetUmpireProfile commit", "err", err)
 	}
 }
 
 func (me *MyDB) SetUmpireCertImage(userID int, data []byte, contentType string) {
-	if _, err := me.DB.Exec(`UPDATE users SET cert_image=$1, cert_image_type=$2 WHERE id=$3`, data, contentType, userID); err != nil {
-		slog.Error("SetUmpireCertImage", "err", err)
+	if len(data) == 0 { // removal
+		if _, err := me.DB.Exec(`UPDATE users SET cert_image=NULL, cert_image_type='' WHERE id=$1`, userID); err != nil {
+			slog.Error("SetUmpireCertImage", "err", err)
+		}
+		return
 	}
+	if _, err := me.DB.Exec(`UPDATE users SET cert_image=$1, cert_image_type=$2, cert_linked_at=NOW() WHERE id=$3`, data, contentType, userID); err != nil {
+		slog.Error("SetUmpireCertImage", "err", err)
+		return
+	}
+	me.DB.Exec(`DELETE FROM umpire_expired_flags WHERE user_id=$1`, userID)
+}
+
+func (me *MyDB) SetUmpireCertExpiry(userID int, expiresOn time.Time) {
+	var d interface{}
+	if !expiresOn.IsZero() {
+		d = expiresOn.Format("2006-01-02")
+	}
+	if _, err := me.DB.Exec(`UPDATE users SET cert_expires_on=$1 WHERE id=$2`, d, userID); err != nil {
+		slog.Error("SetUmpireCertExpiry", "err", err)
+	}
+}
+
+func (me *MyDB) SetUmpireExpiredFlag(tournamentID, userID, byUserID int, flagged bool) {
+	var err error
+	if flagged {
+		_, err = me.DB.Exec(`INSERT INTO umpire_expired_flags (user_id, tournament_id, flagged_by) VALUES ($1,$2,$3)
+			ON CONFLICT (user_id, tournament_id) DO UPDATE SET flagged_by=$3, flagged_at=NOW()`, userID, tournamentID, byUserID)
+	} else {
+		_, err = me.DB.Exec(`DELETE FROM umpire_expired_flags WHERE user_id=$1 AND tournament_id=$2`, userID, tournamentID)
+	}
+	if err != nil {
+		slog.Error("SetUmpireExpiredFlag", "err", err)
+	}
+}
+
+func (me *MyDB) ExpiredFlagUmpireIDs(tournamentID int) map[int]bool {
+	out := map[int]bool{}
+	rows, err := me.DB.Query(`SELECT user_id FROM umpire_expired_flags WHERE tournament_id=$1`, tournamentID)
+	if err != nil {
+		slog.Error("ExpiredFlagUmpireIDs", "err", err)
+		return out
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		if rows.Scan(&id) == nil {
+			out[id] = true
+		}
+	}
+	return out
 }
 
 func (me *MyDB) GetUmpireCertImage(userID int) ([]byte, string, bool) {
@@ -70,11 +148,12 @@ func (me *MyDB) GetUmpireCertImage(userID int) ([]byte, string, bool) {
 	return data, ct, true
 }
 
-const umpireSelect = `SELECT id, name, email, cert_url, cert_image IS NOT NULL FROM users WHERE is_umpire`
+const umpireSelect = `SELECT id, name, email, cert_url, cert_image IS NOT NULL, cert_linked_at, cert_expires_on FROM users WHERE is_umpire`
 
 func (me *MyDB) GetUmpire(userID int) (Umpire, bool) {
 	var u Umpire
-	err := me.DB.QueryRow(umpireSelect+` AND id=$1`, userID).Scan(&u.UserID, &u.Name, &u.Email, &u.CertURL, &u.HasCertImage)
+	var linked, expires sql.NullTime
+	err := me.DB.QueryRow(umpireSelect+` AND id=$1`, userID).Scan(&u.UserID, &u.Name, &u.Email, &u.CertURL, &u.HasCertImage, &linked, &expires)
 	if err == sql.ErrNoRows {
 		return Umpire{}, false
 	}
@@ -82,6 +161,7 @@ func (me *MyDB) GetUmpire(userID int) (Umpire, bool) {
 		slog.Error("GetUmpire", "err", err)
 		return Umpire{}, false
 	}
+	u.LinkedAt, u.ExpiresOn = linked.Time, expires.Time
 	return u, true
 }
 
@@ -95,10 +175,12 @@ func (me *MyDB) ListUmpires() []Umpire {
 	var out []Umpire
 	for rows.Next() {
 		var u Umpire
-		if err := rows.Scan(&u.UserID, &u.Name, &u.Email, &u.CertURL, &u.HasCertImage); err != nil {
+		var linked, expires sql.NullTime
+		if err := rows.Scan(&u.UserID, &u.Name, &u.Email, &u.CertURL, &u.HasCertImage, &linked, &expires); err != nil {
 			slog.Error("ListUmpires scan", "err", err)
 			continue
 		}
+		u.LinkedAt, u.ExpiresOn = linked.Time, expires.Time
 		out = append(out, u)
 	}
 	return out

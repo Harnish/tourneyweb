@@ -4,9 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
 )
+
+type manageUmpireRow struct {
+	mydb.Umpire
+	Verified bool
+	Flagged  bool
+	Expired  bool
+}
 
 func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	t, ok := me.tournamentFromRoute(w, r, ps)
@@ -17,31 +26,52 @@ func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, "The umpire list is available once the tournament is approved and published.", http.StatusForbidden)
 		return
 	}
-	me.render(w, "manageUmpires", manageUmpiresData{
-		baseData: newBaseWithTournament(r, t),
-		Umpires:  me.DB.ListUmpires(),
-		Verified: me.DB.VerifiedUmpireIDs(t.ID),
-	})
+	verified, flagged, now := me.DB.VerifiedUmpireIDs(t.ID), me.DB.ExpiredFlagUmpireIDs(t.ID), time.Now()
+	var rows []manageUmpireRow
+	for _, u := range me.DB.ListUmpires() {
+		rows = append(rows, manageUmpireRow{Umpire: u, Verified: verified[u.UserID], Flagged: flagged[u.UserID],
+			Expired: u.Expired(flagged[u.UserID], now)})
+	}
+	me.render(w, "manageUmpires", manageUmpiresData{baseData: newBaseWithTournament(r, t), Rows: rows})
 }
 
-func (me *Env) ManageUmpireVerify(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// umpireTarget resolves the tournament and the flagged-umpire user for the verify/expire POSTs.
+func (me *Env) umpireTarget(w http.ResponseWriter, r *http.Request, ps httprouter.Params, what string) (mydb.Tournament, int, bool) {
 	t, ok := me.tournamentFromRoute(w, r, ps)
 	if !ok {
-		return
+		return t, 0, false
 	}
 	if t.Status == "draft" {
-		http.Error(w, "Umpires can be verified once the tournament is approved and published.", http.StatusForbidden)
-		return
+		http.Error(w, "Umpires can be "+what+" once the tournament is approved and published.", http.StatusForbidden)
+		return t, 0, false
 	}
 	uid, err := strconv.Atoi(ps.ByName("uid"))
 	if err != nil {
 		http.Error(w, "Bad user ID", http.StatusBadRequest)
-		return
+		return t, 0, false
 	}
 	if _, isUmpire := me.DB.GetUmpire(uid); !isUmpire {
 		http.Error(w, "Umpire not found", http.StatusNotFound)
+		return t, 0, false
+	}
+	return t, uid, true
+}
+
+func (me *Env) ManageUmpireVerify(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, uid, ok := me.umpireTarget(w, r, ps, "verified")
+	if !ok {
 		return
 	}
 	me.DB.SetUmpireVerified(t.ID, uid, userFromContext(r.Context()).ID, r.FormValue("verified") == "1")
+	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/umpires", t.ID), http.StatusSeeOther)
+}
+
+// ManageUmpireExpire flags (or clears) an umpire's certification as expired for this tournament.
+func (me *Env) ManageUmpireExpire(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	t, uid, ok := me.umpireTarget(w, r, ps, "flagged as expired")
+	if !ok {
+		return
+	}
+	me.DB.SetUmpireExpiredFlag(t.ID, uid, userFromContext(r.Context()).ID, r.FormValue("expired") == "1")
 	http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/umpires", t.ID), http.StatusSeeOther)
 }

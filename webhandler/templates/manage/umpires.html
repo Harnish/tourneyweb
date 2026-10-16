@@ -2,22 +2,28 @@
 {{template "header" .}}
 <h2>Umpires &mdash; {{.Tournament.Name}}</h2>
 <p>Everyone who registered as an umpire. Verifying marks them as vetted for <em>this tournament only</em>; unverified umpires can still be assigned.</p>
-{{if .Umpires}}
+{{if .Rows}}
 <table>
-<tr><th>Name</th><th>Email</th><th>Certification link</th><th>Certificate image</th><th>Status</th><th></th></tr>
-{{range .Umpires}}
+<tr><th>Name</th><th>Email</th><th>Certification link</th><th>Certificate image</th><th>Linked</th><th>Expires</th><th>Status</th><th></th></tr>
+{{range .Rows}}
 <tr>
   <td>{{.Name}}</td>
   <td>{{.Email}}</td>
   <td>{{if .CertURL}}<a href="{{.CertURL}}" target="_blank" rel="noopener noreferrer">{{.CertURL}}</a>{{end}}</td>
   <td>{{if .HasCertImage}}<a href="/umpires/{{.UserID}}/certificate">View</a>{{end}}</td>
-  {{$v := index $.Verified .UserID}}
-  <td>{{if $v}}&#10004; verified{{else}}unverified{{end}}</td>
+  <td>{{if not .LinkedAt.IsZero}}{{.LinkedAt.Format "Jan 2, 2006"}}{{end}}</td>
+  <td>{{if not .ExpiresOn.IsZero}}{{.ExpiresOn.Format "Jan 2, 2006"}}{{end}}</td>
+  <td>{{if .Expired}}<strong style="color:#c60">&#9888; expired</strong>{{else if .Verified}}&#10004; verified{{else}}unverified{{end}}</td>
   <td>
-    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpires/{{.UserID}}/verify" style="margin:0">
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpires/{{.UserID}}/verify" style="margin:0;display:inline">
       {{$.CSRFField}}
-      <input type="hidden" name="verified" value="{{if $v}}0{{else}}1{{end}}">
-      <input type="submit" value="{{if $v}}Unverify{{else}}Verify{{end}}">
+      <input type="hidden" name="verified" value="{{if .Verified}}0{{else}}1{{end}}">
+      <input type="submit" value="{{if .Verified}}Unverify{{else}}Verify{{end}}">
+    </form>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpires/{{.UserID}}/expire" style="margin:0;display:inline">
+      {{$.CSRFField}}
+      <input type="hidden" name="expired" value="{{if .Flagged}}0{{else}}1{{end}}">
+      <input type="submit" value="{{if .Flagged}}Clear expired{{else}}Flag expired{{end}}">
     </form>
   </td>
 </tr>

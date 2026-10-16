@@ -49,6 +49,32 @@ func TestUmpiresPostgres(t *testing.T) {
 	if d.VerifiedUmpireIDs(tid)[ann.ID] {
 		t.Fatal("unverified")
 	}
+	// certification expiry: linked date, expiry date, per-tournament flags cleared by a new link/image
+	if u, _ := d.GetUmpire(ann.ID); u.LinkedAt.IsZero() {
+		t.Fatal("LinkedAt must be set once a link/image exists")
+	}
+	d.SetUmpireCertExpiry(ann.ID, time.Date(2027, 3, 1, 0, 0, 0, 0, time.UTC))
+	if u, _ := d.GetUmpire(ann.ID); u.ExpiresOn.Format("2006-01-02") != "2027-03-01" {
+		t.Fatalf("expiry: %v", u.ExpiresOn)
+	}
+	d.SetUmpireExpiredFlag(tid, ann.ID, bob.ID, true)
+	d.SetUmpireProfile(ann.ID, true, "https://c.example") // unchanged link keeps the flag
+	if !d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
+		t.Fatal("unchanged link must keep flag")
+	}
+	d.SetUmpireProfile(ann.ID, true, "https://d.example")
+	if d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
+		t.Fatal("a new link clears flags")
+	}
+	d.SetUmpireExpiredFlag(tid, ann.ID, bob.ID, true)
+	d.SetUmpireCertImage(ann.ID, []byte{9, 9}, "image/png")
+	if d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
+		t.Fatal("a new image clears flags")
+	}
+	d.SetUmpireCertExpiry(ann.ID, time.Time{})
+	if u, _ := d.GetUmpire(ann.ID); !u.ExpiresOn.IsZero() {
+		t.Fatal("zero clears expiry")
+	}
 	d.SetDivisionUmpiresNeeded(did, 9)
 	if d.DivisionUmpiresNeeded(did) != 4 {
 		t.Fatal("umpires needed clamps to 4")
