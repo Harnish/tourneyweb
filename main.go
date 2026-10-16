@@ -77,6 +77,8 @@ func main() {
 	router.POST("/profile", wh.Profile)
 	router.GET("/umpires/:uid/certificate", wh.UmpireCertificate)
 	router.GET("/umpire", wh.UmpireGames)
+	router.POST("/umpire/tournaments/:tid/available", wh.UmpireAvailable)
+	router.POST("/umpire/tournaments/:tid/withdraw", wh.UmpireWithdraw)
 	router.POST("/umpire/games/:gid/slots/:slot", wh.UmpireRespond)
 	// Public routes
 	router.GET("/", wh.TournamentList)

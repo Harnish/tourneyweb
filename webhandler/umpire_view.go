@@ -34,6 +34,8 @@ type umpireSection struct {
 
 type umpireGamesData struct {
 	baseData
+	IsUmpire bool
+	Open     []openTournament
 	Upcoming umpireSection
 	Past     umpireSection
 }
@@ -97,8 +99,15 @@ func (me *Env) UmpireGames(w http.ResponseWriter, r *http.Request, ps httprouter
 		}
 	}
 	base := newBase(r)
+	_, isUmpire := me.DB.GetUmpire(user.ID)
+	var open []openTournament
+	if isUmpire {
+		open = me.openTournamentsFor(user.ID)
+	}
 	me.render(w, "umpireGames", umpireGamesData{
 		baseData: base,
+		IsUmpire: isUmpire,
+		Open:     open,
 		Upcoming: umpireSection{Days: groupByDay(upcoming, false), CSRF: base.CSRFField},
 		Past:     umpireSection{Days: groupByDay(past, true), CSRF: base.CSRFField},
 	})

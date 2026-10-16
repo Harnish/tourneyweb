@@ -12,10 +12,12 @@ import (
 
 type manageUmpireRow struct {
 	mydb.Umpire
-	Verified bool
-	Flagged  bool
-	Expired  bool
-	Relinked bool // the umpire changed their certification after the director flagged it
+	Verified    bool
+	Flagged     bool
+	Expired     bool
+	Relinked    bool // the umpire changed their certification after the director flagged it
+	Volunteered bool
+	Note        string
 }
 
 func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -28,12 +30,19 @@ func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 	verified, flagged, flagTimes, now := me.DB.VerifiedUmpireIDs(t.ID), me.DB.ExpiredFlagUmpireIDs(t.ID), me.DB.ExpiredFlagTimes(t.ID), time.Now()
-	var rows []manageUmpireRow
+	volunteers := me.DB.UmpireAvailabilityForTournament(t.ID)
+	var rows, rest []manageUmpireRow
 	for _, u := range me.DB.ListUmpires() {
-		rows = append(rows, manageUmpireRow{Umpire: u, Verified: verified[u.UserID], Flagged: flagged[u.UserID],
-			Expired: u.Expired(flagged[u.UserID], now), Relinked: flagged[u.UserID] && u.LinkedAt.After(flagTimes[u.UserID])})
+		row := manageUmpireRow{Umpire: u, Verified: verified[u.UserID], Flagged: flagged[u.UserID],
+			Expired: u.Expired(flagged[u.UserID], now), Relinked: flagged[u.UserID] && u.LinkedAt.After(flagTimes[u.UserID])}
+		if a, ok := volunteers[u.UserID]; ok {
+			row.Volunteered, row.Note = true, a.Note
+			rows = append(rows, row)
+		} else {
+			rest = append(rest, row)
+		}
 	}
-	me.render(w, "manageUmpires", manageUmpiresData{baseData: newBaseWithTournament(r, t), Rows: rows})
+	me.render(w, "manageUmpires", manageUmpiresData{baseData: newBaseWithTournament(r, t), Rows: append(rows, rest...)})
 }
 
 // umpireTarget resolves the tournament and the flagged-umpire user for the verify/expire POSTs.
