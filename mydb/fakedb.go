@@ -33,6 +33,7 @@ type FakeDB struct {
 	umpExpired    map[[2]int]time.Time // {tournamentID, userID} -> flagged at
 	umpNeeded     map[int]int
 	umpSlots      []UmpireSlot
+	notifications []Notification
 }
 
 type gameByTeamRow struct {

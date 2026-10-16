@@ -124,6 +124,16 @@ var pgtables = []string{
 		flagged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		PRIMARY KEY (user_id, tournament_id)
 	)`,
+	`CREATE TABLE IF NOT EXISTS notifications (
+		id         SERIAL PRIMARY KEY,
+		user_id    INTEGER NOT NULL REFERENCES users(id),
+		subject    TEXT NOT NULL,
+		message    TEXT NOT NULL DEFAULT '',
+		link       TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		read_at    TIMESTAMPTZ
+	)`,
+	`CREATE INDEX IF NOT EXISTS notifications_user_unread ON notifications (user_id, read_at)`,
 	`CREATE TABLE IF NOT EXISTS umpire_verifications (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),

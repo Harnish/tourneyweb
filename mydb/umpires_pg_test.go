@@ -149,3 +149,46 @@ func TestUmpiresPostgres(t *testing.T) {
 	}
 	_ = db
 }
+
+func TestNotificationsPostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	a, _ := d.CreateUser("na"+sfx+"@x.com", "A", "h", "", true, true)
+	b, _ := d.CreateUser("nb"+sfx+"@x.com", "B", "h", "", true, false)
+	id1 := d.AddNotification(a.ID, "first", "m", "/x")
+	d.AddNotification(a.ID, "second", "", "")
+	if got := d.ListNotifications(a.ID, 10); len(got) != 2 || got[0].Subject != "second" {
+		t.Fatalf("newest first: %+v", got)
+	}
+	if d.CountUnreadNotifications(a.ID) != 2 || d.CountUnreadNotifications(b.ID) != 0 {
+		t.Fatal("unread counts")
+	}
+	if _, ok := d.MarkNotificationRead(id1, b.ID); ok {
+		t.Fatal("other user must not mark read")
+	}
+	n, ok := d.MarkNotificationRead(id1, a.ID)
+	if !ok || n.Link != "/x" || n.ReadAt.IsZero() || d.CountUnreadNotifications(a.ID) != 1 {
+		t.Fatalf("mark read: %+v %v", n, ok)
+	}
+	if _, ok := d.MarkNotificationRead(id1, a.ID); !ok {
+		t.Fatal("idempotent")
+	}
+	d.MarkAllNotificationsRead(a.ID)
+	if d.CountUnreadNotifications(a.ID) != 0 {
+		t.Fatal("mark all")
+	}
+	found := false
+	for _, id := range d.ListAdminUserIDs() {
+		found = found || id == a.ID
+		if id == b.ID {
+			t.Fatal("non-admin listed")
+		}
+	}
+	if !found {
+		t.Fatal("admin missing")
+	}
+}

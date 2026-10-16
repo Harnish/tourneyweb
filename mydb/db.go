@@ -152,6 +152,14 @@ type DB interface {
 	ResetUmpireSlotsPending(gameID int) []UmpireSlot
 	UmpireSlotsForUser(userID int) []UmpireSlot
 
+	// Notifications
+	AddNotification(userID int, subject, message, link string) int
+	ListNotifications(userID, limit int) []Notification
+	CountUnreadNotifications(userID int) int
+	MarkNotificationRead(id, userID int) (Notification, bool)
+	MarkAllNotificationsRead(userID int)
+	ListAdminUserIDs() []int
+
 	// Verification codes
 	IssueVerificationCode(tournamentID int) (string, error)
 	RedeemVerificationCode(code string, tournamentID int) error
