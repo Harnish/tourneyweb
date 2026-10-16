@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -49,6 +51,19 @@ type UmpireSlot struct {
 	UserName, UserEmail      string
 }
 
+// NormalizeCertURL makes trivially different spellings of a link compare equal:
+// surrounding space, scheme/host case, a trailing slash and a #fragment are ignored.
+func NormalizeCertURL(s string) string {
+	s = strings.TrimSpace(s)
+	u, err := url.Parse(s)
+	if err != nil || u.Host == "" {
+		return s
+	}
+	u.Host, u.Fragment = strings.ToLower(u.Host), ""
+	u.Path = strings.TrimRight(u.Path, "/")
+	return u.String()
+}
+
 func clampUmpiresNeeded(n int) int {
 	if n < 1 {
 		return 1
@@ -75,9 +90,11 @@ func (me *MyDB) SetUmpireProfile(userID int, isUmpire bool, certURL string) {
 		slog.Error("SetUmpireProfile", "err", err)
 		return
 	}
-	if old != certURL { // a new link restarts the certification: new linked date, director flags cleared
+	if NormalizeCertURL(old) != NormalizeCertURL(certURL) {
+		// A new link restarts the certification: new linked date and verification must be redone.
+		// Director "expired" flags are kept; the manage page shows the link changed after the flag.
 		tx.Exec(`UPDATE users SET cert_linked_at = CASE WHEN $2::text = '' AND cert_image IS NULL THEN NULL ELSE NOW() END WHERE id=$1`, userID, certURL)
-		tx.Exec(`DELETE FROM umpire_expired_flags WHERE user_id=$1`, userID)
+		tx.Exec(`DELETE FROM umpire_verifications WHERE user_id=$1`, userID)
 	}
 	if err := tx.Commit(); err != nil {
 		slog.Error("SetUmpireProfile commit", "err", err)
@@ -91,11 +108,15 @@ func (me *MyDB) SetUmpireCertImage(userID int, data []byte, contentType string) 
 		}
 		return
 	}
-	if _, err := me.DB.Exec(`UPDATE users SET cert_image=$1, cert_image_type=$2, cert_linked_at=NOW() WHERE id=$3`, data, contentType, userID); err != nil {
+	res, err := me.DB.Exec(`UPDATE users SET cert_image=$1, cert_image_type=$2, cert_linked_at=NOW()
+		WHERE id=$3 AND cert_image IS DISTINCT FROM $1`, data, contentType, userID)
+	if err != nil {
 		slog.Error("SetUmpireCertImage", "err", err)
 		return
 	}
-	me.DB.Exec(`DELETE FROM umpire_expired_flags WHERE user_id=$1`, userID)
+	if n, _ := res.RowsAffected(); n > 0 { // different content: verification must be redone; flags stay
+		me.DB.Exec(`DELETE FROM umpire_verifications WHERE user_id=$1`, userID)
+	}
 }
 
 func (me *MyDB) SetUmpireCertExpiry(userID int, expiresOn time.Time) {
@@ -119,6 +140,24 @@ func (me *MyDB) SetUmpireExpiredFlag(tournamentID, userID, byUserID int, flagged
 	if err != nil {
 		slog.Error("SetUmpireExpiredFlag", "err", err)
 	}
+}
+
+func (me *MyDB) ExpiredFlagTimes(tournamentID int) map[int]time.Time {
+	out := map[int]time.Time{}
+	rows, err := me.DB.Query(`SELECT user_id, flagged_at FROM umpire_expired_flags WHERE tournament_id=$1`, tournamentID)
+	if err != nil {
+		slog.Error("ExpiredFlagTimes", "err", err)
+		return out
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var at time.Time
+		if rows.Scan(&id, &at) == nil {
+			out[id] = at
+		}
+	}
+	return out
 }
 
 func (me *MyDB) ExpiredFlagUmpireIDs(tournamentID int) map[int]bool {
