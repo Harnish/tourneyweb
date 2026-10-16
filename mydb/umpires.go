@@ -51,16 +51,15 @@ type UmpireSlot struct {
 	UserName, UserEmail      string
 }
 
-// NormalizeCertURL makes trivially different spellings of a link compare equal:
-// surrounding space, scheme/host case, a trailing slash and a #fragment are ignored.
+// NormalizeCertURL makes spellings that differ only in surrounding space or scheme/host case compare equal.
+// Path, query and fragment are compared exactly: they can address a different document.
 func NormalizeCertURL(s string) string {
 	s = strings.TrimSpace(s)
 	u, err := url.Parse(s)
 	if err != nil || u.Host == "" {
 		return s
 	}
-	u.Host, u.Fragment = strings.ToLower(u.Host), ""
-	u.Path = strings.TrimRight(u.Path, "/")
+	u.Host = strings.ToLower(u.Host)
 	return u.String()
 }
 

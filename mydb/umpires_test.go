@@ -304,8 +304,8 @@ func TestCertChangeKeepsFlagsButClearsVerification(t *testing.T) {
 	db.SetUmpireVerified(2, id, 99, true)
 	db.SetUmpireExpiredFlag(1, id, 99, true)
 
-	// same link, or a trivially different spelling of it: nothing changes
-	for _, same := range []string{"https://a.example/cert", " HTTPS://A.Example/cert/ ", "https://a.example/cert#top"} {
+	// same link, or a spelling that differs only in space or scheme/host case: nothing changes
+	for _, same := range []string{"https://a.example/cert", " HTTPS://A.Example/cert "} {
 		db.SetUmpireProfile(id, true, same)
 		if u, _ := db.GetUmpire(id); !u.LinkedAt.Equal(u0.LinkedAt) {
 			t.Fatalf("%q must not count as a new link", same)
@@ -315,6 +315,19 @@ func TestCertChangeKeepsFlagsButClearsVerification(t *testing.T) {
 		}
 	}
 
+	// a different path or fragment can be a different document: that is a new link
+	time.Sleep(2 * time.Millisecond)
+	db.SetUmpireProfile(id, true, "https://a.example/cert/")
+	if db.VerifiedUmpireIDs(1)[id] {
+		t.Fatal("a different path (trailing slash) counts as a new link")
+	}
+	db.SetUmpireVerified(1, id, 99, true)
+	db.SetUmpireProfile(id, true, "https://a.example/cert/#other")
+	if db.VerifiedUmpireIDs(1)[id] {
+		t.Fatal("a different fragment counts as a new link")
+	}
+	db.SetUmpireVerified(1, id, 99, true)
+	db.SetUmpireVerified(2, id, 99, true)
 	time.Sleep(2 * time.Millisecond)
 	db.SetUmpireProfile(id, true, "https://b.example/other")
 	if !db.ExpiredFlagUmpireIDs(1)[id] {

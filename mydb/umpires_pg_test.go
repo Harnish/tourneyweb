@@ -59,7 +59,7 @@ func TestUmpiresPostgres(t *testing.T) {
 	}
 	d.SetUmpireVerified(tid, ann.ID, bob.ID, true)
 	d.SetUmpireExpiredFlag(tid, ann.ID, bob.ID, true)
-	d.SetUmpireProfile(ann.ID, true, "HTTPS://C.example/") // trivially different spelling: no change
+	d.SetUmpireProfile(ann.ID, true, "HTTPS://C.example") // scheme/host case only: no change
 	if !d.VerifiedUmpireIDs(tid)[ann.ID] || !d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
 		t.Fatal("trivial link edit must keep verification and flag")
 	}
