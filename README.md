@@ -34,6 +34,8 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
 - **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament and flag expired certifications (umpires can also set their own expiration date; expired umpires show a warning but stay assignable); assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
+- **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
+- **Umpire availability** — umpires see upcoming tournaments and mark themselves available (with an optional note); directors are notified and see volunteers first on the manage umpires page
 - **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
 - **Delete confirmation** — browser confirm dialogs guard all delete operations
 - **Delete lock** — optional `disabledelete` flag prevents accidental deletions during live tournaments
@@ -208,7 +210,8 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | Path | Description |
 |---|---|
 | `/profile` | Edit profile; mark yourself an umpire, add certification link/image |
-| `/umpire` | My umpire games, with accept/decline |
+| `/umpire` | My umpire games with accept/decline; upcoming tournaments with Available / Withdraw |
+| `/notifications` | My notifications; opening one marks it read and follows its link |
 | `/umpires/:uid/certificate` | Certificate image (owner, admins, directors of published tournaments) |
 
 ### Score entry (directors + staff)

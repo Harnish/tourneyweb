@@ -29,6 +29,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Recently Completed
 
+- **Notifications + umpire availability** — in-app notification inbox (nav unread count) with email for the same event; umpire notices (assigned, changed, cancelled, removed, declined) moved onto it, directors falling back to site admins when none exist; umpires see upcoming tournaments and volunteer with an optional note, directors are notified once and see volunteers first (#24)
 - **Umpire certification expiry** — umpires set an optional expiration date and see when their certification was linked; directors can flag a certification expired per tournament; a new link/image resets the linked date and clears verification (expired flags stay, with a "re-linked since flagged" note for the director); expired umpires get a warning badge but remain assignable (#23)
 - **Umpires** — umpire flag + certification link/image on the profile page; per-division umpire count; per-game umpire slots (registered umpire or free-form name) with email notification and accept/decline; declined slots reopen and notify directors; overlap blocking (2-hour window); per-tournament verification; `/umpire` my-games view. Credentials visible to the owner, admins, and directors of published tournaments only
 - **Calendar view** — `/tournaments/:tid/calendar` shows a month grid of all games across every division, with prev/next month navigation, today highlighting, and a link back to the full schedule
