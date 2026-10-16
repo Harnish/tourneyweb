@@ -14,6 +14,8 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
+- **[P2/M]** Umpire travel limits — restrict which umpires are offered/available for a game based on distance (e.g. umpire home location or max travel radius vs. field location) so nobody drives hours for a single game. Follow-up to the umpire accounts/assignments feature.
+
 ---
 
 ## Bugs
