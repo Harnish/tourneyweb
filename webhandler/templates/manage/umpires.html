@@ -13,7 +13,7 @@
   <td>{{if .HasCertImage}}<a href="/umpires/{{.UserID}}/certificate">View</a>{{end}}</td>
   <td>{{if not .LinkedAt.IsZero}}{{.LinkedAt.Format "Jan 2, 2006"}}{{end}}</td>
   <td>{{if not .ExpiresOn.IsZero}}{{.ExpiresOn.Format "Jan 2, 2006"}}{{end}}</td>
-  <td>{{if .Expired}}<strong style="color:#c60">&#9888; expired</strong>{{else if .Verified}}&#10004; verified{{else}}unverified{{end}}</td>
+  <td>{{if .Expired}}<strong style="color:#c60">&#9888; expired</strong>{{if .Relinked}}<br><small>re-linked since flagged &mdash; review, then clear the flag if valid</small>{{end}}{{else if .Verified}}&#10004; verified{{else}}unverified{{end}}</td>
   <td>
     <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpires/{{.UserID}}/verify" style="margin:0;display:inline">
       {{$.CSRFField}}

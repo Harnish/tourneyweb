@@ -151,3 +151,22 @@ func TestManageUmpiresShowsExpiredInsteadOfVerified(t *testing.T) {
 		t.Error("want a button to clear the flag")
 	}
 }
+
+func TestManageUmpiresShowsRelinkedSinceFlag(t *testing.T) {
+	env, db, tid, _, uid, dir := umpFixture(t)
+	page := func() string {
+		w := httptest.NewRecorder()
+		env.ManageUmpires(w, directorReq("GET", "", dir), httprouter.Params{{Key: "tid", Value: strconv.Itoa(tid)}})
+		return w.Body.String()
+	}
+	db.SetUmpireExpiredFlag(tid, uid, dir.ID, true)
+	if strings.Contains(page(), "re-linked") {
+		t.Fatal("no re-link note while the certification is unchanged since the flag")
+	}
+	time.Sleep(2 * time.Millisecond)
+	db.SetUmpireProfile(uid, true, "https://new.example/cert")
+	body := page()
+	if !strings.Contains(body, "re-linked") || !strings.Contains(body, "expired") {
+		t.Fatalf("flag stays, with a re-linked note: %s", body)
+	}
+}

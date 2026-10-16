@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/Harnish/tourneyweb/mydb"
+	"github.com/julienschmidt/httprouter"
 )
 
 type manageUmpireRow struct {
@@ -15,6 +15,7 @@ type manageUmpireRow struct {
 	Verified bool
 	Flagged  bool
 	Expired  bool
+	Relinked bool // the umpire changed their certification after the director flagged it
 }
 
 func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -26,11 +27,11 @@ func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, "The umpire list is available once the tournament is approved and published.", http.StatusForbidden)
 		return
 	}
-	verified, flagged, now := me.DB.VerifiedUmpireIDs(t.ID), me.DB.ExpiredFlagUmpireIDs(t.ID), time.Now()
+	verified, flagged, flagTimes, now := me.DB.VerifiedUmpireIDs(t.ID), me.DB.ExpiredFlagUmpireIDs(t.ID), me.DB.ExpiredFlagTimes(t.ID), time.Now()
 	var rows []manageUmpireRow
 	for _, u := range me.DB.ListUmpires() {
 		rows = append(rows, manageUmpireRow{Umpire: u, Verified: verified[u.UserID], Flagged: flagged[u.UserID],
-			Expired: u.Expired(flagged[u.UserID], now)})
+			Expired: u.Expired(flagged[u.UserID], now), Relinked: flagged[u.UserID] && u.LinkedAt.After(flagTimes[u.UserID])})
 	}
 	me.render(w, "manageUmpires", manageUmpiresData{baseData: newBaseWithTournament(r, t), Rows: rows})
 }

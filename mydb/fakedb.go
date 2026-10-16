@@ -29,8 +29,8 @@ type FakeDB struct {
 	bracketGames  map[int]BracketGame
 	players       map[int]Player
 	umpires       map[int]fakeUmpireProfile
-	umpVerified   map[[2]int]bool // {tournamentID, userID}
-	umpExpired    map[[2]int]bool // {tournamentID, userID}
+	umpVerified   map[[2]int]bool      // {tournamentID, userID}
+	umpExpired    map[[2]int]time.Time // {tournamentID, userID} -> flagged at
 	umpNeeded     map[int]int
 	umpSlots      []UmpireSlot
 }
@@ -69,7 +69,7 @@ func NewFakeDB() *FakeDB {
 		players:       make(map[int]Player),
 		umpires:       make(map[int]fakeUmpireProfile),
 		umpVerified:   make(map[[2]int]bool),
-		umpExpired:    make(map[[2]int]bool),
+		umpExpired:    make(map[[2]int]time.Time),
 		umpNeeded:     make(map[int]int),
 	}
 }

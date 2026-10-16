@@ -57,19 +57,28 @@ func TestUmpiresPostgres(t *testing.T) {
 	if u, _ := d.GetUmpire(ann.ID); u.ExpiresOn.Format("2006-01-02") != "2027-03-01" {
 		t.Fatalf("expiry: %v", u.ExpiresOn)
 	}
+	d.SetUmpireVerified(tid, ann.ID, bob.ID, true)
 	d.SetUmpireExpiredFlag(tid, ann.ID, bob.ID, true)
-	d.SetUmpireProfile(ann.ID, true, "https://c.example") // unchanged link keeps the flag
-	if !d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
-		t.Fatal("unchanged link must keep flag")
+	d.SetUmpireProfile(ann.ID, true, "HTTPS://C.example/") // trivially different spelling: no change
+	if !d.VerifiedUmpireIDs(tid)[ann.ID] || !d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
+		t.Fatal("trivial link edit must keep verification and flag")
 	}
 	d.SetUmpireProfile(ann.ID, true, "https://d.example")
-	if d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
-		t.Fatal("a new link clears flags")
+	if d.VerifiedUmpireIDs(tid)[ann.ID] || !d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
+		t.Fatal("a new link clears verification but keeps the flag")
 	}
-	d.SetUmpireExpiredFlag(tid, ann.ID, bob.ID, true)
+	if u, _ := d.GetUmpire(ann.ID); !u.LinkedAt.After(d.ExpiredFlagTimes(tid)[ann.ID]) {
+		t.Fatal("linked date should be after the flag time")
+	}
+	d.SetUmpireVerified(tid, ann.ID, bob.ID, true)
 	d.SetUmpireCertImage(ann.ID, []byte{9, 9}, "image/png")
-	if d.ExpiredFlagUmpireIDs(tid)[ann.ID] {
-		t.Fatal("a new image clears flags")
+	if d.VerifiedUmpireIDs(tid)[ann.ID] {
+		t.Fatal("a new image clears verification")
+	}
+	d.SetUmpireVerified(tid, ann.ID, bob.ID, true)
+	d.SetUmpireCertImage(ann.ID, []byte{9, 9}, "image/png")
+	if !d.VerifiedUmpireIDs(tid)[ann.ID] {
+		t.Fatal("identical image keeps verification")
 	}
 	d.SetUmpireCertExpiry(ann.ID, time.Time{})
 	if u, _ := d.GetUmpire(ann.ID); !u.ExpiresOn.IsZero() {

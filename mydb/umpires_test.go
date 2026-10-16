@@ -295,24 +295,57 @@ func TestCertLinkedAtSetWhenLinkChanges(t *testing.T) {
 	}
 }
 
-func TestCertChangeClearsExpiredFlags(t *testing.T) {
+func TestCertChangeKeepsFlagsButClearsVerification(t *testing.T) {
 	db := mydb.NewFakeDB()
 	id := newUmpire(t, db, "u@x.com", "Una")
-	db.SetUmpireProfile(id, true, "https://a.example")
+	db.SetUmpireProfile(id, true, "https://a.example/cert")
+	u0, _ := db.GetUmpire(id)
+	db.SetUmpireVerified(1, id, 99, true)
+	db.SetUmpireVerified(2, id, 99, true)
 	db.SetUmpireExpiredFlag(1, id, 99, true)
-	db.SetUmpireExpiredFlag(2, id, 99, true)
-	db.SetUmpireProfile(id, true, "https://a.example")
+
+	// same link, or a trivially different spelling of it: nothing changes
+	for _, same := range []string{"https://a.example/cert", " HTTPS://A.Example/cert/ ", "https://a.example/cert#top"} {
+		db.SetUmpireProfile(id, true, same)
+		if u, _ := db.GetUmpire(id); !u.LinkedAt.Equal(u0.LinkedAt) {
+			t.Fatalf("%q must not count as a new link", same)
+		}
+		if !db.VerifiedUmpireIDs(1)[id] || !db.VerifiedUmpireIDs(2)[id] || !db.ExpiredFlagUmpireIDs(1)[id] {
+			t.Fatalf("%q must keep verification and flags", same)
+		}
+	}
+
+	time.Sleep(2 * time.Millisecond)
+	db.SetUmpireProfile(id, true, "https://b.example/other")
 	if !db.ExpiredFlagUmpireIDs(1)[id] {
-		t.Fatal("unchanged link keeps flags")
+		t.Fatal("a director's expired flag must survive an umpire-side edit")
 	}
+	if db.VerifiedUmpireIDs(1)[id] || db.VerifiedUmpireIDs(2)[id] {
+		t.Fatal("a new link must clear verification in every tournament")
+	}
+	u, _ := db.GetUmpire(id)
+	if ft := db.ExpiredFlagTimes(1)[id]; !u.LinkedAt.After(ft) {
+		t.Fatalf("director must be able to see the link changed after the flag (%v vs %v)", u.LinkedAt, ft)
+	}
+}
+
+func TestCertImageChangeClearsVerificationOnlyWhenContentDiffers(t *testing.T) {
+	db := mydb.NewFakeDB()
+	id := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireProfile(id, true, "")
 	db.SetUmpireCertImage(id, []byte{1, 2, 3}, "image/png")
-	if db.ExpiredFlagUmpireIDs(1)[id] || db.ExpiredFlagUmpireIDs(2)[id] {
-		t.Fatal("a new image clears flags in every tournament")
-	}
+	db.SetUmpireVerified(1, id, 99, true)
 	db.SetUmpireExpiredFlag(1, id, 99, true)
-	db.SetUmpireProfile(id, true, "https://c.example")
-	if db.ExpiredFlagUmpireIDs(1)[id] {
-		t.Fatal("a new link clears flags")
+	db.SetUmpireCertImage(id, []byte{1, 2, 3}, "image/png") // identical re-upload
+	if !db.VerifiedUmpireIDs(1)[id] {
+		t.Fatal("re-uploading identical bytes must not clear verification")
+	}
+	db.SetUmpireCertImage(id, []byte{9, 9}, "image/png")
+	if db.VerifiedUmpireIDs(1)[id] {
+		t.Fatal("different image must clear verification")
+	}
+	if !db.ExpiredFlagUmpireIDs(1)[id] {
+		t.Fatal("expired flag must survive an umpire-side upload")
 	}
 }
 

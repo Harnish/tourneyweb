@@ -140,6 +140,7 @@ type DB interface {
 	SetUmpireCertExpiry(userID int, expiresOn time.Time)
 	SetUmpireExpiredFlag(tournamentID, userID, byUserID int, flagged bool)
 	ExpiredFlagUmpireIDs(tournamentID int) map[int]bool
+	ExpiredFlagTimes(tournamentID int) map[int]time.Time
 	DivisionUmpiresNeeded(divisionID int) int
 	SetDivisionUmpiresNeeded(divisionID, n int)
 

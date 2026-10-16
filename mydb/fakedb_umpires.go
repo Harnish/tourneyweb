@@ -1,6 +1,7 @@
 package mydb
 
 import (
+	"bytes"
 	"errors"
 	"sort"
 	"strings"
@@ -20,21 +21,21 @@ func (f *FakeDB) SetUmpireProfile(userID int, isUmpire bool, certURL string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	p := f.umpires[userID]
-	if p.certURL != certURL { // a new link restarts the certification
+	if NormalizeCertURL(p.certURL) != NormalizeCertURL(certURL) { // a new link restarts the certification
 		p.linkedAt = time.Now()
 		if certURL == "" && len(p.image) == 0 {
 			p.linkedAt = time.Time{}
 		}
-		f.clearExpiredFlagsLocked(userID)
+		f.clearVerificationsLocked(userID)
 	}
 	p.isUmpire, p.certURL = isUmpire, certURL
 	f.umpires[userID] = p
 }
 
-func (f *FakeDB) clearExpiredFlagsLocked(userID int) {
-	for k := range f.umpExpired {
+func (f *FakeDB) clearVerificationsLocked(userID int) {
+	for k := range f.umpVerified {
 		if k[1] == userID {
-			delete(f.umpExpired, k)
+			delete(f.umpVerified, k)
 		}
 	}
 }
@@ -52,10 +53,22 @@ func (f *FakeDB) SetUmpireExpiredFlag(tournamentID, userID, byUserID int, flagge
 	defer f.mu.Unlock()
 	k := [2]int{tournamentID, userID}
 	if flagged {
-		f.umpExpired[k] = true
+		f.umpExpired[k] = time.Now()
 	} else {
 		delete(f.umpExpired, k)
 	}
+}
+
+func (f *FakeDB) ExpiredFlagTimes(tournamentID int) map[int]time.Time {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := map[int]time.Time{}
+	for k, at := range f.umpExpired {
+		if k[0] == tournamentID {
+			out[k[1]] = at
+		}
+	}
+	return out
 }
 
 func (f *FakeDB) ExpiredFlagUmpireIDs(tournamentID int) map[int]bool {
@@ -74,10 +87,11 @@ func (f *FakeDB) SetUmpireCertImage(userID int, data []byte, contentType string)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	p := f.umpires[userID]
+	changed := len(data) > 0 && !bytes.Equal(p.image, data)
 	p.image, p.imageType = append([]byte(nil), data...), contentType
-	if len(data) > 0 { // a new image restarts the certification
+	if changed { // a different image restarts the certification; director flags stay
 		p.linkedAt = time.Now()
-		f.clearExpiredFlagsLocked(userID)
+		f.clearVerificationsLocked(userID)
 	}
 	f.umpires[userID] = p
 }
