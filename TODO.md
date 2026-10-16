@@ -29,6 +29,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Recently Completed
 
+- **Umpires** — umpire flag + certification link/image on the profile page; per-division umpire count; per-game umpire slots (registered umpire or free-form name) with email notification and accept/decline; declined slots reopen and notify directors; overlap blocking (2-hour window); per-tournament verification; `/umpire` my-games view. Credentials visible to the owner, admins, and directors of published tournaments only
 - **Calendar view** — `/tournaments/:tid/calendar` shows a month grid of all games across every division, with prev/next month navigation, today highlighting, and a link back to the full schedule
 - **Team QR code** — server-generated QR code (via `github.com/skip2/go-qrcode`) linking to the team's public page; shown on the team detail page (`/tournaments/:tid/teams/:teamid/qr.png`) and on a new printable team sheet (`/tournaments/:tid/teams/:teamid/sheet`) with roster and a print button
 - **Double-elimination brackets** — Directors choose single- or double-elimination when starting a bracket (double-elim gated to team counts that are an exact power of 2); losers bracket, grand final, and bracket-reset game (if the losers-bracket entrant wins the grand final) all auto-generate and cascade on scoring; public bracket page renders Winners/Losers/Grand Final sections

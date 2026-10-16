@@ -33,6 +33,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Role-based access control** — three roles per tournament: `director` (full tournament management), `staff` (score entry only), `coach` (reserved); site-wide `admin` flag for system administration
 - **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
+- **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament; assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
 - **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
 - **Delete confirmation** — browser confirm dialogs guard all delete operations
 - **Delete lock** — optional `disabledelete` flag prevents accidental deletions during live tournaments
@@ -202,6 +203,14 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | `/password-reset` | Request password reset |
 | `/password-reset/confirm` | Set new password (link from email) |
 
+### Profile and umpires (logged in)
+
+| Path | Description |
+|---|---|
+| `/profile` | Edit profile; mark yourself an umpire, add certification link/image |
+| `/umpire` | My umpire games, with accept/decline |
+| `/umpires/:uid/certificate` | Certificate image (owner, admins, directors of published tournaments) |
+
 ### Score entry (directors + staff)
 
 | Path | Description |
@@ -213,6 +222,7 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | Path | Description |
 |---|---|
 | `/tournaments/:tid/manage/roles` | View/assign/remove roles, invite users |
+| `/tournaments/:tid/manage/umpires` | List registered umpires, verify/unverify for this tournament (published tournaments only) |
 
 ### Admin (requires `is_admin`)
 

@@ -1,0 +1,13 @@
+{{define "umpireSlots"}}
+{{range .Slots}}{{$s := .}}
+<div style="margin-bottom:.5em">
+  <select name="ump_user_{{.Slot}}">
+    <option value="">-- registered umpire --</option>
+    {{range $.Umpires}}<option value="{{.UserID}}"{{if eq .UserID $s.UserID}} selected{{end}}{{if and .Blocked (ne .UserID $s.UserID)}} disabled{{end}}>{{.Label}}{{if .Blocked}} (busy at that time){{end}}</option>{{end}}
+  </select>
+  or <input type="text" name="ump_name_{{.Slot}}" value="{{.FreeName}}" placeholder="free-form name">
+  {{if .Status}}<small>{{.Status}}</small>{{end}}
+  {{if .DeclinedBy}}<small style="color:#c00">declined by {{.DeclinedBy}}</small>{{end}}
+</div>
+{{end}}
+{{end}}

@@ -272,6 +272,9 @@ func (me *Env) DelGame(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 	if !me.DisableDelete {
+		if game := me.DB.ReturnGameByID(gid); game.ID != 0 && game.TournamentID == t.ID {
+			me.notifyGameDeleted(game)
+		}
 		me.DB.DelGame(gid)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
@@ -374,6 +377,7 @@ func (me *Env) CreateGame(w http.ResponseWriter, r *http.Request, ps httprouter.
 		Games:         me.DB.AllGamesByDivision(did),
 		Locations:     me.locationsFor(t.Sport),
 		DisableDelete: me.DisableDelete,
+		Ump:           me.slotBlock(t, did, nil),
 	})
 }
 
@@ -402,7 +406,16 @@ func (me *Env) CreateGameSubmit(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 	startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
-	me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
+	choices := parseSlotChoices(r, me.slotCount(did, 0))
+	if msg := me.validateSlotsFor(t, choices, startTime, 0); msg != "" {
+		http.Error(w, msg, http.StatusConflict)
+		return
+	}
+	newID := me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, "")
+	if msg := me.applySlots(me.DB.ReturnGameByID(newID), choices); msg != "" {
+		http.Error(w, msg, http.StatusConflict)
+		return
+	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/divisions/%d/games/new", t.ID, did), http.StatusSeeOther)
 }
 
@@ -458,7 +471,18 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 			return
 		}
 		startTime, _ := time.ParseInLocation("2006-01-02T15:04", r.FormValue("datetime"), time.Local)
-		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, r.FormValue("umpire"))
+		choices := parseSlotChoices(r, me.slotCount(did, gid))
+		if msg := me.validateSlotsFor(t, choices, startTime, gid); msg != "" {
+			http.Error(w, msg, http.StatusConflict)
+			return
+		}
+		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
+		updated := me.DB.ReturnGameByID(gid)
+		me.notifyGameChanged(game, updated)
+		if msg := me.applySlots(updated, choices); msg != "" {
+			http.Error(w, msg, http.StatusConflict)
+			return
+		}
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 		return
 	}
@@ -468,6 +492,7 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		Teams:     me.DB.ReturnTeamsByTournamentID(t.ID),
 		Divisions: me.DB.ReturnDivisions(t.ID),
 		Locations: me.locationsFor(t.Sport),
+		Ump:       me.slotBlock(t, game.Division.ID, &game),
 	})
 }
 

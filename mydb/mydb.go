@@ -107,6 +107,23 @@ var pgtables = []string{
 		created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		redeemed_at   TIMESTAMPTZ
 	)`,
+	`CREATE TABLE IF NOT EXISTS game_umpires (
+		id         SERIAL PRIMARY KEY,
+		game_id    INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+		slot       INTEGER NOT NULL,
+		user_id    INTEGER REFERENCES users(id),
+		free_name  TEXT NOT NULL DEFAULT '',
+		status     TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+		UNIQUE(game_id, slot),
+		CHECK ((user_id IS NOT NULL) <> (free_name <> ''))
+	)`,
+	`CREATE TABLE IF NOT EXISTS umpire_verifications (
+		user_id       INTEGER NOT NULL REFERENCES users(id),
+		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+		verified_by   INTEGER,
+		verified_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		PRIMARY KEY (user_id, tournament_id)
+	)`,
 }
 
 type MyDB struct {
@@ -210,6 +227,14 @@ var pgmigrations = []string{
 	)`,
 	`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS default_ranking_criteria TEXT`,
 	`ALTER TABLE teams ADD COLUMN IF NOT EXISTS gamechanger_url TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_umpire BOOLEAN NOT NULL DEFAULT false`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_url TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image BYTEA`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image_type TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS umpires_needed INTEGER NOT NULL DEFAULT 1`,
+	`INSERT INTO game_umpires (game_id, slot, free_name, status)
+	 SELECT id, 1, umpire, 'accepted' FROM games g
+	 WHERE umpire <> '' AND NOT EXISTS (SELECT 1 FROM game_umpires WHERE game_id = g.id)`,
 }
 
 func (me *MyDB) AddTeamScore(tournamentID, divisionID, teamID, opponentID, gameID, teamScore, opponentScore int) {

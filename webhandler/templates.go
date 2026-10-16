@@ -66,6 +66,14 @@ func newBaseWithTournament(r *http.Request, t mydb.Tournament) baseData {
 	}
 }
 
+type profileData struct {
+	baseData
+	IsUmpire     bool
+	CertURL      string
+	HasCertImage bool
+	Saved        bool
+}
+
 type divisionTeamRow struct {
 	mydb.Team
 	GamesPlayed int
@@ -210,6 +218,7 @@ type createGameData struct {
 	Games         []mydb.Game
 	Locations     []mydb.Location
 	DisableDelete bool
+	Ump slotBlock
 }
 
 type scoreGameData struct {
@@ -250,6 +259,7 @@ type editGameData struct {
 	Teams     []mydb.Team
 	Divisions []mydb.Division
 	Locations []mydb.Location
+	Ump slotBlock
 }
 
 // Auth template data types
@@ -333,8 +343,15 @@ type manageDivisionsData struct {
 
 type manageDivisionEditData struct {
 	baseData
-	Division    mydb.Division
-	AllCriteria []CriterionUIRow
+	Division      mydb.Division
+	AllCriteria   []CriterionUIRow
+	UmpiresNeeded int
+}
+
+type manageUmpiresData struct {
+	baseData
+	Umpires  []mydb.Umpire
+	Verified map[int]bool
 }
 
 type manageBracketSeedData struct {
@@ -392,6 +409,7 @@ type manageCreateGameData struct {
 	Games         []mydb.Game
 	Locations     []mydb.Location
 	DisableDelete bool
+	Ump slotBlock
 }
 
 type manageEditGameData struct {
@@ -400,6 +418,7 @@ type manageEditGameData struct {
 	Teams     []mydb.Team
 	Divisions []mydb.Division
 	Locations []mydb.Location
+	Ump slotBlock
 }
 
 type adminQueueData struct {

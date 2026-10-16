@@ -28,6 +28,10 @@ type FakeDB struct {
 	bracketSeeds  []BracketSeed
 	bracketGames  map[int]BracketGame
 	players       map[int]Player
+	umpires       map[int]fakeUmpireProfile
+	umpVerified   map[[2]int]bool // {tournamentID, userID}
+	umpNeeded     map[int]int
+	umpSlots      []UmpireSlot
 }
 
 type gameByTeamRow struct {
@@ -62,6 +66,9 @@ func NewFakeDB() *FakeDB {
 		brackets:      make(map[int]Bracket),
 		bracketGames:  make(map[int]BracketGame),
 		players:       make(map[int]Player),
+		umpires:       make(map[int]fakeUmpireProfile),
+		umpVerified:   make(map[[2]int]bool),
+		umpNeeded:     make(map[int]int),
 	}
 }
 
@@ -502,6 +509,13 @@ func (f *FakeDB) DelGame(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.games, id)
+	kept := f.umpSlots[:0]
+	for _, s := range f.umpSlots {
+		if s.GameID != id {
+			kept = append(kept, s)
+		}
+	}
+	f.umpSlots = kept
 }
 
 func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {
