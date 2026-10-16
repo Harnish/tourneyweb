@@ -140,6 +140,14 @@ type DB interface {
 	DivisionUmpiresNeeded(divisionID int) int
 	SetDivisionUmpiresNeeded(divisionID, n int)
 
+	GameUmpires(gameID int) []UmpireSlot
+	UmpireConflict(userID int, start time.Time, excludeGameID int) bool
+	AssignUmpire(gameID, slot, userID int, freeName string) error
+	ClearUmpireSlot(gameID, slot int)
+	RespondUmpireSlot(gameID, slot, userID int, accept bool) error
+	ResetUmpireSlotsPending(gameID int) []UmpireSlot
+	UmpireSlotsForUser(userID int) []UmpireSlot
+
 	// Verification codes
 	IssueVerificationCode(tournamentID int) (string, error)
 	RedeemVerificationCode(code string, tournamentID int) error

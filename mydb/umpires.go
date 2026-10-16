@@ -2,8 +2,23 @@ package mydb
 
 import (
 	"database/sql"
+	"errors"
 	"log/slog"
+	"time"
 )
+
+var (
+	ErrUmpireConflict  = errors.New("umpire has an overlapping game")
+	ErrUmpireDuplicate = errors.New("umpire already assigned to this game")
+)
+
+// umpireWindow is how long a game blocks its umpires, starting at the game's start time.
+const umpireWindow = 2 * time.Hour
+
+// UmpireWindowsOverlap reports whether games starting at a and b overlap. Half-open: back-to-back games do not.
+func UmpireWindowsOverlap(a, b time.Time) bool {
+	return a.After(b.Add(-umpireWindow)) && a.Before(b.Add(umpireWindow))
+}
 
 // Umpire is a user flagged as an umpire, with their credentials.
 type Umpire struct {
@@ -127,4 +142,149 @@ func (me *MyDB) SetDivisionUmpiresNeeded(divisionID, n int) {
 	if _, err := me.DB.Exec(`UPDATE divisions SET umpires_needed=$1 WHERE id=$2`, clampUmpiresNeeded(n), divisionID); err != nil {
 		slog.Error("SetDivisionUmpiresNeeded", "err", err)
 	}
+}
+
+// --- Slots ---
+
+type rowQuerier interface {
+	QueryRow(query string, args ...any) *sql.Row
+}
+
+const slotSelect = `SELECT gu.id, gu.game_id, gu.slot, COALESCE(gu.user_id,0), gu.free_name, gu.status,
+	COALESCE(u.name,''), COALESCE(u.email,'')
+	FROM game_umpires gu LEFT JOIN users u ON u.id = gu.user_id`
+
+func (me *MyDB) querySlots(where string, args ...any) []UmpireSlot {
+	rows, err := me.DB.Query(slotSelect+" "+where, args...)
+	if err != nil {
+		slog.Error("querySlots", "err", err)
+		return nil
+	}
+	defer rows.Close()
+	var out []UmpireSlot
+	for rows.Next() {
+		var s UmpireSlot
+		if err := rows.Scan(&s.ID, &s.GameID, &s.Slot, &s.UserID, &s.FreeName, &s.Status, &s.UserName, &s.UserEmail); err != nil {
+			slog.Error("querySlots scan", "err", err)
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
+}
+
+func (me *MyDB) GameUmpires(gameID int) []UmpireSlot {
+	return me.querySlots(`WHERE gu.game_id=$1 ORDER BY gu.slot`, gameID)
+}
+
+func (me *MyDB) UmpireSlotsForUser(userID int) []UmpireSlot {
+	return me.querySlots(`WHERE gu.user_id=$1 ORDER BY gu.game_id, gu.slot`, userID)
+}
+
+func umpireConflict(q rowQuerier, userID int, start time.Time, excludeGameID int) bool {
+	if start.IsZero() {
+		return false
+	}
+	var found bool
+	err := q.QueryRow(`SELECT EXISTS (
+		SELECT 1 FROM game_umpires gu JOIN games g ON g.id = gu.game_id
+		WHERE gu.user_id=$1 AND gu.status <> 'declined' AND g.id <> $4
+		  AND g.start_time > $2 AND g.start_time < $3)`,
+		userID, start.Add(-umpireWindow), start.Add(umpireWindow), excludeGameID).Scan(&found)
+	if err != nil {
+		slog.Error("umpireConflict", "err", err)
+	}
+	return found
+}
+
+func (me *MyDB) UmpireConflict(userID int, start time.Time, excludeGameID int) bool {
+	return umpireConflict(me.DB, userID, start, excludeGameID)
+}
+
+// refreshUmpireCache rewrites games.umpire from the non-declined slots.
+func refreshUmpireCache(ex interface {
+	Exec(query string, args ...any) (sql.Result, error)
+}, gameID int) {
+	_, err := ex.Exec(`UPDATE games SET umpire = COALESCE((
+		SELECT string_agg(COALESCE(u.name, gu.free_name), ', ' ORDER BY gu.slot)
+		FROM game_umpires gu LEFT JOIN users u ON u.id = gu.user_id
+		WHERE gu.game_id=$1 AND gu.status <> 'declined'), '') WHERE id=$1`, gameID)
+	if err != nil {
+		slog.Error("refreshUmpireCache", "err", err)
+	}
+}
+
+func (me *MyDB) AssignUmpire(gameID, slot, userID int, freeName string) error {
+	tx, err := me.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if userID > 0 {
+		// Serialize concurrent assignments of the same umpire.
+		if _, err := tx.Exec(`SELECT 1 FROM users WHERE id=$1 FOR UPDATE`, userID); err != nil {
+			return err
+		}
+		var dup bool
+		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM game_umpires WHERE game_id=$1 AND user_id=$2 AND slot <> $3)`,
+			gameID, userID, slot).Scan(&dup); err != nil {
+			return err
+		}
+		if dup {
+			return ErrUmpireDuplicate
+		}
+		var start sql.NullTime
+		if err := tx.QueryRow(`SELECT start_time FROM games WHERE id=$1`, gameID).Scan(&start); err != nil {
+			return err
+		}
+		if start.Valid && umpireConflict(tx, userID, start.Time, gameID) {
+			return ErrUmpireConflict
+		}
+		_, err = tx.Exec(`INSERT INTO game_umpires (game_id, slot, user_id, free_name, status) VALUES ($1,$2,$3,'','pending')
+			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=$3, free_name='', status='pending'`, gameID, slot, userID)
+	} else {
+		_, err = tx.Exec(`INSERT INTO game_umpires (game_id, slot, user_id, free_name, status) VALUES ($1,$2,NULL,$3,'accepted')
+			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=NULL, free_name=$3, status='accepted'`, gameID, slot, freeName)
+	}
+	if err != nil {
+		return err
+	}
+	refreshUmpireCache(tx, gameID)
+	return tx.Commit()
+}
+
+func (me *MyDB) ClearUmpireSlot(gameID, slot int) {
+	if _, err := me.DB.Exec(`DELETE FROM game_umpires WHERE game_id=$1 AND slot=$2`, gameID, slot); err != nil {
+		slog.Error("ClearUmpireSlot", "err", err)
+		return
+	}
+	refreshUmpireCache(me.DB, gameID)
+}
+
+func (me *MyDB) RespondUmpireSlot(gameID, slot, userID int, accept bool) error {
+	status := "declined"
+	if accept {
+		status = "accepted"
+	}
+	res, err := me.DB.Exec(`UPDATE game_umpires SET status=$1 WHERE game_id=$2 AND slot=$3 AND user_id=$4`, status, gameID, slot, userID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return errors.New("slot not assigned to this user")
+	}
+	refreshUmpireCache(me.DB, gameID)
+	return nil
+}
+
+func (me *MyDB) ResetUmpireSlotsPending(gameID int) []UmpireSlot {
+	affected := me.querySlots(`WHERE gu.game_id=$1 AND gu.user_id IS NOT NULL AND gu.status='accepted' ORDER BY gu.slot`, gameID)
+	if len(affected) == 0 {
+		return nil
+	}
+	if _, err := me.DB.Exec(`UPDATE game_umpires SET status='pending' WHERE game_id=$1 AND user_id IS NOT NULL AND status='accepted'`, gameID); err != nil {
+		slog.Error("ResetUmpireSlotsPending", "err", err)
+		return nil
+	}
+	return affected
 }
