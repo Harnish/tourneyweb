@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"sort"
@@ -9,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/Harnish/tourneyweb/mydb"
+	"github.com/julienschmidt/httprouter"
 )
 
 type umpireRow struct {
@@ -33,6 +34,8 @@ type umpireSection struct {
 
 type umpireGamesData struct {
 	baseData
+	IsUmpire bool
+	Open     []openTournament
 	Upcoming umpireSection
 	Past     umpireSection
 }
@@ -96,8 +99,15 @@ func (me *Env) UmpireGames(w http.ResponseWriter, r *http.Request, ps httprouter
 		}
 	}
 	base := newBase(r)
+	_, isUmpire := me.DB.GetUmpire(user.ID)
+	var open []openTournament
+	if isUmpire {
+		open = me.openTournamentsFor(user.ID)
+	}
 	me.render(w, "umpireGames", umpireGamesData{
 		baseData: base,
+		IsUmpire: isUmpire,
+		Open:     open,
 		Upcoming: umpireSection{Days: groupByDay(upcoming, false), CSRF: base.CSRFField},
 		Past:     umpireSection{Days: groupByDay(past, true), CSRF: base.CSRFField},
 	})
@@ -127,14 +137,9 @@ func (me *Env) UmpireRespond(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 	if action == "decline" {
 		g := me.DB.ReturnGameByID(gid)
-		for _, role := range me.DB.GetRolesForTournament(g.TournamentID) {
-			if role.Role != "director" {
-				continue
-			}
-			if d, err := me.DB.GetUserByID(role.UserID); err == nil {
-				me.notifyUmpire(d.Email, "Umpire declined a game",
-					user.Name+" declined: "+gameLine(g)+". The slot is open again.")
-			}
+		link := fmt.Sprintf("/tournaments/%d/manage/games/%d/edit", g.TournamentID, g.ID)
+		for _, id := range me.directorRecipients(g.TournamentID) {
+			me.notifyUser(id, "Umpire declined a game", user.Name+" declined: "+gameLine(g)+". The slot is open again.", link)
 		}
 	}
 	http.Redirect(w, r, "/umpire", http.StatusSeeOther)

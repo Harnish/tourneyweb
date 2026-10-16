@@ -43,6 +43,7 @@
   </div>
   <div class="tw-nav-user">
     {{if .User.LoggedIn}}
+    <a href="/notifications" class="tw-username">Notifications{{if .User.Unread}} ({{.User.Unread}}){{end}}</a>
     <a href="/profile" class="tw-username">{{.User.Name}}</a>
     <form method="post" action="/logout" style="margin:0">{{.CSRFField}}<button type="submit" class="tw-btn-logout">Log out</button></form>
     {{else}}

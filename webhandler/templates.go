@@ -66,6 +66,11 @@ func newBaseWithTournament(r *http.Request, t mydb.Tournament) baseData {
 	}
 }
 
+type notificationsData struct {
+	baseData
+	Items []mydb.Notification
+}
+
 type profileData struct {
 	baseData
 	IsUmpire     bool

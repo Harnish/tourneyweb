@@ -24,6 +24,7 @@ type TWUser struct {
 	Name    string
 	IsAdmin bool
 	Roles   []TournamentRole
+	Unread  int // unread in-app notifications
 }
 
 type TournamentRole struct {
@@ -232,7 +233,7 @@ func (me *Env) loadUser(w http.ResponseWriter, r *http.Request) TWUser {
 	for i, r := range dbRoles {
 		roles[i] = TournamentRole{TournamentID: r.TournamentID, Role: r.Role, TeamID: r.TeamID}
 	}
-	return TWUser{ID: u.ID, Email: u.Email, Name: u.Name, IsAdmin: u.IsAdmin, Roles: roles}
+	return TWUser{ID: u.ID, Email: u.Email, Name: u.Name, IsAdmin: u.IsAdmin, Roles: roles, Unread: me.DB.CountUnreadNotifications(u.ID)}
 }
 
 func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

@@ -9,28 +9,55 @@ import (
 )
 
 // sendNotice is a test seam; the default sends through me.Email and is a no-op when mail isn't configured.
-var sendNotice = func(me *Env, to, subject, msg string) error {
+var sendNotice = func(me *Env, to, subject, msg, link string) error {
 	if me.Email == nil {
 		return nil
 	}
-	return me.Email.SendUmpireNotice(to, subject, msg)
+	return me.Email.SendUmpireNotice(to, subject, msg, link)
 }
 
 // notifyWG lets tests wait for in-flight notifications.
 var notifyWG sync.WaitGroup
 
-// notifyUmpire emails in the background; failures are logged and never block the request.
-func (me *Env) notifyUmpire(toEmail, subject, message string) {
-	if toEmail == "" {
+// notifyUser writes an in-app notification and emails the user. The inbox row is written synchronously;
+// the email goes out in the background and failures are only logged. Unknown users get nothing;
+// a user without an email address still gets the inbox row.
+func (me *Env) notifyUser(userID int, subject, message, link string) {
+	if userID <= 0 {
+		return
+	}
+	u, err := me.DB.GetUserByID(userID)
+	if err != nil || u.ID == 0 {
+		return
+	}
+	me.DB.AddNotification(userID, subject, message, link)
+	if u.Email == "" {
 		return
 	}
 	notifyWG.Add(1)
 	go func() {
 		defer notifyWG.Done()
-		if err := sendNotice(me, toEmail, subject, message); err != nil {
-			slog.Error("umpire notice failed", "to", toEmail, "err", err)
+		if err := sendNotice(me, u.Email, subject, message, link); err != nil {
+			slog.Error("notification email failed", "to", u.Email, "err", err)
 		}
 	}()
+}
+
+// directorRecipients returns the tournament's directors; if it has none, all site admins,
+// so notices like "an umpire volunteered" are never silent.
+func (me *Env) directorRecipients(tournamentID int) []int {
+	seen := map[int]bool{}
+	var ids []int
+	for _, role := range me.DB.GetRolesForTournament(tournamentID) {
+		if role.Role == "director" && !seen[role.UserID] {
+			seen[role.UserID] = true
+			ids = append(ids, role.UserID)
+		}
+	}
+	if len(ids) > 0 {
+		return ids
+	}
+	return me.DB.ListAdminUserIDs()
 }
 
 // gameLine describes a game for emails: "10U · Home vs Away · Jul 10, 2026 9:00 AM · Field 1".

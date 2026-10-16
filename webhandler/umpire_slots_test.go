@@ -47,14 +47,14 @@ func newSlotFx(t *testing.T) *slotFx {
 	var mu sync.Mutex
 	var sent []string
 	old := sendNotice
-	sendNotice = func(me *Env, to, subject, msg string) error {
+	sendNotice = func(me *Env, to, subject, msg, link string) error {
 		mu.Lock()
 		sent = append(sent, to+"|"+subject)
 		mu.Unlock()
 		return nil
 	}
 	return &slotFx{env: &Env{DB: db}, db: db, tid: tid, did: did, game: db.ReturnGameByID(gid),
-		ann: ann.ID, bob: bob.ID, sent: &sent, sentMu: &mu, restore: func() { sendNotice = old }}
+		ann: ann.ID, bob: bob.ID, sent: &sent, sentMu: &mu, restore: func() { notifyWG.Wait(); sendNotice = old }}
 }
 
 func (f *slotFx) emails() []string {

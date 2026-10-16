@@ -124,6 +124,25 @@ var pgtables = []string{
 		flagged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		PRIMARY KEY (user_id, tournament_id)
 	)`,
+	`CREATE TABLE IF NOT EXISTS notifications (
+		id         SERIAL PRIMARY KEY,
+		user_id    INTEGER NOT NULL REFERENCES users(id),
+		subject    TEXT NOT NULL,
+		message    TEXT NOT NULL DEFAULT '',
+		link       TEXT NOT NULL DEFAULT '',
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		read_at    TIMESTAMPTZ
+	)`,
+	`CREATE INDEX IF NOT EXISTS notifications_user_unread ON notifications (user_id, read_at)`,
+	`CREATE TABLE IF NOT EXISTS umpire_availability (
+		user_id       INTEGER NOT NULL REFERENCES users(id),
+		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+		note          TEXT NOT NULL DEFAULT '',
+		created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		withdrawn     BOOLEAN NOT NULL DEFAULT false,
+		notified_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		PRIMARY KEY (user_id, tournament_id)
+	)`,
 	`CREATE TABLE IF NOT EXISTS umpire_verifications (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
@@ -238,6 +257,8 @@ var pgmigrations = []string{
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_url TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image BYTEA`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image_type TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS withdrawn BOOLEAN NOT NULL DEFAULT false`,
+	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_linked_at TIMESTAMPTZ`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_expires_on DATE`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS umpires_needed INTEGER NOT NULL DEFAULT 1`,

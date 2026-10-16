@@ -33,6 +33,37 @@
 
 {{define "umpireGames"}}
 {{template "header" .}}
+{{if .IsUmpire}}
+<h2>Upcoming Tournaments</h2>
+{{if .Open}}
+<p>Let the tournament directors know you're available to umpire.</p>
+<table>
+<tr><th>Tournament</th><th>Starts</th><th>Where</th><th>Availability</th></tr>
+{{range .Open}}
+<tr>
+  <td>{{.Tournament.Name}} <small>({{.Tournament.Sport}})</small></td>
+  <td>{{.Tournament.StartDate.Format "Jan 2, 2006"}}</td>
+  <td>{{.Tournament.Location}}</td>
+  <td>
+    <form method="post" action="/umpire/tournaments/{{.Tournament.ID}}/available" style="display:inline">
+      {{$.CSRFField}}
+      <input type="text" name="note" value="{{.Note}}" maxlength="200" placeholder="note (optional)" size="28">
+      <input type="submit" value="{{if .Available}}Update note{{else}}I'm available{{end}}">
+    </form>
+    {{if .Available}}
+    <form method="post" action="/umpire/tournaments/{{.Tournament.ID}}/withdraw" style="display:inline">
+      {{$.CSRFField}}<input type="submit" value="Withdraw">
+    </form>
+    <small>&#10003; you're listed as available</small>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No upcoming tournaments right now.</p>
+{{end}}
+{{end}}
 <h2>My Umpire Games</h2>
 {{if or .Upcoming.Days .Past.Days}}
 {{if .Upcoming.Days}}{{template "umpireRows" .Upcoming}}{{else}}<p>No upcoming games.</p>{{end}}

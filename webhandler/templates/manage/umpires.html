@@ -7,7 +7,7 @@
 <tr><th>Name</th><th>Email</th><th>Certification link</th><th>Certificate image</th><th>Linked</th><th>Expires</th><th>Status</th><th></th></tr>
 {{range .Rows}}
 <tr>
-  <td>{{.Name}}</td>
+  <td>{{.Name}}{{if .Volunteered}} <span style="background:#fd6;padding:0 4px;border-radius:3px">volunteered</span>{{if .Note}}<br><small>{{.Note}}</small>{{end}}{{end}}</td>
   <td>{{.Email}}</td>
   <td>{{if .CertURL}}<a href="{{.CertURL}}" target="_blank" rel="noopener noreferrer">{{.CertURL}}</a>{{end}}</td>
   <td>{{if .HasCertImage}}<a href="/umpires/{{.UserID}}/certificate">View</a>{{end}}</td>
