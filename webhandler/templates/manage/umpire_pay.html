@@ -1,0 +1,47 @@
+{{define "manageUmpirePay"}}
+{{template "header" .}}
+<h2>Umpire pay &mdash; {{.Tournament.Name}}</h2>
+<p>Every umpire slot that isn't declined counts as a game (pending, accepted and free-form names alike). Mark someone absent to take a game off their total. Set the pay per game on each division's edit page.</p>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage/umpire-pay.csv">Download CSV</a> &middot; <a href="#" onclick="window.print();return false">Print</a></p>
+{{if .Report}}
+{{range .Report}}
+<div style="margin-bottom:1.5em">
+<h3>{{.Name}}</h3>
+{{if .Lines}}
+<ul>
+{{range .Lines}}
+  <li>{{.Division}}: {{.Games}} game{{if ne .Games 1}}s{{end}}{{if .HasRate}} &times; {{.RateText}} = <strong>{{.AmountText}}</strong>{{else}} <em>(no rate set)</em>{{end}}</li>
+{{end}}
+</ul>
+<p><strong>Total: {{.TotalText}}</strong>{{if .UnratedGames}} <em>(plus {{.UnratedGames}} game{{if ne .UnratedGames 1}}s{{end}} with no rate set)</em>{{end}}</p>
+{{else}}
+<p><em>No paid games.</em></p>
+{{end}}
+<details>
+<summary>Games ({{len .Games}})</summary>
+<table>
+{{range .Games}}
+<tr{{if .Absent}} style="text-decoration:line-through;opacity:.6"{{end}}>
+  <td>{{formatTime .Game.Start}}</td>
+  <td>{{.Game.Division.Name}}</td>
+  <td>{{.Game.HomeTeam.Name}} vs {{.Game.AwayTeam.Name}}</td>
+  <td>{{.Game.Location}}</td>
+  <td style="text-decoration:none">
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/umpire-pay/games/{{.Game.ID}}/slots/{{.Slot}}/absent" style="margin:0">
+      {{$.CSRFField}}
+      <input type="hidden" name="absent" value="{{if .Absent}}0{{else}}1{{end}}">
+      <input type="submit" value="{{if .Absent}}Restore{{else}}Mark absent{{end}}">
+    </form>
+  </td>
+</tr>
+{{end}}
+</table>
+</details>
+</div>
+{{end}}
+{{else}}
+<p>No umpires are assigned to games in this tournament yet.</p>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back</a></p>
+{{template "footer" .}}
+{{end}}

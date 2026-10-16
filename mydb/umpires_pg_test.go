@@ -248,3 +248,37 @@ func TestAvailabilityPostgres(t *testing.T) {
 		t.Fatal("re-volunteering after the cooldown notifies again")
 	}
 }
+
+func TestUmpirePayPostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	tid := d.AddTournament("Pay "+sfx, "baseball", "L", "", time.Now(), "published")
+	did := d.AddDivision(tid, "10U")
+	d.AddTeam(tid, did, "A", "")
+	d.AddTeam(tid, did, "B", "")
+	tm := d.ReturnTeamsByDivisionID(did)
+	g1 := d.AddGame(tid, did, tm[0].ID, tm[1].ID, "F1", time.Now(), "")
+	u, _ := d.CreateUser("pay"+sfx+"@x.com", "Pay", "h", "", true, false)
+	if d.DivisionPayPerGameCents(did) != 0 {
+		t.Fatal("default no rate")
+	}
+	d.SetDivisionPayPerGameCents(did, 7550)
+	if d.DivisionPayPerGameCents(did) != 7550 {
+		t.Fatal("rate")
+	}
+	d.AssignUmpire(g1, 1, u.ID, "")
+	d.AssignUmpire(g1, 2, 0, "Free F.")
+	d.SetUmpireSlotAbsent(g1, 2, true)
+	slots := d.UmpireSlotsForTournament(tid)
+	if len(slots) != 2 || slots[0].Absent || !slots[1].Absent {
+		t.Fatalf("slots: %+v", slots)
+	}
+	d.AssignUmpire(g1, 2, 0, "Other F.") // reassigning resets absent
+	if d.UmpireSlotsForTournament(tid)[1].Absent {
+		t.Fatal("reassign must reset absent")
+	}
+}

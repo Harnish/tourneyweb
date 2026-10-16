@@ -264,6 +264,7 @@ func (f *FakeDB) AssignUmpire(gameID, slot, userID int, freeName string) error {
 	for i, s := range f.umpSlots {
 		if s.GameID == gameID && s.Slot == slot {
 			f.umpSlots[i].UserID, f.umpSlots[i].FreeName, f.umpSlots[i].Status = userID, freeName, status
+			f.umpSlots[i].Absent = false
 			f.refreshUmpireCacheLocked(gameID)
 			return nil
 		}
@@ -315,4 +316,35 @@ func (f *FakeDB) ResetUmpireSlotsPending(gameID int) []UmpireSlot {
 		}
 	}
 	return affected
+}
+
+func (f *FakeDB) UmpireSlotsForTournament(tournamentID int) []UmpireSlot {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.slotsLocked(func(s UmpireSlot) bool { return f.games[s.GameID].TournamentID == tournamentID })
+}
+
+func (f *FakeDB) SetUmpireSlotAbsent(gameID, slot int, absent bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for i, s := range f.umpSlots {
+		if s.GameID == gameID && s.Slot == slot {
+			f.umpSlots[i].Absent = absent
+		}
+	}
+}
+
+func (f *FakeDB) DivisionPayPerGameCents(divisionID int) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.payRate[divisionID]
+}
+
+func (f *FakeDB) SetDivisionPayPerGameCents(divisionID, cents int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if cents < 0 {
+		cents = 0
+	}
+	f.payRate[divisionID] = cents
 }

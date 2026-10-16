@@ -355,6 +355,7 @@ type manageDivisionEditData struct {
 	Division      mydb.Division
 	AllCriteria   []CriterionUIRow
 	UmpiresNeeded int
+	PayPerGame    string // e.g. "75.00"; empty = no rate
 }
 
 type manageUmpiresData struct {

@@ -35,6 +35,7 @@ type FakeDB struct {
 	umpSlots      []UmpireSlot
 	notifications []Notification
 	muteScore     map[int]bool
+	payRate       map[int]int
 	availability  map[[2]int]Availability // {userID, tournamentID}
 }
 
@@ -75,6 +76,7 @@ func NewFakeDB() *FakeDB {
 		umpExpired:    make(map[[2]int]time.Time),
 		availability:  make(map[[2]int]Availability),
 		muteScore:     make(map[int]bool),
+		payRate:       make(map[int]int),
 		umpNeeded:     make(map[int]int),
 	}
 }

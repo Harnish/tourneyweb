@@ -29,6 +29,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Recently Completed
 
+- **Umpire pay report** — per-division pay per game; report of each umpire's games by division with amounts, totals, per-game absent marks and CSV export (#19)
 - **Game-scored notices** — directors (admins as fallback) get an inbox entry and email when a game is scored or re-scored, except for whoever entered the score; a profile checkbox turns just these notices off; score forms now reject games from another tournament (#25)
 - **Notifications + umpire availability** — in-app notification inbox (nav unread count) with email for the same event; umpire notices (assigned, changed, cancelled, removed, declined) moved onto it, directors falling back to site admins when none exist; umpires see upcoming tournaments and volunteer with an optional note, directors are notified once and see volunteers first (#24)
 - **Umpire certification expiry** — umpires set an optional expiration date and see when their certification was linked; directors can flag a certification expired per tournament; a new link/image resets the linked date and clears verification (expired flags stay, with a "re-linked since flagged" note for the director); expired umpires get a warning badge but remain assignable (#23)

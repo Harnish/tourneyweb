@@ -412,3 +412,60 @@ func TestUmpireCertExpired(t *testing.T) {
 		}
 	}
 }
+
+func TestDivisionPayPerGame(t *testing.T) {
+	db := mydb.NewFakeDB()
+	tid := db.AddTournament("T", "baseball", "L", "", time.Now(), "published")
+	did := db.AddDivision(tid, "10U")
+	if db.DivisionPayPerGameCents(did) != 0 {
+		t.Fatal("default is no rate")
+	}
+	db.SetDivisionPayPerGameCents(did, 7550)
+	if db.DivisionPayPerGameCents(did) != 7550 {
+		t.Fatal("rate not stored")
+	}
+	db.SetDivisionPayPerGameCents(did, -5)
+	if db.DivisionPayPerGameCents(did) != 0 {
+		t.Fatal("negative rates clamp to none")
+	}
+}
+
+func TestSlotAbsentToggleAndResetOnReassign(t *testing.T) {
+	db, _, add, u1, u2 := slotFixture(t)
+	g := add(t10)
+	db.AssignUmpire(g, 1, u1, "")
+	db.SetUmpireSlotAbsent(g, 1, true)
+	if !db.GameUmpires(g)[0].Absent {
+		t.Fatal("absent flag not set")
+	}
+	db.SetUmpireSlotAbsent(g, 1, false)
+	if db.GameUmpires(g)[0].Absent {
+		t.Fatal("absent flag not cleared")
+	}
+	db.SetUmpireSlotAbsent(g, 1, true)
+	db.AssignUmpire(g, 1, u2, "") // reassigning the slot starts fresh
+	if db.GameUmpires(g)[0].Absent {
+		t.Fatal("reassignment must reset absent")
+	}
+}
+
+func TestUmpireSlotsForTournamentScoped(t *testing.T) {
+	db, tid, add, u1, _ := slotFixture(t)
+	g := add(t10)
+	db.AssignUmpire(g, 1, u1, "")
+	db.AssignUmpire(g, 2, 0, "Free")
+	other := db.AddTournament("T2", "baseball", "L", "", time.Now(), "published")
+	od := db.AddDivision(other, "12U")
+	db.AddTeam(other, od, "X", "")
+	db.AddTeam(other, od, "Y", "")
+	tm := db.ReturnTeamsByDivisionID(od)
+	og := db.AddGame(other, od, tm[0].ID, tm[1].ID, "F", t10, "")
+	db.AssignUmpire(og, 1, 0, "Elsewhere")
+	got := db.UmpireSlotsForTournament(tid)
+	if len(got) != 2 {
+		t.Fatalf("want only this tournament's slots, got %+v", got)
+	}
+	if len(db.UmpireSlotsForTournament(other)) != 1 {
+		t.Fatal("other tournament has its own slot")
+	}
+}

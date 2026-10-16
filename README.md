@@ -34,6 +34,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
 - **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament and flag expired certifications (umpires can also set their own expiration date; expired umpires show a warning but stay assignable); assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
+- **Umpire pay report** — set an optional pay per game on each division; a director report counts each umpire's assigned games by division (declined and absent-marked games excluded), shows amounts and totals, and exports CSV
 - **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
 - **Score notices** — directors (or site admins when a tournament has none) are notified when a game is scored or its score is corrected; anyone can turn these off on their profile page
 - **Umpire availability** — umpires see upcoming tournaments and mark themselves available (with an optional note); directors are notified and see volunteers first on the manage umpires page
@@ -226,6 +227,7 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | Path | Description |
 |---|---|
 | `/tournaments/:tid/manage/roles` | View/assign/remove roles, invite users |
+| `/tournaments/:tid/manage/umpire-pay` | Umpire pay report (games by division, amounts, mark absent); `.csv` suffix downloads it |
 | `/tournaments/:tid/manage/umpires` | List registered umpires, verify/unverify for this tournament (published tournaments only) |
 
 ### Admin (requires `is_admin`)
