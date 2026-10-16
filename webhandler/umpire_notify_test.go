@@ -37,7 +37,7 @@ func TestNotifyUmpireUsesSeam(t *testing.T) {
 	var mu sync.Mutex
 	var got []string
 	old := sendNotice
-	sendNotice = func(me *Env, to, subject, msg string) error {
+	sendNotice = func(me *Env, to, subject, msg, link string) error {
 		mu.Lock()
 		got = append(got, to)
 		mu.Unlock()

@@ -47,7 +47,7 @@ func newSlotFx(t *testing.T) *slotFx {
 	var mu sync.Mutex
 	var sent []string
 	old := sendNotice
-	sendNotice = func(me *Env, to, subject, msg string) error {
+	sendNotice = func(me *Env, to, subject, msg, link string) error {
 		mu.Lock()
 		sent = append(sent, to+"|"+subject)
 		mu.Unlock()

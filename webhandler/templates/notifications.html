@@ -1,0 +1,18 @@
+{{define "notifications"}}
+{{template "header" .}}
+<h2>Notifications</h2>
+{{if .Items}}
+<form method="post" action="/notifications/read-all" style="margin-bottom:1em">{{.CSRFField}}<input type="submit" value="Mark all read"></form>
+<table>
+{{range .Items}}
+<tr{{if .ReadAt.IsZero}} style="font-weight:bold"{{end}}>
+  <td>{{formatTime .CreatedAt}}</td>
+  <td>{{if .Link}}<a href="/notifications/{{.ID}}">{{.Subject}}</a>{{else}}{{.Subject}}{{end}}{{if .Message}}<br><span style="font-weight:normal">{{.Message}}</span>{{end}}</td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>No notifications yet.</p>
+{{end}}
+{{template "footer" .}}
+{{end}}
