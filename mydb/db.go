@@ -160,6 +160,13 @@ type DB interface {
 	MarkAllNotificationsRead(userID int)
 	ListAdminUserIDs() []int
 
+	// Umpire availability
+	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)
+	ClearUmpireAvailability(userID, tournamentID int)
+	UmpireAvailabilityForUser(userID int) map[int]Availability
+	UmpireAvailabilityForTournament(tournamentID int) map[int]Availability
+	ReturnTournamentsOpenForUmpires(from time.Time) []Tournament
+
 	// Verification codes
 	IssueVerificationCode(tournamentID int) (string, error)
 	RedeemVerificationCode(code string, tournamentID int) error
