@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 type manageUmpireRow struct {
