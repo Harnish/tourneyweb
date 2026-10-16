@@ -83,11 +83,19 @@ func (me *Env) UmpireAvailable(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 // UmpireWithdraw clears availability. It never touches existing game assignments and notifies nobody.
+// Withdrawing is always allowed (it only ever touches the user's own row), even if they are no longer flagged
+// as an umpire or the tournament has since moved or become a draft.
 func (me *Env) UmpireWithdraw(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	user, t, ok := me.availabilityTarget(w, r, ps)
-	if !ok {
+	user := userFromContext(r.Context())
+	if !user.LoggedIn() {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	me.DB.ClearUmpireAvailability(user.ID, t.ID)
+	tid, err := strconv.Atoi(ps.ByName("tid"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	me.DB.ClearUmpireAvailability(user.ID, tid)
 	http.Redirect(w, r, "/umpire", http.StatusSeeOther)
 }

@@ -30,8 +30,11 @@ func TestAvailabilityClear(t *testing.T) {
 	if len(db.UmpireAvailabilityForUser(u)) != 0 || len(db.UmpireAvailabilityForTournament(1)) != 0 {
 		t.Fatal("clear removes the row")
 	}
-	if !db.SetUmpireAvailability(u, 1, "") {
-		t.Fatal("volunteering again after withdrawing is new (notifies again)")
+	if db.SetUmpireAvailability(u, 1, "") {
+		t.Fatal("re-volunteering right after a withdrawal must not notify directors again (cooldown)")
+	}
+	if _, ok := db.UmpireAvailabilityForUser(u)[1]; !ok {
+		t.Fatal("re-volunteering restores the availability")
 	}
 }
 
@@ -73,5 +76,25 @@ func TestOpenForUmpiresFiltersDraftAndPast(t *testing.T) {
 		if names[i] != want[i] {
 			t.Fatalf("got %v want %v (ordered by start date)", names, want)
 		}
+	}
+}
+
+func TestWithdrawnAvailabilityIsHidden(t *testing.T) {
+	db := mydb.NewFakeDB()
+	u := newUmpire(t, db, "u@x.com", "Una")
+	db.SetUmpireAvailability(u, 1, "x")
+	db.ClearUmpireAvailability(u, 1)
+	if _, ok := db.UmpireAvailabilityForTournament(1)[u]; ok {
+		t.Fatal("withdrawn volunteers are not listed")
+	}
+}
+
+func TestListNotificationsLimitZeroMeansAll(t *testing.T) {
+	db := mydb.NewFakeDB()
+	u := newUmpire(t, db, "u@x.com", "Una")
+	db.AddNotification(u, "a", "", "")
+	db.AddNotification(u, "b", "", "")
+	if got := db.ListNotifications(u, 0); len(got) != 2 {
+		t.Fatalf("limit 0 = no limit, got %d", len(got))
 	}
 }

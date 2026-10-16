@@ -140,7 +140,7 @@ func TestNotificationOpenOtherUser404(t *testing.T) {
 func TestNotificationOpenRefusesOffsiteLinks(t *testing.T) {
 	f := newNoticeFx(t)
 	defer f.done()
-	for _, link := range []string{"", "https://evil.example/", "//evil.example/x", "javascript:alert(1)"} {
+	for _, link := range []string{"", "https://evil.example/", "//evil.example/x", "/\\evil.example", "javascript:alert(1)"} {
 		id := f.db.AddNotification(f.u.ID, "s", "", link)
 		if w := openNote(f, TWUser{ID: f.u.ID}, id); w.Header().Get("Location") != "/notifications" {
 			t.Errorf("link %q redirected to %q, want /notifications", link, w.Header().Get("Location"))

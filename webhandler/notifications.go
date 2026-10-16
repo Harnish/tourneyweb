@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -40,7 +41,7 @@ func (me *Env) NotificationOpen(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 	dest := n.Link
-	if !strings.HasPrefix(dest, "/") || strings.HasPrefix(dest, "//") { // site-relative links only
+	if !siteRelative(dest) {
 		dest = "/notifications"
 	}
 	http.Redirect(w, r, dest, http.StatusSeeOther)
@@ -54,4 +55,13 @@ func (me *Env) NotificationsReadAll(w http.ResponseWriter, r *http.Request, ps h
 	}
 	me.DB.MarkAllNotificationsRead(user.ID)
 	http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+}
+
+// siteRelative accepts only plain same-site paths: no scheme or host, no "//host", no backslash tricks.
+func siteRelative(dest string) bool {
+	if !strings.HasPrefix(dest, "/") || strings.HasPrefix(dest, "//") || strings.Contains(dest, "\\") {
+		return false
+	}
+	u, err := url.Parse(dest)
+	return err == nil && u.Scheme == "" && u.Host == ""
 }

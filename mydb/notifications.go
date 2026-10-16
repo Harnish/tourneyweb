@@ -33,8 +33,9 @@ func scanNotification(sc interface{ Scan(...any) error }) (Notification, error) 
 	return n, err
 }
 
+// ListNotifications returns the user's newest notifications; limit <= 0 means no limit.
 func (me *MyDB) ListNotifications(userID, limit int) []Notification {
-	rows, err := me.DB.Query(notificationSelect+` WHERE user_id=$1 ORDER BY created_at DESC, id DESC LIMIT $2`, userID, limit)
+	rows, err := me.DB.Query(notificationSelect+` WHERE user_id=$1 ORDER BY created_at DESC, id DESC LIMIT NULLIF($2::int, 0)`, userID, limit)
 	if err != nil {
 		slog.Error("ListNotifications", "err", err)
 		return nil

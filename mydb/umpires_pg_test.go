@@ -161,6 +161,9 @@ func TestNotificationsPostgres(t *testing.T) {
 	b, _ := d.CreateUser("nb"+sfx+"@x.com", "B", "h", "", true, false)
 	id1 := d.AddNotification(a.ID, "first", "m", "/x")
 	d.AddNotification(a.ID, "second", "", "")
+	if all := d.ListNotifications(a.ID, 0); len(all) != 2 {
+		t.Fatalf("limit 0 means no limit, got %d", len(all))
+	}
 	if got := d.ListNotifications(a.ID, 10); len(got) != 2 || got[0].Subject != "second" {
 		t.Fatalf("newest first: %+v", got)
 	}
@@ -224,7 +227,16 @@ func TestAvailabilityPostgres(t *testing.T) {
 		t.Fatalf("open list wrong: %v", ids)
 	}
 	d.ClearUmpireAvailability(u.ID, soon)
+	if _, ok := d.UmpireAvailabilityForTournament(soon)[u.ID]; ok {
+		t.Fatal("withdrawn volunteers are not listed")
+	}
+	if d.SetUmpireAvailability(u.ID, soon, "") {
+		t.Fatal("re-volunteering inside the cooldown must not notify")
+	}
+	d.ClearUmpireAvailability(u.ID, soon)
+	db := d.(*mydb.MyDB)
+	db.DB.Exec(`UPDATE umpire_availability SET notified_at = NOW() - INTERVAL '25 hours' WHERE user_id=$1 AND tournament_id=$2`, u.ID, soon)
 	if !d.SetUmpireAvailability(u.ID, soon, "") {
-		t.Fatal("volunteering again after withdrawing is new")
+		t.Fatal("re-volunteering after the cooldown notifies again")
 	}
 }

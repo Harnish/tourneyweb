@@ -10,18 +10,26 @@ func (f *FakeDB) SetUmpireAvailability(userID, tournamentID int, note string) bo
 	defer f.mu.Unlock()
 	k := [2]int{userID, tournamentID}
 	a, existed := f.availability[k]
+	notify := !existed
 	if !existed {
-		a = Availability{UserID: userID, TournamentID: tournamentID, CreatedAt: time.Now()}
+		a = Availability{UserID: userID, TournamentID: tournamentID, CreatedAt: time.Now(), NotifiedAt: time.Now()}
+	} else if a.Withdrawn && time.Since(a.NotifiedAt) > AvailabilityNotifyCooldown {
+		notify = true
+		a.NotifiedAt = time.Now()
 	}
-	a.Note = note
+	a.Note, a.Withdrawn = note, false
 	f.availability[k] = a
-	return !existed
+	return notify
 }
 
 func (f *FakeDB) ClearUmpireAvailability(userID, tournamentID int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	delete(f.availability, [2]int{userID, tournamentID})
+	k := [2]int{userID, tournamentID}
+	if a, ok := f.availability[k]; ok {
+		a.Withdrawn = true
+		f.availability[k] = a
+	}
 }
 
 func (f *FakeDB) UmpireAvailabilityForUser(userID int) map[int]Availability {
@@ -29,7 +37,7 @@ func (f *FakeDB) UmpireAvailabilityForUser(userID int) map[int]Availability {
 	defer f.mu.Unlock()
 	out := map[int]Availability{}
 	for _, a := range f.availability {
-		if a.UserID == userID {
+		if a.UserID == userID && !a.Withdrawn {
 			out[a.TournamentID] = a
 		}
 	}
@@ -41,7 +49,7 @@ func (f *FakeDB) UmpireAvailabilityForTournament(tournamentID int) map[int]Avail
 	defer f.mu.Unlock()
 	out := map[int]Availability{}
 	for _, a := range f.availability {
-		if a.TournamentID == tournamentID {
+		if a.TournamentID == tournamentID && !a.Withdrawn {
 			out[a.UserID] = a
 		}
 	}

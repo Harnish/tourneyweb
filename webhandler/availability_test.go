@@ -56,11 +56,16 @@ func TestUmpireAvailableNotifiesDirectorsOnce(t *testing.T) {
 	if a := f.db.UmpireAvailabilityForUser(f.ann)[f.tid]; a.Note != "weekends and Fridays" {
 		t.Fatalf("note not updated: %+v", a)
 	}
-	// withdraw then volunteer again: new volunteer, notifies again
-	withdrawPost(f, ann, f.tid)
-	availPost(f, ann, f.tid, "")
-	if got := inboxSubjects(f, dir); len(got) != 2 {
-		t.Fatalf("re-volunteering after a withdrawal should notify: %v", got)
+	// withdraw then volunteer again in a loop must not spam the directors
+	for i := 0; i < 3; i++ {
+		withdrawPost(f, ann, f.tid)
+		availPost(f, ann, f.tid, "")
+	}
+	if got := inboxSubjects(f, dir); len(got) != 1 {
+		t.Fatalf("withdraw/volunteer loop re-notified: %v", got)
+	}
+	if e := f.emails(); len(e) != 1 {
+		t.Fatalf("withdraw/volunteer loop re-emailed: %v", e)
 	}
 }
 
@@ -185,3 +190,28 @@ func TestUmpirePageListsUpcomingNotDrafts(t *testing.T) {
 	}
 }
 
+
+func TestWithdrawAlwaysAllowedForOwnRow(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	ann := TWUser{ID: f.ann, Name: "Ann"}
+	availPost(f, ann, f.tid, "")
+	f.db.SetUmpireProfile(f.ann, false, "") // no longer flagged as umpire
+	if w := withdrawPost(f, ann, f.tid); w.Code != http.StatusSeeOther {
+		t.Fatalf("un-flagged umpire: got %d want 303", w.Code)
+	}
+	if len(f.db.UmpireAvailabilityForUser(f.ann)) != 0 {
+		t.Fatal("row must be cleared even after un-flagging")
+	}
+	f.db.SetUmpireProfile(f.ann, true, "")
+	availPost(f, ann, f.tid, "")
+	f.db.AddTournament("x", "baseball", "L", "", time.Now(), "published")
+	long := f.db.AddTournament("Long past", "baseball", "L", "", time.Now().Add(-90*24*time.Hour), "published")
+	f.db.SetUmpireAvailability(f.ann, long, "")
+	if w := withdrawPost(f, ann, long); w.Code != http.StatusSeeOther || len(f.db.UmpireAvailabilityForUser(f.ann)) != 1 {
+		t.Fatalf("long-past tournament withdraw: code=%d rows=%d", w.Code, len(f.db.UmpireAvailabilityForUser(f.ann)))
+	}
+	if w := withdrawPost(f, TWUser{}, f.tid); w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/login" {
+		t.Fatal("anonymous goes to login")
+	}
+}
