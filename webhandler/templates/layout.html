@@ -43,7 +43,7 @@
   </div>
   <div class="tw-nav-user">
     {{if .User.LoggedIn}}
-    <span class="tw-username">{{.User.Name}}</span>
+    <a href="/profile" class="tw-username">{{.User.Name}}</a>
     <form method="post" action="/logout" style="margin:0">{{.CSRFField}}<button type="submit" class="tw-btn-logout">Log out</button></form>
     {{else}}
     <a href="/login" style="color:var(--tw-muted);font-size:0.875rem">Log in</a>

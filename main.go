@@ -70,6 +70,9 @@ func main() {
 	router.GET("/password-reset/confirm", wh.PasswordResetConfirmForm)
 	router.POST("/password-reset/confirm", wh.PasswordResetConfirm)
 	router.POST("/logout", wh.Logout)
+	router.GET("/profile", wh.Profile)
+	router.POST("/profile", wh.Profile)
+	router.GET("/umpires/:uid/certificate", wh.UmpireCertificate)
 	// Public routes
 	router.GET("/", wh.TournamentList)
 	// Self-service tournament creation (requires login, enforced in handler)

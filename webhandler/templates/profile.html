@@ -1,0 +1,22 @@
+{{define "profile"}}
+{{template "header" .}}
+<h2>My Profile</h2>
+{{if .Saved}}<p style="color:green">Saved.</p>{{end}}
+<form method="post" action="/profile" enctype="multipart/form-data">
+<table>
+<tr><td>Name</td><td>{{.User.Name}}</td></tr>
+<tr><td>Email</td><td>{{.User.Email}}</td></tr>
+<tr><td>I am an umpire</td><td><input type="checkbox" name="is_umpire" {{if .IsUmpire}}checked{{end}}></td></tr>
+<tr><td>Certification link</td><td><input type="url" name="cert_url" value="{{.CertURL}}" placeholder="https://..." size="50"></td></tr>
+<tr><td>Certificate image</td><td>
+  {{if .HasCertImage}}<a href="/umpires/{{.User.ID}}/certificate">Current certificate</a><br>{{end}}
+  <input type="file" name="cert_image" accept="image/jpeg,image/png,application/pdf"> <small>JPG, PNG or PDF, up to 5 MB</small>
+</td></tr>
+<tr><td></td><td><input type="submit" value="Save"></td></tr>
+</table>
+<p><small>Directors and site admins can see your certification link and image so they can verify you before assigning games.</small></p>
+{{.CSRFField}}
+</form>
+{{if .IsUmpire}}<p><a href="/umpire">My umpire games</a></p>{{end}}
+{{template "footer" .}}
+{{end}}

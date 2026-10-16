@@ -66,6 +66,14 @@ func newBaseWithTournament(r *http.Request, t mydb.Tournament) baseData {
 	}
 }
 
+type profileData struct {
+	baseData
+	IsUmpire     bool
+	CertURL      string
+	HasCertImage bool
+	Saved        bool
+}
+
 type divisionTeamRow struct {
 	mydb.Team
 	GamesPlayed int
