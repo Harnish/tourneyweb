@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
@@ -53,7 +54,9 @@ func getCert(env *Env, user TWUser, uid int) *httptest.ResponseRecorder {
 }
 
 func TestCanViewCertificate(t *testing.T) {
-	dir := TWUser{ID: 5, Roles: []TournamentRole{{TournamentID: 9, Role: "director"}}}
+	env, db, _ := profileEnv(t)
+	pub := db.AddTournament("Pub", "baseball", "L", "", time.Now(), "published")
+	draft := db.AddTournament("Draft", "baseball", "L", "", time.Now(), "draft")
 	cases := []struct {
 		name string
 		u    TWUser
@@ -61,16 +64,39 @@ func TestCanViewCertificate(t *testing.T) {
 	}{
 		{"owner", TWUser{ID: 1}, true},
 		{"admin", TWUser{ID: 2, IsAdmin: true}, true},
-		{"director of any tournament", dir, true},
-		{"staff", TWUser{ID: 3, Roles: []TournamentRole{{TournamentID: 9, Role: "staff"}}}, false},
-		{"coach", TWUser{ID: 4, Roles: []TournamentRole{{TournamentID: 9, Role: "coach", TeamID: 1}}}, false},
+		{"director of published tournament", TWUser{ID: 5, Roles: []TournamentRole{{TournamentID: pub, Role: "director"}}}, true},
+		{"director of draft tournament only", TWUser{ID: 7, Roles: []TournamentRole{{TournamentID: draft, Role: "director"}}}, false},
+		{"staff", TWUser{ID: 3, Roles: []TournamentRole{{TournamentID: pub, Role: "staff"}}}, false},
+		{"coach", TWUser{ID: 4, Roles: []TournamentRole{{TournamentID: pub, Role: "coach", TeamID: 1}}}, false},
 		{"other user", TWUser{ID: 6}, false},
 		{"anonymous", TWUser{}, false},
 	}
 	for _, c := range cases {
-		if got := canViewCertificate(c.u, 1); got != c.want {
+		if got := env.canViewCertificate(c.u, 1); got != c.want {
 			t.Errorf("%s: got %v want %v", c.name, got, c.want)
 		}
+	}
+}
+
+func TestCertificateHiddenAfterOptOutAndRemovable(t *testing.T) {
+	env, db, owner := profileEnv(t)
+	pub := db.AddTournament("Pub", "baseball", "L", "", time.Now(), "published")
+	dir := TWUser{ID: 50, Roles: []TournamentRole{{TournamentID: pub, Role: "director"}}}
+	db.SetUmpireProfile(owner.ID, true, "")
+	db.SetUmpireCertImage(owner.ID, pngBytes, "image/png")
+	if w := getCert(env, dir, owner.ID); w.Code != http.StatusOK {
+		t.Fatalf("flagged umpire: got %d", w.Code)
+	}
+	db.SetUmpireProfile(owner.ID, false, "")
+	if w := getCert(env, dir, owner.ID); w.Code != http.StatusNotFound {
+		t.Errorf("unflagged umpire's certificate must be hidden from directors, got %d", w.Code)
+	}
+	if w := getCert(env, owner, owner.ID); w.Code != http.StatusOK {
+		t.Errorf("owner can still see their own upload, got %d", w.Code)
+	}
+	postProfile(env, owner, map[string]string{"is_umpire": "on", "remove_cert": "on"}, nil)
+	if _, _, ok := db.GetUmpireCertImage(owner.ID); ok {
+		t.Error("remove_cert should delete the stored image")
 	}
 }
 
@@ -89,7 +115,8 @@ func TestCertificateAccess(t *testing.T) {
 	if w.Code != http.StatusOK || w.Header().Get("Content-Disposition") == "" || w.Header().Get("X-Content-Type-Options") != "nosniff" {
 		t.Errorf("owner: code=%d headers=%v", w.Code, w.Header())
 	}
-	dir := TWUser{ID: 50, Roles: []TournamentRole{{TournamentID: 9, Role: "director"}}}
+	pub := db.AddTournament("Pub", "baseball", "L", "", time.Now(), "published")
+	dir := TWUser{ID: 50, Roles: []TournamentRole{{TournamentID: pub, Role: "director"}}}
 	if w := getCert(env, dir, owner.ID); w.Code != http.StatusOK {
 		t.Errorf("director: got %d want 200", w.Code)
 	}

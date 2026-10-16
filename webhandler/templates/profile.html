@@ -9,7 +9,7 @@
 <tr><td>I am an umpire</td><td><input type="checkbox" name="is_umpire" {{if .IsUmpire}}checked{{end}}></td></tr>
 <tr><td>Certification link</td><td><input type="url" name="cert_url" value="{{.CertURL}}" placeholder="https://..." size="50"></td></tr>
 <tr><td>Certificate image</td><td>
-  {{if .HasCertImage}}<a href="/umpires/{{.User.ID}}/certificate">Current certificate</a><br>{{end}}
+  {{if .HasCertImage}}<a href="/umpires/{{.User.ID}}/certificate">Current certificate</a> <label><input type="checkbox" name="remove_cert"> remove</label><br>{{end}}
   <input type="file" name="cert_image" accept="image/jpeg,image/png,application/pdf"> <small>JPG, PNG or PDF, up to 5 MB</small>
 </td></tr>
 <tr><td></td><td><input type="submit" value="Save"></td></tr>

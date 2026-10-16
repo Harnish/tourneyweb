@@ -13,6 +13,10 @@ func (me *Env) ManageUmpires(w http.ResponseWriter, r *http.Request, ps httprout
 	if !ok {
 		return
 	}
+	if t.Status == "draft" {
+		http.Error(w, "The umpire list is available once the tournament is approved and published.", http.StatusForbidden)
+		return
+	}
 	me.render(w, "manageUmpires", manageUmpiresData{
 		baseData: newBaseWithTournament(r, t),
 		Umpires:  me.DB.ListUmpires(),

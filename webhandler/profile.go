@@ -12,8 +12,10 @@ import (
 
 const maxCertImageBytes = 5 << 20
 
-// canViewCertificate: the umpire, site admins, and directors (of any tournament) may see credentials.
-func canViewCertificate(u TWUser, ownerID int) bool {
+// canViewCertificate: the umpire, site admins, and directors of an admin-approved (non-draft)
+// tournament may see credentials. Anyone can create a draft tournament and become its director,
+// so draft directors are deliberately excluded.
+func (me *Env) canViewCertificate(u TWUser, ownerID int) bool {
 	if !u.LoggedIn() {
 		return false
 	}
@@ -21,7 +23,7 @@ func canViewCertificate(u TWUser, ownerID int) bool {
 		return true
 	}
 	for _, r := range u.Roles {
-		if r.Role == "director" {
+		if r.Role == "director" && me.DB.ReturnTournamentByID(r.TournamentID).Status != "draft" {
 			return true
 		}
 	}
@@ -63,6 +65,9 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			}
 		}
 		me.DB.SetUmpireProfile(user.ID, r.FormValue("is_umpire") != "", certURL)
+		if r.FormValue("remove_cert") != "" {
+			me.DB.SetUmpireCertImage(user.ID, nil, "")
+		}
 		if len(image) > 0 {
 			me.DB.SetUmpireCertImage(user.ID, image, contentType)
 		}
@@ -86,8 +91,13 @@ func (me *Env) UmpireCertificate(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 	uid, err := strconv.Atoi(ps.ByName("uid"))
-	if err != nil || !canViewCertificate(user, uid) {
+	if err != nil || !me.canViewCertificate(user, uid) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	// Non-owners only see credentials of people who are currently registered as umpires.
+	if _, isUmpire := me.DB.GetUmpire(uid); !isUmpire && user.ID != uid {
+		http.NotFound(w, r)
 		return
 	}
 	data, contentType, ok := me.DB.GetUmpireCertImage(uid)

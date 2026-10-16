@@ -89,3 +89,14 @@ func TestDivisionEditSavesUmpiresNeeded(t *testing.T) {
 		t.Fatalf("garbage must leave value unchanged, got %d", got)
 	}
 }
+
+func TestManageUmpiresBlockedForDraftTournament(t *testing.T) {
+	env, db, _, _, _, dir := umpFixture(t)
+	draft := db.AddTournament("Draft", "baseball", "L", "", time.Now(), "draft")
+	dir.Roles = append(dir.Roles, TournamentRole{TournamentID: draft, Role: "director"})
+	w := httptest.NewRecorder()
+	env.ManageUmpires(w, directorReq("GET", "", dir), httprouter.Params{{Key: "tid", Value: strconv.Itoa(draft)}})
+	if w.Code != http.StatusForbidden || strings.Contains(w.Body.String(), "https://assoc.example/una") {
+		t.Fatalf("draft tournament must not expose the umpire directory: %d", w.Code)
+	}
+}
