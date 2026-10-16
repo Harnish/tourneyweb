@@ -49,6 +49,7 @@ type UmpireSlot struct {
 	ID, GameID, Slot, UserID int
 	FreeName, Status         string
 	UserName, UserEmail      string
+	Absent                   bool // director-marked no-show: not paid
 }
 
 // NormalizeCertURL makes spellings that differ only in surrounding space or scheme/host case compare equal.
@@ -273,7 +274,7 @@ type rowQuerier interface {
 }
 
 const slotSelect = `SELECT gu.id, gu.game_id, gu.slot, COALESCE(gu.user_id,0), gu.free_name, gu.status,
-	COALESCE(u.name,''), COALESCE(u.email,'')
+	COALESCE(u.name,''), COALESCE(u.email,''), gu.absent
 	FROM game_umpires gu LEFT JOIN users u ON u.id = gu.user_id`
 
 func (me *MyDB) querySlots(where string, args ...any) []UmpireSlot {
@@ -286,7 +287,7 @@ func (me *MyDB) querySlots(where string, args ...any) []UmpireSlot {
 	var out []UmpireSlot
 	for rows.Next() {
 		var s UmpireSlot
-		if err := rows.Scan(&s.ID, &s.GameID, &s.Slot, &s.UserID, &s.FreeName, &s.Status, &s.UserName, &s.UserEmail); err != nil {
+		if err := rows.Scan(&s.ID, &s.GameID, &s.Slot, &s.UserID, &s.FreeName, &s.Status, &s.UserName, &s.UserEmail, &s.Absent); err != nil {
 			slog.Error("querySlots scan", "err", err)
 			continue
 		}
@@ -363,10 +364,10 @@ func (me *MyDB) AssignUmpire(gameID, slot, userID int, freeName string) error {
 			return ErrUmpireConflict
 		}
 		_, err = tx.Exec(`INSERT INTO game_umpires (game_id, slot, user_id, free_name, status) VALUES ($1,$2,$3,'','pending')
-			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=$3, free_name='', status='pending'`, gameID, slot, userID)
+			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=$3, free_name='', status='pending', absent=false`, gameID, slot, userID)
 	} else {
 		_, err = tx.Exec(`INSERT INTO game_umpires (game_id, slot, user_id, free_name, status) VALUES ($1,$2,NULL,$3,'accepted')
-			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=NULL, free_name=$3, status='accepted'`, gameID, slot, freeName)
+			ON CONFLICT (game_id, slot) DO UPDATE SET user_id=NULL, free_name=$3, status='accepted', absent=false`, gameID, slot, freeName)
 	}
 	if err != nil {
 		return err
@@ -415,4 +416,33 @@ func (me *MyDB) ResetUmpireSlotsPending(gameID int) []UmpireSlot {
 		return nil
 	}
 	return affected
+}
+
+func (me *MyDB) UmpireSlotsForTournament(tournamentID int) []UmpireSlot {
+	return me.querySlots(`WHERE gu.game_id IN (SELECT id FROM games WHERE tournament_id=$1) ORDER BY gu.game_id, gu.slot`, tournamentID)
+}
+
+func (me *MyDB) SetUmpireSlotAbsent(gameID, slot int, absent bool) {
+	if _, err := me.DB.Exec(`UPDATE game_umpires SET absent=$1 WHERE game_id=$2 AND slot=$3`, absent, gameID, slot); err != nil {
+		slog.Error("SetUmpireSlotAbsent", "err", err)
+	}
+}
+
+// DivisionPayPerGameCents is the optional umpire pay per game for a division; 0 means no rate set.
+func (me *MyDB) DivisionPayPerGameCents(divisionID int) int {
+	var c int
+	me.DB.QueryRow(`SELECT pay_per_game_cents FROM divisions WHERE id=$1`, divisionID).Scan(&c)
+	if c < 0 {
+		return 0
+	}
+	return c
+}
+
+func (me *MyDB) SetDivisionPayPerGameCents(divisionID, cents int) {
+	if cents < 0 {
+		cents = 0
+	}
+	if _, err := me.DB.Exec(`UPDATE divisions SET pay_per_game_cents=$1 WHERE id=$2`, cents, divisionID); err != nil {
+		slog.Error("SetDivisionPayPerGameCents", "err", err)
+	}
 }

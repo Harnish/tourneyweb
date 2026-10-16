@@ -55,8 +55,7 @@ func TestScoreNotifiesDirectorsExceptTheScorer(t *testing.T) {
 	if got[0].Link != wantLink {
 		t.Fatalf("link %q want %q", got[0].Link, wantLink)
 	}
-	tm := f.db.ReturnTeamsByDivisionID(f.did)
-	if !strings.Contains(got[0].Message, tm[0].Name+" 7, "+tm[1].Name+" 3") {
+	if !strings.Contains(got[0].Message, f.game.HomeTeam.Name+" 7, "+f.game.AwayTeam.Name+" 3") {
 		t.Fatalf("message should include the score: %q", got[0].Message)
 	}
 	if e := f.emails(); len(e) != 1 || !strings.HasPrefix(e[0], "dir2@x.com|Game scored") {

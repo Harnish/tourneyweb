@@ -142,6 +142,10 @@ type DB interface {
 	ExpiredFlagUmpireIDs(tournamentID int) map[int]bool
 	ExpiredFlagTimes(tournamentID int) map[int]time.Time
 	DivisionUmpiresNeeded(divisionID int) int
+	DivisionPayPerGameCents(divisionID int) int
+	SetDivisionPayPerGameCents(divisionID, cents int)
+	SetUmpireSlotAbsent(gameID, slot int, absent bool)
+	UmpireSlotsForTournament(tournamentID int) []UmpireSlot
 	SetDivisionUmpiresNeeded(divisionID, n int)
 
 	GameUmpires(gameID int) []UmpireSlot

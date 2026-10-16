@@ -73,6 +73,15 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 			http.Error(w, "Division name required", http.StatusBadRequest)
 			return
 		}
+		payCents, payPresent := 0, false
+		if vals, ok := r.Form["pay_per_game"]; ok && len(vals) > 0 {
+			var err error
+			if payCents, err = parseCents(vals[0]); err != nil {
+				http.Error(w, "Pay per game must be a dollar amount like 75 or 75.50", http.StatusBadRequest)
+				return
+			}
+			payPresent = true
+		}
 		criteriaStr := r.FormValue("ranking_criteria")
 		var criteria []string
 		if criteriaStr != "" {
@@ -91,6 +100,9 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		if n, err := strconv.Atoi(r.FormValue("umpires_needed")); err == nil {
 			me.DB.SetDivisionUmpiresNeeded(did, n)
 		}
+		if payPresent {
+			me.DB.SetDivisionPayPerGameCents(did, payCents)
+		}
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/divisions", t.ID), http.StatusSeeOther)
 		return
 	}
@@ -99,6 +111,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		Division:      division,
 		AllCriteria:   AllCriteriaForUI(division.RankingCriteria),
 		UmpiresNeeded: me.DB.DivisionUmpiresNeeded(did),
+		PayPerGame:    payText(me.DB.DivisionPayPerGameCents(did)),
 	})
 }
 
