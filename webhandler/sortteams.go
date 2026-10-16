@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // criterionFn compares two teams on a single criterion.

@@ -3,7 +3,7 @@ package webhandler
 import (
 	"math/rand"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // gameSpec describes a single game to create.

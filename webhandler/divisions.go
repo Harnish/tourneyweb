@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 func (me *Env) AddDivisionForm(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

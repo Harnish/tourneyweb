@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // Runs against a real Postgres only when TEST_DATABASE_URL is set, e.g.

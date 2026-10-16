@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 func TestFakeDB_TournamentCRUD(t *testing.T) {

@@ -3,7 +3,7 @@ package webhandler
 import (
 	"testing"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 func makeTeams(n int) []mydb.Team {

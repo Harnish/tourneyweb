@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 func TestNextPowerOf2(t *testing.T) {

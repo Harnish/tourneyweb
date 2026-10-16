@@ -15,8 +15,8 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/julienschmidt/httprouter"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/webhandler"
+	"github.com/Harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/webhandler"
 )
 
 //go:embed Banner.png

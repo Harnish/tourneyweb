@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // monthGrid lays out a full calendar month as weeks of 7 days, padded with

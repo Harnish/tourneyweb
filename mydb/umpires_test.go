@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 func newUmpire(t *testing.T, db *mydb.FakeDB, email, name string) int {
