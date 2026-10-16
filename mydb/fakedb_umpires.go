@@ -225,6 +225,9 @@ func (f *FakeDB) RespondUmpireSlot(gameID, slot, userID int, accept bool) error 
 	defer f.mu.Unlock()
 	for i, s := range f.umpSlots {
 		if s.GameID == gameID && s.Slot == slot && s.UserID == userID && userID > 0 {
+			if s.Status == "declined" {
+				return ErrUmpireSlotDeclined
+			}
 			f.umpSlots[i].Status = "declined"
 			if accept {
 				f.umpSlots[i].Status = "accepted"

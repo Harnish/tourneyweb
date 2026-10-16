@@ -247,3 +247,26 @@ func TestUmpireWindowsOverlap(t *testing.T) {
 		t.Fatal("back-to-back must not overlap")
 	}
 }
+
+func TestDeclinedSlotIsTerminal(t *testing.T) {
+	db, _, add, u1, _ := slotFixture(t)
+	g1, g2 := add(t10), add(t10.Add(time.Hour))
+	db.AssignUmpire(g1, 1, u1, "")
+	if err := db.RespondUmpireSlot(g1, 1, u1, false); err != nil {
+		t.Fatal(err)
+	}
+	// declined freed the window; the umpire takes an overlapping game
+	if err := db.AssignUmpire(g2, 1, u1, ""); err != nil {
+		t.Fatal(err)
+	}
+	// re-accepting the declined slot would double-book; it must be refused
+	if err := db.RespondUmpireSlot(g1, 1, u1, true); err == nil {
+		t.Fatal("accepting a declined slot must fail")
+	}
+	if err := db.RespondUmpireSlot(g1, 1, u1, false); err == nil {
+		t.Fatal("declining twice must fail (no repeat notifications)")
+	}
+	if db.GameUmpires(g1)[0].Status != "declined" {
+		t.Fatal("status must stay declined")
+	}
+}

@@ -85,6 +85,9 @@ func TestUmpiresPostgres(t *testing.T) {
 	if err := d.AssignUmpire(g2, 1, ann.ID, ""); err != nil {
 		t.Fatalf("declined must not block: %v", err)
 	}
+	if err := d.RespondUmpireSlot(g1, 1, ann.ID, true); err != mydb.ErrUmpireSlotDeclined {
+		t.Fatalf("accept after decline must be refused, got %v", err)
+	}
 	d.RespondUmpireSlot(g2, 1, ann.ID, true)
 	if r := d.ResetUmpireSlotsPending(g2); len(r) != 1 || r[0].UserEmail == "" {
 		t.Fatalf("reset: %+v", r)

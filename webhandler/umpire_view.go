@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"errors"
 	"html/template"
 	"net/http"
 	"sort"
@@ -117,6 +118,10 @@ func (me *Env) UmpireRespond(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 	if err := me.DB.RespondUmpireSlot(gid, slot, user.ID, action == "accept"); err != nil {
+		if errors.Is(err, mydb.ErrUmpireSlotDeclined) {
+			http.Error(w, "You already declined this game; ask the tournament director to reassign it.", http.StatusConflict)
+			return
+		}
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

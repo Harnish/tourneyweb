@@ -10,6 +10,8 @@ import (
 var (
 	ErrUmpireConflict  = errors.New("umpire has an overlapping game")
 	ErrUmpireDuplicate = errors.New("umpire already assigned to this game")
+	// ErrUmpireSlotDeclined: a declined slot is final until management reassigns it.
+	ErrUmpireSlotDeclined = errors.New("slot was already declined")
 )
 
 // umpireWindow is how long a game blocks its umpires, starting at the game's start time.
@@ -266,11 +268,17 @@ func (me *MyDB) RespondUmpireSlot(gameID, slot, userID int, accept bool) error {
 	if accept {
 		status = "accepted"
 	}
-	res, err := me.DB.Exec(`UPDATE game_umpires SET status=$1 WHERE game_id=$2 AND slot=$3 AND user_id=$4`, status, gameID, slot, userID)
+	res, err := me.DB.Exec(`UPDATE game_umpires SET status=$1 WHERE game_id=$2 AND slot=$3 AND user_id=$4 AND status <> 'declined'`, status, gameID, slot, userID)
 	if err != nil {
 		return err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
+		var declined bool
+		me.DB.QueryRow(`SELECT EXISTS (SELECT 1 FROM game_umpires WHERE game_id=$1 AND slot=$2 AND user_id=$3 AND status='declined')`,
+			gameID, slot, userID).Scan(&declined)
+		if declined {
+			return ErrUmpireSlotDeclined
+		}
 		return errors.New("slot not assigned to this user")
 	}
 	refreshUmpireCache(me.DB, gameID)

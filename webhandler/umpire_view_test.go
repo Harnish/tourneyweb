@@ -120,3 +120,21 @@ func TestUmpireGamesRequiresLogin(t *testing.T) {
 		t.Fatalf("got %d want 303", w.Code)
 	}
 }
+
+func TestSecondDeclineDoesNotReEmailDirectors(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	d1, _ := f.db.CreateUser("dir1@x.com", "Dir1", "h", "", true, false)
+	f.db.AssignRole(d1.ID, f.tid, "director", 0)
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	respond(f, TWUser{ID: f.ann}, f.game.ID, 1, "decline")
+	if w := respond(f, TWUser{ID: f.ann}, f.game.ID, 1, "decline"); w.Code != http.StatusConflict {
+		t.Fatalf("repeat decline: got %d want 409", w.Code)
+	}
+	if w := respond(f, TWUser{ID: f.ann}, f.game.ID, 1, "accept"); w.Code != http.StatusConflict {
+		t.Fatalf("accept after decline: got %d want 409", w.Code)
+	}
+	if e := f.emails(); len(e) != 1 {
+		t.Fatalf("directors must be emailed once, got %v", e)
+	}
+}
