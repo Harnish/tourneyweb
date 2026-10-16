@@ -129,6 +129,17 @@ type DB interface {
 	ClearLoginAttempts(ip string) error
 	PruneLoginAttempts() error
 
+	// Umpires
+	SetUmpireProfile(userID int, isUmpire bool, certURL string)
+	SetUmpireCertImage(userID int, data []byte, contentType string)
+	GetUmpireCertImage(userID int) (data []byte, contentType string, ok bool)
+	GetUmpire(userID int) (Umpire, bool)
+	ListUmpires() []Umpire
+	SetUmpireVerified(tournamentID, userID, byUserID int, verified bool)
+	VerifiedUmpireIDs(tournamentID int) map[int]bool
+	DivisionUmpiresNeeded(divisionID int) int
+	SetDivisionUmpiresNeeded(divisionID, n int)
+
 	// Verification codes
 	IssueVerificationCode(tournamentID int) (string, error)
 	RedeemVerificationCode(code string, tournamentID int) error

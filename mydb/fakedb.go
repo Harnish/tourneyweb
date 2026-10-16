@@ -28,6 +28,10 @@ type FakeDB struct {
 	bracketSeeds  []BracketSeed
 	bracketGames  map[int]BracketGame
 	players       map[int]Player
+	umpires       map[int]fakeUmpireProfile
+	umpVerified   map[[2]int]bool // {tournamentID, userID}
+	umpNeeded     map[int]int
+	umpSlots      []UmpireSlot
 }
 
 type gameByTeamRow struct {
@@ -62,6 +66,9 @@ func NewFakeDB() *FakeDB {
 		brackets:      make(map[int]Bracket),
 		bracketGames:  make(map[int]BracketGame),
 		players:       make(map[int]Player),
+		umpires:       make(map[int]fakeUmpireProfile),
+		umpVerified:   make(map[[2]int]bool),
+		umpNeeded:     make(map[int]int),
 	}
 }
 
