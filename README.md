@@ -35,6 +35,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
 - **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament and flag expired certifications (umpires can also set their own expiration date; expired umpires show a warning but stay assignable); assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
 - **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
+- **Score notices** — directors (or site admins when a tournament has none) are notified when a game is scored or its score is corrected; anyone can turn these off on their profile page
 - **Umpire availability** — umpires see upcoming tournaments and mark themselves available (with an optional note); directors are notified and see volunteers first on the manage umpires page
 - **CSRF protection** — all state-changing forms are protected with `gorilla/csrf`
 - **Delete confirmation** — browser confirm dialogs guard all delete operations

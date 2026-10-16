@@ -184,6 +184,14 @@ func TestNotificationsPostgres(t *testing.T) {
 	if d.CountUnreadNotifications(a.ID) != 0 {
 		t.Fatal("mark all")
 	}
+	if d.MutesScoreNotices(a.ID) {
+		t.Fatal("default is not muted")
+	}
+	d.SetMuteScoreNotices(a.ID, true)
+	if !d.MutesScoreNotices(a.ID) || d.MutesScoreNotices(b.ID) {
+		t.Fatal("mute is per user")
+	}
+	d.SetMuteScoreNotices(a.ID, false)
 	found := false
 	for _, id := range d.ListAdminUserIDs() {
 		found = found || id == a.ID

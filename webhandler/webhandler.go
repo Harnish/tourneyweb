@@ -291,13 +291,18 @@ func (me *Env) ScoreGame(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		http.Error(w, "Bad Game ID", http.StatusBadRequest)
 		return
 	}
+	game := me.DB.ReturnGameByID(gid)
+	if game.ID == 0 || game.TournamentID != t.ID {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
 	options := make([]int, 41)
 	for i := range options {
 		options[i] = i
 	}
 	me.render(w, "scoreGame", scoreGameData{
 		baseData:     newBaseWithTournament(r, t),
-		Game:         me.DB.ReturnGameByID(gid),
+		Game:         game,
 		ScoreOptions: options,
 	})
 }
@@ -322,18 +327,24 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 		http.Error(w, "Bad away score", http.StatusBadRequest)
 		return
 	}
+	before := me.DB.ReturnGameByID(gid)
+	if before.ID == 0 || before.TournamentID != t.ID { // the game must belong to the tournament in the URL
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
 	me.DB.ScoreGame(gid, hscore, ascore)
-	if hscore != ascore {
-		game := me.DB.ReturnGameByID(gid)
-		if game.ID == 0 {
-			slog.Error("RecordScore: could not re-fetch game after scoring", "gid", gid)
-		} else {
+	game := me.DB.ReturnGameByID(gid)
+	if game.ID == 0 {
+		slog.Error("RecordScore: could not re-fetch game after scoring", "gid", gid)
+	} else {
+		if hscore != ascore {
 			winnerID := game.HomeTeam.ID
 			if ascore > hscore {
 				winnerID = game.AwayTeam.ID
 			}
 			me.AdvanceBracket(gid, winnerID)
 		}
+		me.notifyGameScored(game, before.Scored, userFromContext(r.Context()).ID)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }

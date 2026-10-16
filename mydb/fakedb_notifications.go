@@ -82,3 +82,15 @@ func (f *FakeDB) ListAdminUserIDs() []int {
 	sort.Ints(out)
 	return out
 }
+
+func (f *FakeDB) SetMuteScoreNotices(userID int, mute bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.muteScore[userID] = mute
+}
+
+func (f *FakeDB) MutesScoreNotices(userID int) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.muteScore[userID]
+}

@@ -159,6 +159,8 @@ type DB interface {
 	MarkNotificationRead(id, userID int) (Notification, bool)
 	MarkAllNotificationsRead(userID int)
 	ListAdminUserIDs() []int
+	SetMuteScoreNotices(userID int, mute bool)
+	MutesScoreNotices(userID int) bool
 
 	// Umpire availability
 	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)
