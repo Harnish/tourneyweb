@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // sendNotice is a test seam; the default sends through me.Email and is a no-op when mail isn't configured.

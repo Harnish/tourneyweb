@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/csrf"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 //go:embed templates

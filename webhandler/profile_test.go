@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 var pngBytes = append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)

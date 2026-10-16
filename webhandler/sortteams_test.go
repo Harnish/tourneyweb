@@ -3,7 +3,7 @@ package webhandler
 import (
 	"testing"
 
-	"gitlab.joe.beardedgeek.org/harnish/tourneyweb/mydb"
+	"github.com/Harnish/tourneyweb/mydb"
 )
 
 // makeTeam builds a Team with pre-populated stats. ID is used as a stable

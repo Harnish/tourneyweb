@@ -1,4 +1,4 @@
-module gitlab.joe.beardedgeek.org/harnish/tourneyweb
+module github.com/Harnish/tourneyweb
 
 go 1.26.0
 
