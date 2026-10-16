@@ -73,6 +73,8 @@ func main() {
 	router.GET("/profile", wh.Profile)
 	router.POST("/profile", wh.Profile)
 	router.GET("/umpires/:uid/certificate", wh.UmpireCertificate)
+	router.GET("/umpire", wh.UmpireGames)
+	router.POST("/umpire/games/:gid/slots/:slot", wh.UmpireRespond)
 	// Public routes
 	router.GET("/", wh.TournamentList)
 	// Self-service tournament creation (requires login, enforced in handler)
