@@ -96,3 +96,22 @@ func TestListAdminUserIDs(t *testing.T) {
 		t.Fatalf("got %v want [%d %d]", got, a1.ID, a2.ID)
 	}
 }
+
+func TestMuteScoreNotices(t *testing.T) {
+	db := mydb.NewFakeDB()
+	u := newUmpire(t, db, "u@x.com", "Una")
+	if db.MutesScoreNotices(u) {
+		t.Fatal("default is not muted")
+	}
+	db.SetMuteScoreNotices(u, true)
+	if !db.MutesScoreNotices(u) {
+		t.Fatal("muted")
+	}
+	db.SetMuteScoreNotices(u, false)
+	if db.MutesScoreNotices(u) {
+		t.Fatal("unmuted")
+	}
+	if db.MutesScoreNotices(99999) {
+		t.Fatal("unknown user is not muted")
+	}
+}

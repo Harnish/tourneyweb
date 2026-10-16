@@ -259,6 +259,7 @@ var pgmigrations = []string{
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_image_type TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS withdrawn BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE umpire_availability ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS mute_score_notices BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_linked_at TIMESTAMPTZ`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_expires_on DATE`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS umpires_needed INTEGER NOT NULL DEFAULT 1`,

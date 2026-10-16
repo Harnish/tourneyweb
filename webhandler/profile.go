@@ -74,6 +74,7 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			}
 		}
 		me.DB.SetUmpireProfile(user.ID, r.FormValue("is_umpire") != "", certURL)
+		me.DB.SetMuteScoreNotices(user.ID, r.FormValue("mute_score_notices") != "")
 		me.DB.SetUmpireCertExpiry(user.ID, expires)
 		if r.FormValue("remove_cert") != "" {
 			me.DB.SetUmpireCertImage(user.ID, nil, "")
@@ -93,14 +94,15 @@ func (me *Env) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		expiresOn = u.ExpiresOn.Format("2006-01-02")
 	}
 	me.render(w, "profile", profileData{
-		LinkedOn:     linkedOn,
-		ExpiresOn:    expiresOn,
-		Expired:      isUmpire && u.Expired(false, time.Now()),
-		baseData:     newBase(r),
-		IsUmpire:     isUmpire,
-		CertURL:      u.CertURL,
-		HasCertImage: u.HasCertImage,
-		Saved:        r.URL.Query().Get("saved") != "",
+		MuteScoreNotices: me.DB.MutesScoreNotices(user.ID),
+		LinkedOn:         linkedOn,
+		ExpiresOn:        expiresOn,
+		Expired:          isUmpire && u.Expired(false, time.Now()),
+		baseData:         newBase(r),
+		IsUmpire:         isUmpire,
+		CertURL:          u.CertURL,
+		HasCertImage:     u.HasCertImage,
+		Saved:            r.URL.Query().Get("saved") != "",
 	})
 }
 

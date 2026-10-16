@@ -88,3 +88,16 @@ func (me *MyDB) ListAdminUserIDs() []int {
 	}
 	return out
 }
+
+// SetMuteScoreNotices turns the user's "game scored" notifications off (or back on). Other notifications are unaffected.
+func (me *MyDB) SetMuteScoreNotices(userID int, mute bool) {
+	if _, err := me.DB.Exec(`UPDATE users SET mute_score_notices=$1 WHERE id=$2`, mute, userID); err != nil {
+		slog.Error("SetMuteScoreNotices", "err", err)
+	}
+}
+
+func (me *MyDB) MutesScoreNotices(userID int) bool {
+	var mute bool
+	me.DB.QueryRow(`SELECT mute_score_notices FROM users WHERE id=$1`, userID).Scan(&mute)
+	return mute
+}
