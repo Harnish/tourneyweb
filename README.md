@@ -6,6 +6,22 @@ Check out [TODO.md](TODO.md) if you want to help out.
 
 ---
 
+## Screenshots
+
+**Tournament home**
+
+![Tournament home](docs/screenshots/home.png)
+
+**Division standings and games**
+
+![Division standings](docs/screenshots/standings.png)
+
+**Full game schedule**
+
+![Game schedule](docs/screenshots/games.png)
+
+---
+
 ## Features
 
 - **Multi-tournament** — manage multiple tournaments simultaneously, each with their own divisions, teams, and schedule
