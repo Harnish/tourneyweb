@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"log/slog"
 	"strconv"
 
@@ -93,6 +94,20 @@ func (s *EmailService) SendInvitationEmail(toEmail, tournamentName, role string)
 <p style="color:#6b7280;font-size:.85em;">Or copy this link: %s</p>
 </body></html>`, tournamentName, role, tournamentName, url, url)
 	return s.sendEmail(toEmail, fmt.Sprintf("You've been invited to manage %s", tournamentName), body)
+}
+
+// SendUmpireNotice emails an umpire (or a director about an umpire) with a link to the umpire page.
+func (s *EmailService) SendUmpireNotice(toEmail, subject, message string) error {
+	url := fmt.Sprintf("%s/umpire", s.baseURL)
+	body := fmt.Sprintf(`<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+<h2>%s</h2>
+<p>%s</p>
+<p style="text-align:center;margin:30px 0;">
+  <a href="%s" style="background-color:#2a6099;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">View my games</a>
+</p>
+<p style="color:#6b7280;font-size:.85em;">Or copy this link: %s</p>
+</body></html>`, html.EscapeString(subject), html.EscapeString(message), url, url)
+	return s.sendEmail(toEmail, subject, body)
 }
 
 // GenerateToken returns a cryptographically random 32-byte hex string.
