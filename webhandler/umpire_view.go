@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"sort"
@@ -9,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/Harnish/tourneyweb/mydb"
+	"github.com/julienschmidt/httprouter"
 )
 
 type umpireRow struct {
@@ -127,14 +128,9 @@ func (me *Env) UmpireRespond(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 	if action == "decline" {
 		g := me.DB.ReturnGameByID(gid)
-		for _, role := range me.DB.GetRolesForTournament(g.TournamentID) {
-			if role.Role != "director" {
-				continue
-			}
-			if d, err := me.DB.GetUserByID(role.UserID); err == nil {
-				me.notifyUmpire(d.Email, "Umpire declined a game",
-					user.Name+" declined: "+gameLine(g)+". The slot is open again.")
-			}
+		link := fmt.Sprintf("/tournaments/%d/manage/games/%d/edit", g.TournamentID, g.ID)
+		for _, id := range me.directorRecipients(g.TournamentID) {
+			me.notifyUser(id, "Umpire declined a game", user.Name+" declined: "+gameLine(g)+". The slot is open again.", link)
 		}
 	}
 	http.Redirect(w, r, "/umpire", http.StatusSeeOther)

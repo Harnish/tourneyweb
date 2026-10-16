@@ -1,7 +1,6 @@
 package webhandler
 
 import (
-	"sync"
 	"testing"
 	"time"
 
@@ -24,31 +23,5 @@ func TestGameLine(t *testing.T) {
 	want = "10U · Dawg Pound vs River Rats · Field 1"
 	if got := gameLine(g); got != want {
 		t.Fatalf("zero start: got %q want %q", got, want)
-	}
-}
-
-func TestNotifyUmpireNilEmail(t *testing.T) {
-	env := &Env{}
-	env.notifyUmpire("a@x.com", "s", "m") // must not panic
-	notifyWG.Wait()
-}
-
-func TestNotifyUmpireUsesSeam(t *testing.T) {
-	var mu sync.Mutex
-	var got []string
-	old := sendNotice
-	sendNotice = func(me *Env, to, subject, msg, link string) error {
-		mu.Lock()
-		got = append(got, to)
-		mu.Unlock()
-		return nil
-	}
-	defer func() { sendNotice = old }()
-	env := &Env{}
-	env.notifyUmpire("a@x.com", "s", "m")
-	env.notifyUmpire("", "s", "m") // blank recipient skipped
-	notifyWG.Wait()
-	if len(got) != 1 || got[0] != "a@x.com" {
-		t.Fatalf("got %v", got)
 	}
 }

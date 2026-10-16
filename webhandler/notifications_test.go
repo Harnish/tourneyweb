@@ -34,7 +34,7 @@ func newNoticeFx(t *testing.T) *noticeFx {
 		mu.Unlock()
 		return nil
 	}
-	return &noticeFx{env: &Env{DB: db}, db: db, u: u, sent: &sent, mu: &mu, done: func() { sendNotice = old }}
+	return &noticeFx{env: &Env{DB: db}, db: db, u: u, sent: &sent, mu: &mu, done: func() { notifyWG.Wait(); sendNotice = old }}
 }
 
 func (f *noticeFx) emails() []string {

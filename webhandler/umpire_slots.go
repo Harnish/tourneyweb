@@ -199,7 +199,7 @@ func (me *Env) applySlots(g mydb.Game, choices []slotChoice) string {
 		me.DB.ClearUmpireSlot(g.ID, s.Slot)
 		delete(old, s.Slot)
 		if s.UserID > 0 && s.Status != "declined" {
-			me.notifyUmpire(s.UserEmail, "Removed from a game", "You are no longer assigned to: "+line)
+			me.notifyUser(s.UserID, "Removed from a game", "You are no longer assigned to: "+line, "/umpire")
 		}
 	}
 	var failed []string
@@ -216,9 +216,7 @@ func (me *Env) applySlots(g mydb.Game, choices []slotChoice) string {
 			continue
 		}
 		if c.UserID > 0 {
-			if u, ok := me.DB.GetUmpire(c.UserID); ok {
-				me.notifyUmpire(u.Email, "You have been scheduled to umpire", "Please accept or decline: "+line)
-			}
+			me.notifyUser(c.UserID, "You have been scheduled to umpire", "Please accept or decline: "+line, "/umpire")
 		}
 	}
 	if len(failed) > 0 {
@@ -233,8 +231,8 @@ func (me *Env) notifyGameChanged(old, updated mydb.Game) {
 		return
 	}
 	for _, s := range me.DB.ResetUmpireSlotsPending(updated.ID) {
-		me.notifyUmpire(s.UserEmail, "Game changed — please re-confirm",
-			"This game has changed. Was: "+gameLine(old)+". Now: "+gameLine(updated)+". Please accept or decline again.")
+		me.notifyUser(s.UserID, "Game changed — please re-confirm",
+			"This game has changed. Was: "+gameLine(old)+". Now: "+gameLine(updated)+". Please accept or decline again.", "/umpire")
 	}
 }
 
@@ -242,7 +240,7 @@ func (me *Env) notifyGameChanged(old, updated mydb.Game) {
 func (me *Env) notifyGameDeleted(g mydb.Game) {
 	for _, s := range me.DB.GameUmpires(g.ID) {
 		if s.UserID > 0 && s.Status != "declined" {
-			me.notifyUmpire(s.UserEmail, "Game cancelled", "This game was cancelled: "+gameLine(g))
+			me.notifyUser(s.UserID, "Game cancelled", "This game was cancelled: "+gameLine(g), "/umpire")
 		}
 	}
 }

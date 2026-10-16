@@ -138,3 +138,92 @@ func TestSecondDeclineDoesNotReEmailDirectors(t *testing.T) {
 		t.Fatalf("directors must be emailed once, got %v", e)
 	}
 }
+
+func inboxSubjects(f *slotFx, userID int) []string {
+	var out []string
+	for _, n := range f.db.ListNotifications(userID, 50) {
+		out = append(out, n.Subject+"|"+n.Link)
+	}
+	return out
+}
+
+func TestDirectorRecipientsFallsBackToAdmins(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	admin, _ := f.db.CreateUser("admin@x.com", "Admin", "h", "", true, true)
+	staff, _ := f.db.CreateUser("staff@x.com", "Staff", "h", "", true, false)
+	f.db.AssignRole(staff.ID, f.tid, "staff", 0)
+	if got := f.env.directorRecipients(f.tid); len(got) != 1 || got[0] != admin.ID {
+		t.Fatalf("no director: want admins only, got %v", got)
+	}
+	dir, _ := f.db.CreateUser("dir@x.com", "Dir", "h", "", true, false)
+	f.db.AssignRole(dir.ID, f.tid, "director", 0)
+	if got := f.env.directorRecipients(f.tid); len(got) != 1 || got[0] != dir.ID {
+		t.Fatalf("with a director: want directors only, got %v", got)
+	}
+}
+
+func TestDeclineNotifiesDirectorsInboxWithEditLink(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	dir, _ := f.db.CreateUser("dir@x.com", "Dir", "h", "", true, false)
+	f.db.AssignRole(dir.ID, f.tid, "director", 0)
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	respond(f, TWUser{ID: f.ann, Name: "Ann"}, f.game.ID, 1, "decline")
+	want := "Umpire declined a game|/tournaments/" + strconv.Itoa(f.tid) + "/manage/games/" + strconv.Itoa(f.game.ID) + "/edit"
+	if got := inboxSubjects(f, dir.ID); len(got) != 1 || got[0] != want {
+		t.Fatalf("got %v want [%s]", got, want)
+	}
+}
+
+func TestDeclineWithNoDirectorReachesAdmins(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	admin, _ := f.db.CreateUser("admin@x.com", "Admin", "h", "", true, true)
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	respond(f, TWUser{ID: f.ann, Name: "Ann"}, f.game.ID, 1, "decline")
+	if len(inboxSubjects(f, admin.ID)) != 1 {
+		t.Fatal("admin fallback must be notified")
+	}
+}
+
+func TestAssignedRemovedChangedCancelledGetInboxRows(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.env.applySlots(f.game, []slotChoice{{1, f.ann, ""}})
+	if got := inboxSubjects(f, f.ann); len(got) != 1 || got[0] != "You have been scheduled to umpire|/umpire" {
+		t.Fatalf("assigned: %v", got)
+	}
+	f.db.RespondUmpireSlot(f.game.ID, 1, f.ann, true)
+	moved := f.game
+	moved.Start = moved.Start.Add(3 * time.Hour)
+	f.env.notifyGameChanged(f.game, moved)
+	f.env.applySlots(f.game, []slotChoice{{1, 0, ""}})
+	f.env.applySlots(f.game, []slotChoice{{1, f.bob, ""}})
+	f.env.notifyGameDeleted(f.game)
+	all := strings.Join(inboxSubjects(f, f.ann), ";")
+	for _, want := range []string{"Game changed — please re-confirm|/umpire", "Removed from a game|/umpire"} {
+		if !strings.Contains(all, want) {
+			t.Errorf("Ann is missing %q in %s", want, all)
+		}
+	}
+	if b := strings.Join(inboxSubjects(f, f.bob), ";"); !strings.Contains(b, "Game cancelled|/umpire") {
+		t.Errorf("Bob should be told the game was cancelled: %s", b)
+	}
+}
+
+func TestFreeFormUmpireNotNotified(t *testing.T) {
+	f := newSlotFx(t)
+	defer f.restore()
+	f.env.applySlots(f.game, []slotChoice{{1, 0, "Free Ump"}})
+	f.env.applySlots(f.game, []slotChoice{{1, 0, ""}})
+	f.env.notifyGameDeleted(f.game)
+	for _, id := range []int{f.ann, f.bob} {
+		if n := f.db.CountUnreadNotifications(id); n != 0 {
+			t.Fatalf("user %d got %d notifications", id, n)
+		}
+	}
+	if e := f.emails(); len(e) != 0 {
+		t.Fatalf("no emails: %v", e)
+	}
+}

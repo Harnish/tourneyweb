@@ -54,7 +54,7 @@ func newSlotFx(t *testing.T) *slotFx {
 		return nil
 	}
 	return &slotFx{env: &Env{DB: db}, db: db, tid: tid, did: did, game: db.ReturnGameByID(gid),
-		ann: ann.ID, bob: bob.ID, sent: &sent, sentMu: &mu, restore: func() { sendNotice = old }}
+		ann: ann.ID, bob: bob.ID, sent: &sent, sentMu: &mu, restore: func() { notifyWG.Wait(); sendNotice = old }}
 }
 
 func (f *slotFx) emails() []string {
