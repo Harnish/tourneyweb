@@ -29,6 +29,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Recently Completed
 
+- **Coach and umpire score entry** — coaches report or confirm scores for their own games; matching reports confirm, differing ones mark the game disputed and notify the assigned umpires (directors, then admins, as fallback); umpires enter the final score; director/staff scores are always final; standings follow the first coach's score; brackets advance only on confirmed/final scores (#18)
 - **Umpire pay report** — per-division pay per game; report of each umpire's games by division with amounts, totals, per-game absent marks and CSV export (#19)
 - **Game-scored notices** — directors (admins as fallback) get an inbox entry and email when a game is scored or re-scored, except for whoever entered the score; a profile checkbox turns just these notices off; score forms now reject games from another tournament (#25)
 - **Notifications + umpire availability** — in-app notification inbox (nav unread count) with email for the same event; umpire notices (assigned, changed, cancelled, removed, declined) moved onto it, directors falling back to site admins when none exist; umpires see upcoming tournaments and volunteer with an optional note, directors are notified once and see volunteers first (#24)
