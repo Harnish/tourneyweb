@@ -234,11 +234,20 @@ func (me *Env) notifyGameChanged(old, updated mydb.Game) {
 		me.notifyUser(s.UserID, "Game changed — please re-confirm",
 			"This game has changed. Was: "+gameLine(old)+". Now: "+gameLine(updated)+". Please accept or decline again.", "/umpire")
 	}
+	for _, s := range me.DB.ResetRoleSlotsPending(updated.ID) {
+		me.notifyUser(s.UserID, "Game changed — please re-confirm",
+			"This game has changed ("+s.RoleName+"). Was: "+gameLine(old)+". Now: "+gameLine(updated)+". Please accept or decline again.", "/umpire")
+	}
 }
 
 // notifyGameDeleted must be called before the game is deleted.
 func (me *Env) notifyGameDeleted(g mydb.Game) {
 	for _, s := range me.DB.GameUmpires(g.ID) {
+		if s.UserID > 0 && s.Status != "declined" {
+			me.notifyUser(s.UserID, "Game cancelled", "This game was cancelled: "+gameLine(g), "/umpire")
+		}
+	}
+	for _, s := range me.DB.GameRoleSlots(g.ID) {
 		if s.UserID > 0 && s.Status != "declined" {
 			me.notifyUser(s.UserID, "Game cancelled", "This game was cancelled: "+gameLine(g), "/umpire")
 		}

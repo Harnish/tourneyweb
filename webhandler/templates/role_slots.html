@@ -1,0 +1,43 @@
+{{define "roleSlots"}}
+{{if .Roles}}
+<datalist id="role-user-list"></datalist>
+{{range .Roles}}{{$r := .}}
+<div style="margin-bottom:.75em"><strong>{{.Name}}</strong>
+{{range .Slots}}
+<div style="margin:.25em 0">
+  <input type="hidden" name="role_user_{{$r.RoleID}}_{{.Slot}}" value="{{if .UserID}}{{.UserID}}{{end}}">
+  <input type="text" class="role-name" name="role_name_{{$r.RoleID}}_{{.Slot}}" value="{{.Display}}" list="role-user-list" autocomplete="off" data-search="{{$.SearchURL}}" placeholder="search users or type a name">
+  {{if .Status}}<small>{{.Status}}</small>{{end}}
+  {{if .DeclinedBy}}<small style="color:#c00">declined by {{.DeclinedBy}}</small>{{end}}
+</div>
+{{end}}
+</div>
+{{end}}
+<script>
+(function () {
+  if (window.twRoleSearch) return;
+  window.twRoleSearch = true;
+  var dl = document.getElementById('role-user-list'), picked = {};
+  document.addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el.classList || !el.classList.contains('role-name')) return;
+    var hid = el.previousElementSibling;
+    if (picked[el.value]) { hid.value = picked[el.value]; return; }
+    hid.value = ''; // typed text is a free-form name
+    var q = el.value.trim();
+    if (q.length < 2) return;
+    fetch(el.dataset.search + '?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        dl.innerHTML = ''; picked = {};
+        list.forEach(function (u) {
+          var v = u.name + ' (#' + u.id + ')';
+          picked[v] = u.id;
+          var o = document.createElement('option'); o.value = v; dl.appendChild(o);
+        });
+      });
+  });
+})();
+</script>
+{{end}}
+{{end}}

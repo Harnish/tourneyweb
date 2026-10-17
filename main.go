@@ -148,6 +148,7 @@ func main() {
 	router.POST("/tournaments/:tid/manage/extra-roles", wh.ManageExtraRoleCreate)
 	router.POST("/tournaments/:tid/manage/extra-roles/:rid/rename", wh.ManageExtraRoleRename)
 	router.POST("/tournaments/:tid/manage/extra-roles/:rid/delete", wh.ManageExtraRoleDelete)
+	router.GET("/tournaments/:tid/manage/users/search", wh.UserSearch)
 	router.GET("/tournaments/:tid/manage/umpires", wh.ManageUmpires)
 	router.POST("/tournaments/:tid/manage/umpires/:uid/verify", wh.ManageUmpireVerify)
 	router.GET("/tournaments/:tid/manage/umpire-pay", wh.ManageUmpirePay)

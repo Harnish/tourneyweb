@@ -32,6 +32,7 @@ func (me *Env) ManageCreateGame(w http.ResponseWriter, r *http.Request, ps httpr
 		Locations:     me.locationsForTournament(t.ID),
 		DisableDelete: me.DisableDelete,
 		Ump:           me.slotBlock(t, did, nil),
+		Roles:         me.roleSlotBlock(t, did, nil),
 	})
 }
 
@@ -80,8 +81,18 @@ func (me *Env) ManageCreateGameSubmit(w http.ResponseWriter, r *http.Request, ps
 		http.Error(w, msg, http.StatusConflict)
 		return
 	}
+	roleChoices := me.parseRoleChoices(r, did, 0)
+	if msg := me.validateRoleChoices(t, roleChoices, choices, startTime, 0); msg != "" {
+		http.Error(w, msg, http.StatusConflict)
+		return
+	}
 	newID := me.DB.AddGame(t.ID, did, hid, aid, r.FormValue("location"), startTime, "")
-	if msg := me.applySlots(me.DB.ReturnGameByID(newID), choices); msg != "" {
+	created := me.DB.ReturnGameByID(newID)
+	if msg := me.applySlots(created, choices); msg != "" {
+		http.Error(w, msg, http.StatusConflict)
+		return
+	}
+	if msg := me.applyRoleChoices(created, roleChoices); msg != "" {
 		http.Error(w, msg, http.StatusConflict)
 		return
 	}
@@ -198,6 +209,11 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 			http.Error(w, msg, http.StatusConflict)
 			return
 		}
+		roleChoices := me.parseRoleChoices(r, did, gid)
+		if msg := me.validateRoleChoices(t, roleChoices, choices, startTime, gid); msg != "" {
+			http.Error(w, msg, http.StatusConflict)
+			return
+		}
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
 		if hid != game.HomeTeam.ID || aid != game.AwayTeam.ID {
 			me.DB.ClearScoreReports(gid) // reports belong to the old teams' coaches
@@ -205,6 +221,10 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 		updated := me.DB.ReturnGameByID(gid)
 		me.notifyGameChanged(game, updated)
 		if msg := me.applySlots(updated, choices); msg != "" {
+			http.Error(w, msg, http.StatusConflict)
+			return
+		}
+		if msg := me.applyRoleChoices(updated, roleChoices); msg != "" {
 			http.Error(w, msg, http.StatusConflict)
 			return
 		}
@@ -218,6 +238,7 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 		Divisions: me.DB.ReturnDivisions(t.ID),
 		Locations: me.locationsForTournament(t.ID),
 		Ump:       me.slotBlock(t, game.Division.ID, &game),
+		Roles:     me.roleSlotBlock(t, game.Division.ID, &game),
 	})
 }
 
