@@ -20,6 +20,8 @@ type umpireRow struct {
 	Slot           int
 	Status         string
 	Partner        string
+	RoleID         int    // 0 for an umpire slot
+	RoleName       string // "Umpire" or the extra role's name
 }
 
 type umpireDay struct {
@@ -91,7 +93,23 @@ func (me *Env) UmpireGames(w http.ResponseWriter, r *http.Request, ps httprouter
 			}
 		}
 		row := umpireRow{Game: g, TournamentName: me.DB.ReturnTournamentByID(g.TournamentID).Name,
-			Slot: s.Slot, Status: s.Status, Partner: strings.Join(partners, ", ")}
+			Slot: s.Slot, Status: s.Status, Partner: strings.Join(partners, ", "), RoleName: "Umpire"}
+		if g.Start.IsZero() || !g.Start.Before(now) {
+			upcoming = append(upcoming, row)
+		} else {
+			past = append(past, row)
+		}
+	}
+	for _, s := range me.DB.RoleSlotsForUser(user.ID) {
+		if s.Status == "declined" {
+			continue
+		}
+		g := me.DB.ReturnGameByID(s.GameID)
+		if g.ID == 0 {
+			continue
+		}
+		row := umpireRow{Game: g, TournamentName: me.DB.ReturnTournamentByID(g.TournamentID).Name,
+			Slot: s.Slot, Status: s.Status, RoleID: s.RoleID, RoleName: s.RoleName}
 		if g.Start.IsZero() || !g.Start.Before(now) {
 			upcoming = append(upcoming, row)
 		} else {

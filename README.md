@@ -34,6 +34,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Invitations** — directors can invite unregistered users by email; role is applied automatically on registration
 - **Score entry for staff** — staff users see a "Score" link on the public games page; directors get a full admin score view
 - **Umpires** — users register as umpires on their profile (certification link + optional certificate image); directors set umpires per game by division (1–4), assign registered umpires or free-form names, and verify umpires per tournament and flag expired certifications (umpires can also set their own expiration date; expired umpires show a warning but stay assignable); assigned umpires get an email and accept/decline on their own "my games" page; overlapping assignments (2-hour window) are blocked
+- **Extra game roles** — directors name roles per tournament (scorekeeper, scoreboard, safety...), set how many each level needs on the division edit page, and fill each game's slots by searching registered users or typing a name; assignees are notified and accept/decline, overlaps with umpire or other role assignments are blocked, and everyone sees their duties on the combined "My assignments" page
 - **Umpire pay report** — set an optional pay per game on each division; a director report counts each umpire's assigned games by division (declined and absent-marked games excluded), shows amounts and totals, and exports CSV
 - **Coach and umpire scoring** — coaches report scores for their own games (matching reports confirm; differing reports flag the game disputed and notify the assigned umpires), umpires enter the final score, and directors/staff can always overwrite; standings follow the first coach's score and brackets advance only on a confirmed or final score
 - **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
@@ -213,7 +214,7 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 | Path | Description |
 |---|---|
 | `/profile` | Edit profile; mark yourself an umpire, add certification link/image |
-| `/umpire` | My umpire games with accept/decline; upcoming tournaments with Available / Withdraw |
+| `/umpire` | My assignments (umpire games and extra roles) with accept/decline; upcoming tournaments with Available / Withdraw |
 | `/notifications` | My notifications; opening one marks it read and follows its link |
 | `/umpires/:uid/certificate` | Certificate image (owner, admins, directors of published tournaments) |
 

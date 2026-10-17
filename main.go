@@ -80,6 +80,7 @@ func main() {
 	router.POST("/umpire/tournaments/:tid/available", wh.UmpireAvailable)
 	router.POST("/umpire/tournaments/:tid/withdraw", wh.UmpireWithdraw)
 	router.POST("/umpire/games/:gid/slots/:slot", wh.UmpireRespond)
+	router.POST("/umpire/games/:gid/roles/:rid/slots/:slot", wh.RoleRespond)
 	// Public routes
 	router.GET("/", wh.TournamentList)
 	// Self-service tournament creation (requires login, enforced in handler)
