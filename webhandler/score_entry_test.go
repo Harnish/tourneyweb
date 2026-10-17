@@ -202,6 +202,7 @@ func TestDisputeFallsBackToDirectorsThenAdmins(t *testing.T) {
 		t.Fatalf("directors notified when no registered umpire: %v", f.subjects(f.director))
 	}
 	// a tournament without directors falls back to admins
+	notifyWG.Wait() // the seam is a package global: let the first fixture's mail finish before swapping it
 	g2 := newSlotFx(t)
 	defer g2.restore()
 	admin, _ := g2.db.CreateUser("admin@x.com", "Admin", "h", "", true, true)
@@ -248,6 +249,7 @@ func TestBracketGameAdvancesOnlyOnConfirmedOrFinalAndRejectsTies(t *testing.T) {
 		t.Fatalf("confirmed score advances the winner, got %d", winner())
 	}
 	// disputed then umpire final also advances
+	notifyWG.Wait() // the mail seam is a package global: finish the first fixture's mail before swapping it
 	f2 := entryFixture(t)
 	defer f2.restore()
 	f2.db.AssignUmpire(f2.game.ID, 1, f2.ann, "")
@@ -316,3 +318,90 @@ func TestMarkFinalClearsDispute(t *testing.T) {
 	}
 }
 
+
+func TestDisputeLinkMatchesWhoGetsIt(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, 0, "Free Ump") // no registered umpire: the director is told instead
+	f.coachReport(f.homeCoach, "coach_home", 7, 3)
+	f.coachReport(f.awayCoach, "coach_away", 7, 5)
+	var link string
+	for _, n := range f.db.ListNotifications(f.director, 10) {
+		if n.Subject == "Score disputed" {
+			link = n.Link
+		}
+	}
+	want := "/tournaments/" + strconv.Itoa(f.tid) + "/score/games/" + strconv.Itoa(f.game.ID)
+	if link != want {
+		t.Fatalf("a director can't open the umpire form; link %q want %q", link, want)
+	}
+}
+
+func TestConcurrentCoachReportsEndConfirmed(t *testing.T) {
+	for i := 0; i < 30; i++ {
+		f := entryFixture(t)
+		done := make(chan struct{}, 2)
+		go func() { f.coachReport(f.homeCoach, "coach_home", 7, 3); done <- struct{}{} }()
+		go func() { f.coachReport(f.awayCoach, "coach_away", 7, 3); done <- struct{}{} }()
+		<-done
+		<-done
+		if got := f.cur().ScoreStatus; got != "confirmed" {
+			t.Fatalf("iteration %d: two matching concurrent reports must end confirmed, got %q", i, got)
+		}
+		if n := count(f.subjects(f.awayCoach.ID), "Score reported — please confirm") + count(f.subjects(f.homeCoach.ID), "Score reported — please confirm"); n != 1 {
+			t.Fatalf("iteration %d: exactly one 'please confirm' notice expected, got %d", i, n)
+		}
+		f.restore()
+	}
+}
+
+type noReportsDB struct{ *mydb.FakeDB }
+
+func (noReportsDB) ScoreReportsForGame(int) []mydb.ScoreReport { return nil }
+
+func TestFailedReportSaveReturnsErrorInsteadOfPanicking(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	env := &Env{DB: noReportsDB{f.db}}
+	err := env.submitCoachScore(f.cur(), "coach_home", f.homeCoach, 7, 3)
+	if !errors.Is(err, ErrSaveFailed) {
+		t.Fatalf("got %v want ErrSaveFailed", err)
+	}
+}
+
+func TestCoachOfBothTeamsCannotReport(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	both := TWUser{ID: 55, Roles: []TournamentRole{
+		{TournamentID: f.tid, Role: "coach", TeamID: f.game.HomeTeam.ID},
+		{TournamentID: f.tid, Role: "coach", TeamID: f.game.AwayTeam.ID},
+	}}
+	if _, ok := coachReporter(both, f.cur()); ok {
+		t.Fatal("a user who coaches both teams must not be able to confirm their own report")
+	}
+}
+
+func TestCoachWhoIsAlsoTheUmpireCannotScoreFinal(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, f.homeCoach.ID, "")
+	if err := f.env.submitUmpireScore(f.cur(), f.homeCoach, 7, 3); !errors.Is(err, ErrNotYourGame) {
+		t.Fatalf("a coach of a team in the game must not enter the umpire's final score: %v", err)
+	}
+	if f.cur().Scored {
+		t.Fatal("nothing stored")
+	}
+}
+
+func TestStaffScoreIsValidated(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	staff := TWUser{ID: 999, Roles: []TournamentRole{{TournamentID: f.tid, Role: "staff"}}}
+	if w := f.call(f.env.RecordScore, "POST", staff, f.game.ID, "homescore", "41", "awayscore", "0"); w.Code != 400 || f.cur().Scored {
+		t.Fatalf("out of range: got %d scored=%v", w.Code, f.cur().Scored)
+	}
+	seedBracketGame(f)
+	if w := f.call(f.env.RecordScore, "POST", staff, f.game.ID, "homescore", "4", "awayscore", "4"); w.Code != 400 || f.cur().Scored {
+		t.Fatalf("bracket tie: got %d scored=%v", w.Code, f.cur().Scored)
+	}
+}

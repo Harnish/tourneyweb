@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"sync"
 	"context"
 	"fmt"
 	"log/slog"
@@ -82,6 +83,9 @@ func userFromContext(ctx context.Context) TWUser {
 }
 
 type Env struct {
+	// scoreMu serializes score writes (coach, umpire and staff paths) so status/standings can't interleave.
+	// ponytail: global lock; SELECT ... FOR UPDATE in a transaction if we ever run more than one replica
+	scoreMu                  sync.Mutex
 	DB                       mydb.DB
 	Email                    *EmailService
 	DisableDelete            bool
@@ -327,9 +331,19 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 		http.Error(w, "Bad away score", http.StatusBadRequest)
 		return
 	}
+	me.scoreMu.Lock()
+	defer me.scoreMu.Unlock()
 	before := me.DB.ReturnGameByID(gid)
 	if before.ID == 0 || before.TournamentID != t.ID { // the game must belong to the tournament in the URL
 		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+	if !validScore(hscore, ascore) {
+		http.Error(w, ErrBadScore.Error(), http.StatusBadRequest)
+		return
+	}
+	if hscore == ascore && me.isBracketGame(gid) {
+		http.Error(w, ErrBracketTie.Error(), http.StatusBadRequest)
 		return
 	}
 	me.DB.ScoreGame(gid, hscore, ascore)

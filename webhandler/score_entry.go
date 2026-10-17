@@ -12,6 +12,7 @@ var (
 	ErrNotYourGame = errors.New("not your game")
 	ErrBadScore    = errors.New("scores must be 0-40")
 	ErrBracketTie  = errors.New("a bracket game cannot end in a tie")
+	ErrSaveFailed  = errors.New("could not save the score report")
 )
 
 const (
@@ -21,19 +22,27 @@ const (
 
 func validScore(h, a int) bool { return h >= 0 && h <= 40 && a >= 0 && a <= 40 }
 
-// coachReporter says which team a coach reports for in this game: a coach role on the game's home or away
-// team, in the game's own tournament.
-func coachReporter(user TWUser, g mydb.Game) (string, bool) {
+// coachSides reports which teams of the game the user holds a coach role for, in the game's own tournament.
+func coachSides(user TWUser, g mydb.Game) (home, away bool) {
 	for _, r := range user.Roles {
 		if r.Role != "coach" || r.TournamentID != g.TournamentID {
 			continue
 		}
-		if r.TeamID == g.HomeTeam.ID {
-			return reporterHome, true
-		}
-		if r.TeamID == g.AwayTeam.ID {
-			return reporterAway, true
-		}
+		home = home || r.TeamID == g.HomeTeam.ID
+		away = away || r.TeamID == g.AwayTeam.ID
+	}
+	return
+}
+
+// coachReporter says which team a coach reports for in this game. A user who coaches both teams gets no side:
+// they could otherwise confirm their own report.
+func coachReporter(user TWUser, g mydb.Game) (string, bool) {
+	home, away := coachSides(user, g)
+	switch {
+	case home && !away:
+		return reporterHome, true
+	case away && !home:
+		return reporterAway, true
 	}
 	return "", false
 }
@@ -56,6 +65,8 @@ func (me *Env) advanceBracketFor(g mydb.Game) {
 // one report → reported, two equal → confirmed, two different → disputed. Standings follow the
 // first reporter's current value. Confirmed and final games are locked for coaches.
 func (me *Env) submitCoachScore(g mydb.Game, reporter string, user TWUser, home, away int) error {
+	me.scoreMu.Lock()
+	defer me.scoreMu.Unlock()
 	if reporter != reporterHome && reporter != reporterAway {
 		return ErrNotYourGame
 	}
@@ -75,6 +86,9 @@ func (me *Env) submitCoachScore(g mydb.Game, reporter string, user TWUser, home,
 	hadReports := len(me.DB.ScoreReportsForGame(g.ID)) > 0
 	me.DB.SaveScoreReport(g.ID, reporter, user.ID, home, away)
 	reports := me.DB.ScoreReportsForGame(g.ID)
+	if len(reports) == 0 {
+		return ErrSaveFailed
+	}
 	first := reports[0]
 
 	changed := !cur.Scored || cur.HomeScore != first.HomeScore || cur.AwayScore != first.AwayScore
@@ -109,8 +123,13 @@ func (me *Env) submitCoachScore(g mydb.Game, reporter string, user TWUser, home,
 // submitUmpireScore lets a registered umpire assigned to the game settle it. Allowed while the game is
 // unscored, reported or disputed; the result is final.
 func (me *Env) submitUmpireScore(g mydb.Game, user TWUser, home, away int) error {
+	me.scoreMu.Lock()
+	defer me.scoreMu.Unlock()
 	cur := me.DB.ReturnGameByID(g.ID)
 	if cur.ID == 0 || cur.TournamentID != g.TournamentID || !me.umpireAssigned(g.ID, user.ID) {
+		return ErrNotYourGame
+	}
+	if h, a := coachSides(user, g); h || a { // a coach of either team can't also settle the game as umpire
 		return ErrNotYourGame
 	}
 	if cur.ScoreStatus == "confirmed" || cur.ScoreStatus == "final" {
@@ -163,10 +182,10 @@ func (me *Env) notifyOtherTeamCoaches(g mydb.Game, reporter string, reporterID i
 	}
 }
 
-// disputeRecipients: registered umpires on the game's non-declined slots; else the directors (else admins).
-func (me *Env) disputeRecipients(g mydb.Game) []int {
+// disputeRecipients: registered umpires on the game's non-declined slots (umpires=true); if there are none,
+// the directors (else admins), who settle it from the staff score form instead.
+func (me *Env) disputeRecipients(g mydb.Game) (ids []int, umpires bool) {
 	seen := map[int]bool{}
-	var ids []int
 	for _, s := range me.DB.GameUmpires(g.ID) {
 		if s.UserID > 0 && s.Status != "declined" && !seen[s.UserID] {
 			seen[s.UserID] = true
@@ -174,15 +193,19 @@ func (me *Env) disputeRecipients(g mydb.Game) []int {
 		}
 	}
 	if len(ids) > 0 {
-		return ids
+		return ids, true
 	}
-	return me.directorRecipients(g.TournamentID)
+	return me.directorRecipients(g.TournamentID), false
 }
 
 func (me *Env) notifyDisputed(g mydb.Game) {
+	ids, umpires := me.disputeRecipients(g)
+	link := fmt.Sprintf("/tournaments/%d/score/games/%d", g.TournamentID, g.ID)
 	msg := fmt.Sprintf("The coaches reported different scores for: %s. Please enter the final score.", gameLine(g))
-	link := fmt.Sprintf("/tournaments/%d/umpire/games/%d/score", g.TournamentID, g.ID)
-	for _, id := range me.disputeRecipients(g) {
+	if umpires {
+		link = fmt.Sprintf("/tournaments/%d/umpire/games/%d/score", g.TournamentID, g.ID)
+	}
+	for _, id := range ids {
 		me.notifyUser(id, "Score disputed", msg, link)
 	}
 }
