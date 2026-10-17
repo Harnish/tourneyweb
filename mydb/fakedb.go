@@ -33,6 +33,9 @@ type FakeDB struct {
 	umpExpired    map[[2]int]time.Time // {tournamentID, userID} -> flagged at
 	umpNeeded     map[int]int
 	umpSlots      []UmpireSlot
+	extraRoles    []ExtraRole
+	roleNeeds     map[[2]int]int // {divisionID, roleID} → needed
+	roleSlots     []RoleSlot
 	notifications []Notification
 	muteScore     map[int]bool
 	payRate       map[int]int
@@ -79,6 +82,7 @@ func NewFakeDB() *FakeDB {
 		muteScore:     make(map[int]bool),
 		payRate:       make(map[int]int),
 		umpNeeded:     make(map[int]int),
+		roleNeeds:     make(map[[2]int]int),
 	}
 }
 
@@ -203,6 +207,11 @@ func (f *FakeDB) DelTournament(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.tournaments, id)
+	for _, r := range append([]ExtraRole(nil), f.extraRoles...) {
+		if r.TournamentID == id {
+			f.delRoleLocked(r.ID)
+		}
+	}
 }
 
 func (f *FakeDB) UpdateTournament(id int, name, sport, location, notes string, date time.Time) {
@@ -264,6 +273,11 @@ func (f *FakeDB) DelDivision(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.divisions, id)
+	for k := range f.roleNeeds {
+		if k[0] == id {
+			delete(f.roleNeeds, k)
+		}
+	}
 }
 
 func (f *FakeDB) UpdateDivision(id int, name string, criteria []string) {

@@ -172,6 +172,16 @@ type DB interface {
 	SetMuteScoreNotices(userID int, mute bool)
 	MutesScoreNotices(userID int) bool
 
+	// Extra game roles
+	AddExtraRole(tournamentID int, name string) (int, error)
+	RenameExtraRole(tournamentID, roleID int, name string) error
+	DelExtraRole(tournamentID, roleID int)
+	TournamentExtraRoles(tournamentID int) []ExtraRole
+	ExtraRoleByID(roleID int) ExtraRole
+	DivisionRoleNeeds(divisionID int) map[int]int
+	SetDivisionRoleNeeded(divisionID, roleID, n int)
+	SearchUsers(q string, limit int) []User
+
 	// Umpire availability
 	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)
 	ClearUmpireAvailability(userID, tournamentID int)
