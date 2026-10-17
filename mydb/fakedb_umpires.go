@@ -209,11 +209,17 @@ func (f *FakeDB) conflictLocked(userID int, start time.Time, excludeGameID int) 
 	if start.IsZero() {
 		return false
 	}
+	check := func(gameID int) bool {
+		g, ok := f.games[gameID]
+		return ok && !g.Start.IsZero() && UmpireWindowsOverlap(start, g.Start)
+	}
 	for _, s := range f.umpSlots {
-		if s.UserID != userID || s.Status == "declined" || s.GameID == excludeGameID {
-			continue
+		if s.UserID == userID && s.Status != "declined" && s.GameID != excludeGameID && check(s.GameID) {
+			return true
 		}
-		if g, ok := f.games[s.GameID]; ok && !g.Start.IsZero() && UmpireWindowsOverlap(start, g.Start) {
+	}
+	for _, s := range f.roleSlots {
+		if s.UserID == userID && s.Status != "declined" && s.GameID != excludeGameID && check(s.GameID) {
 			return true
 		}
 	}
@@ -251,6 +257,9 @@ func (f *FakeDB) AssignUmpire(gameID, slot, userID int, freeName string) error {
 			if s.GameID == gameID && s.UserID == userID && s.Slot != slot {
 				return ErrUmpireDuplicate
 			}
+		}
+		if f.heldRoleOnGameLocked(userID, gameID, 0, 0) {
+			return ErrUmpireDuplicate
 		}
 		if f.conflictLocked(userID, f.games[gameID].Start, gameID) {
 			return ErrUmpireConflict

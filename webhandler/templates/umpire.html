@@ -2,10 +2,11 @@
 {{range .Days}}
 <h3>{{.Label}}</h3>
 <table>
-<tr><th>Time</th><th>Tournament</th><th>Game</th><th>Field</th><th>Partner</th><th>Status</th></tr>
+<tr><th>Time</th><th>Role</th><th>Tournament</th><th>Game</th><th>Field</th><th>Partner</th><th>Status</th></tr>
 {{range .Rows}}
 <tr>
   <td>{{formatTime .Game.Start}}</td>
+  <td>{{.RoleName}}</td>
   <td>{{.TournamentName}}</td>
   <td>{{.Game.HomeTeam.Name}} vs {{.Game.AwayTeam.Name}} ({{.Game.Division.Name}})</td>
   <td>{{.Game.Location}}</td>
@@ -13,13 +14,13 @@
   <td>
     {{if eq .Status "pending"}}
     <strong>pending</strong>
-    <form method="post" action="/umpire/games/{{.Game.ID}}/slots/{{.Slot}}" style="display:inline">
+    <form method="post" action="{{if .RoleID}}/umpire/games/{{.Game.ID}}/roles/{{.RoleID}}/slots/{{.Slot}}{{else}}/umpire/games/{{.Game.ID}}/slots/{{.Slot}}{{end}}" style="display:inline">
       {{$.CSRF}}
       <button name="action" value="accept">Accept</button>
       <button name="action" value="decline">Decline</button>
     </form>
     {{else}}accepted &#10003;
-    <form method="post" action="/umpire/games/{{.Game.ID}}/slots/{{.Slot}}" style="display:inline">
+    <form method="post" action="{{if .RoleID}}/umpire/games/{{.Game.ID}}/roles/{{.RoleID}}/slots/{{.Slot}}{{else}}/umpire/games/{{.Game.ID}}/slots/{{.Slot}}{{end}}" style="display:inline">
       {{$.CSRF}}
       <button name="action" value="decline" onclick="return confirm('Decline this game?')">Decline</button>
     </form>
@@ -64,13 +65,13 @@
 <p>No upcoming tournaments right now.</p>
 {{end}}
 {{end}}
-<h2>My Umpire Games</h2>
+<h2>My assignments</h2>
 {{if or .Upcoming.Days .Past.Days}}
 {{if .Upcoming.Days}}{{template "umpireRows" .Upcoming}}{{else}}<p>No upcoming games.</p>{{end}}
 {{if .Past.Days}}<h2>Past</h2>{{template "umpireRows" .Past}}{{end}}
 {{else}}
-<p>You have no umpire assignments yet.</p>
+<p>You have no assignments yet.</p>
 {{end}}
-<p><a href="/profile">Edit umpire profile</a></p>
+{{if .IsUmpire}}<p><a href="/profile">Edit umpire profile</a></p>{{end}}
 {{template "footer" .}}
 {{end}}

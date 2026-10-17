@@ -229,6 +229,7 @@ type createGameData struct {
 	Locations     []mydb.Location
 	DisableDelete bool
 	Ump slotBlock
+	Roles roleSlotBlock
 }
 
 type scoreGameData struct {
@@ -270,6 +271,7 @@ type editGameData struct {
 	Divisions []mydb.Division
 	Locations []mydb.Location
 	Ump slotBlock
+	Roles roleSlotBlock
 }
 
 // Auth template data types
@@ -357,6 +359,13 @@ type manageDivisionEditData struct {
 	AllCriteria   []CriterionUIRow
 	UmpiresNeeded int
 	PayPerGame    string // e.g. "75.00"; empty = no rate
+	RoleNeeds     []roleNeedRow
+}
+
+type manageExtraRolesData struct {
+	baseData
+	Roles         []mydb.ExtraRole
+	DisableDelete bool
 }
 
 type manageUmpiresData struct {
@@ -420,6 +429,7 @@ type manageCreateGameData struct {
 	Locations     []mydb.Location
 	DisableDelete bool
 	Ump slotBlock
+	Roles roleSlotBlock
 }
 
 type manageEditGameData struct {
@@ -429,6 +439,7 @@ type manageEditGameData struct {
 	Divisions []mydb.Division
 	Locations []mydb.Location
 	Ump slotBlock
+	Roles roleSlotBlock
 }
 
 type adminQueueData struct {

@@ -1,0 +1,35 @@
+{{define "manageExtraRoles"}}
+{{template "header" .}}
+<h2>Extra Roles &mdash; {{.Tournament.Name}}</h2>
+<p>Scorekeepers, scoreboard runners, safety staff&hellip; Name a role here, then set how many each level needs on the division's edit page and fill the slots on each game.</p>
+{{if .Roles}}
+<table>
+<tr><th>Role</th><th></th></tr>
+{{range .Roles}}
+<tr>
+  <td>
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/extra-roles/{{.ID}}/rename" style="margin:0;display:inline">
+      {{$.CSRFField}}
+      <input type="text" name="name" value="{{.Name}}" maxlength="40" required>
+      <input type="submit" value="Rename">
+    </form>
+  </td>
+  <td>{{if not $.DisableDelete}}
+    <form method="post" action="/tournaments/{{$.Tournament.ID}}/manage/extra-roles/{{.ID}}/delete" style="margin:0;display:inline">
+      {{$.CSRFField}}
+      <input type="submit" value="Delete" onclick="return confirm('Delete this role and unassign everyone in it?')">
+    </form>{{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+{{else}}<p>No extra roles yet.</p>{{end}}
+<h3>Add a role</h3>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/extra-roles">
+  {{.CSRFField}}
+  <input type="text" name="name" maxlength="40" placeholder="e.g. Scorekeeper" required>
+  <input type="submit" value="Add role">
+</form>
+<p><a href="/tournaments/{{.Tournament.ID}}/manage">Back</a></p>
+{{template "footer" .}}
+{{end}}

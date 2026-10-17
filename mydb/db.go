@@ -160,6 +160,7 @@ type DB interface {
 	SaveScoreReport(gameID int, reporter string, userID, home, away int)
 	ScoreReportsForGame(gameID int) []ScoreReport
 	SetGameScoreStatus(gameID int, status string)
+	ClearScoreReports(gameID int)
 
 	// Notifications
 	AddNotification(userID int, subject, message, link string) int
@@ -170,6 +171,22 @@ type DB interface {
 	ListAdminUserIDs() []int
 	SetMuteScoreNotices(userID int, mute bool)
 	MutesScoreNotices(userID int) bool
+
+	// Extra game roles
+	AddExtraRole(tournamentID int, name string) (int, error)
+	RenameExtraRole(tournamentID, roleID int, name string) error
+	DelExtraRole(tournamentID, roleID int)
+	TournamentExtraRoles(tournamentID int) []ExtraRole
+	ExtraRoleByID(roleID int) ExtraRole
+	DivisionRoleNeeds(divisionID int) map[int]int
+	SetDivisionRoleNeeded(divisionID, roleID, n int)
+	SearchUsers(q string, limit int) []User
+	GameRoleSlots(gameID int) []RoleSlot
+	RoleSlotsForUser(userID int) []RoleSlot
+	AssignRoleSlot(gameID, roleID, slot, userID int, freeName string) error
+	ClearRoleSlot(gameID, roleID, slot int)
+	RespondRoleSlot(gameID, roleID, slot, userID int, accept bool) error
+	ResetRoleSlotsPending(gameID int) []RoleSlot
 
 	// Umpire availability
 	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)

@@ -117,6 +117,29 @@ var pgtables = []string{
 		UNIQUE(game_id, slot),
 		CHECK ((user_id IS NOT NULL) <> (free_name <> ''))
 	)`,
+	`CREATE TABLE IF NOT EXISTS extra_roles (
+		id            SERIAL PRIMARY KEY,
+		tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+		name          TEXT NOT NULL
+	)`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS extra_roles_name ON extra_roles (tournament_id, lower(name))`,
+	`CREATE TABLE IF NOT EXISTS division_role_needs (
+		division_id INTEGER NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
+		role_id     INTEGER NOT NULL REFERENCES extra_roles(id) ON DELETE CASCADE,
+		needed      INTEGER NOT NULL,
+		PRIMARY KEY (division_id, role_id)
+	)`,
+	`CREATE TABLE IF NOT EXISTS game_role_slots (
+		id        SERIAL PRIMARY KEY,
+		game_id   INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+		role_id   INTEGER NOT NULL REFERENCES extra_roles(id) ON DELETE CASCADE,
+		slot      INTEGER NOT NULL,
+		user_id   INTEGER REFERENCES users(id),
+		free_name TEXT NOT NULL DEFAULT '',
+		status    TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+		UNIQUE(game_id, role_id, slot),
+		CHECK ((user_id IS NOT NULL) <> (free_name <> ''))
+	)`,
 	`CREATE TABLE IF NOT EXISTS umpire_expired_flags (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),

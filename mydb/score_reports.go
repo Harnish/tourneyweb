@@ -49,3 +49,15 @@ func (me *MyDB) SetGameScoreStatus(gameID int, status string) {
 		slog.Error("SetGameScoreStatus", "err", err)
 	}
 }
+
+// ClearScoreReports drops a game's coach reports and returns an undecided game to unscored.
+// A final score is a deliberate staff/umpire result and is left alone.
+func (me *MyDB) ClearScoreReports(gameID int) {
+	if _, err := me.DB.Exec(`DELETE FROM game_score_reports WHERE game_id=$1`, gameID); err != nil {
+		slog.Error("ClearScoreReports", "err", err)
+		return
+	}
+	if _, err := me.DB.Exec(`UPDATE games SET score_status='' WHERE id=$1 AND score_status IN ('reported','confirmed','disputed')`, gameID); err != nil {
+		slog.Error("ClearScoreReports status", "err", err)
+	}
+}

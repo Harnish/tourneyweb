@@ -100,6 +100,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		if n, err := strconv.Atoi(r.FormValue("umpires_needed")); err == nil {
 			me.DB.SetDivisionUmpiresNeeded(did, n)
 		}
+		me.applyRoleNeeds(r, t, did)
 		if payPresent {
 			me.DB.SetDivisionPayPerGameCents(did, payCents)
 		}
@@ -112,6 +113,7 @@ func (me *Env) ManageDivisionEdit(w http.ResponseWriter, r *http.Request, ps htt
 		AllCriteria:   AllCriteriaForUI(division.RankingCriteria),
 		UmpiresNeeded: me.DB.DivisionUmpiresNeeded(did),
 		PayPerGame:    payText(me.DB.DivisionPayPerGameCents(did)),
+		RoleNeeds:     me.roleNeedRows(t, did),
 	})
 }
 

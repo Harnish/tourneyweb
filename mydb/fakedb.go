@@ -33,6 +33,9 @@ type FakeDB struct {
 	umpExpired    map[[2]int]time.Time // {tournamentID, userID} -> flagged at
 	umpNeeded     map[int]int
 	umpSlots      []UmpireSlot
+	extraRoles    []ExtraRole
+	roleNeeds     map[[2]int]int // {divisionID, roleID} → needed
+	roleSlots     []RoleSlot
 	notifications []Notification
 	muteScore     map[int]bool
 	payRate       map[int]int
@@ -79,6 +82,7 @@ func NewFakeDB() *FakeDB {
 		muteScore:     make(map[int]bool),
 		payRate:       make(map[int]int),
 		umpNeeded:     make(map[int]int),
+		roleNeeds:     make(map[[2]int]int),
 	}
 }
 
@@ -203,6 +207,11 @@ func (f *FakeDB) DelTournament(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.tournaments, id)
+	for _, r := range append([]ExtraRole(nil), f.extraRoles...) {
+		if r.TournamentID == id {
+			f.delRoleLocked(r.ID)
+		}
+	}
 }
 
 func (f *FakeDB) UpdateTournament(id int, name, sport, location, notes string, date time.Time) {
@@ -264,6 +273,11 @@ func (f *FakeDB) DelDivision(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.divisions, id)
+	for k := range f.roleNeeds {
+		if k[0] == id {
+			delete(f.roleNeeds, k)
+		}
+	}
 }
 
 func (f *FakeDB) UpdateDivision(id int, name string, criteria []string) {
@@ -526,6 +540,13 @@ func (f *FakeDB) DelGame(id int) {
 		}
 	}
 	f.umpSlots = kept
+	roleSlots := f.roleSlots[:0]
+	for _, s := range f.roleSlots {
+		if s.GameID != id {
+			roleSlots = append(roleSlots, s)
+		}
+	}
+	f.roleSlots = roleSlots
 	reports := f.scoreReports[:0]
 	for _, r := range f.scoreReports {
 		if r.GameID != id {
@@ -542,6 +563,7 @@ func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location
 	if !ok {
 		return
 	}
+	teamsChanged := g.HomeTeam.ID != homeTeamID || g.AwayTeam.ID != awayTeamID
 	g.Division = f.divisions[divisionID]
 	g.HomeTeam = f.teams[homeTeamID]
 	g.AwayTeam = f.teams[awayTeamID]
@@ -549,6 +571,9 @@ func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location
 	g.Start = startTime
 	g.Umpire = umpire
 	f.games[id] = g
+	if teamsChanged {
+		f.clearScoreReportsLocked(id)
+	}
 	if g.Scored {
 		f.removeGamesByTeamLocked(id)
 		if g.ScrimmageTeamID != g.HomeTeam.ID {

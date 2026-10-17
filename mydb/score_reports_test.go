@@ -66,3 +66,44 @@ func TestDelGameRemovesReports(t *testing.T) {
 }
 
 var _ mydb.DB = (*mydb.FakeDB)(nil)
+
+func TestClearScoreReports(t *testing.T) {
+	db, g := reportFixture(t)
+	db.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	db.SaveScoreReport(g, "coach_away", 2, 4, 3)
+	db.SetGameScoreStatus(g, "disputed")
+	db.ClearScoreReports(g)
+	if len(db.ScoreReportsForGame(g)) != 0 || db.ReturnGameByID(g).ScoreStatus != "" {
+		t.Fatalf("reports and status must reset: %+v", db.ReturnGameByID(g))
+	}
+	db.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	db.SetGameScoreStatus(g, "final")
+	db.ClearScoreReports(g)
+	if len(db.ScoreReportsForGame(g)) != 0 || db.ReturnGameByID(g).ScoreStatus != "final" {
+		t.Fatalf("final status stays: %+v", db.ReturnGameByID(g))
+	}
+}
+
+func TestUpdateGameTeamChangeClearsReports(t *testing.T) {
+	db, g := reportFixture(t)
+	tid := db.ReturnGameByID(g).TournamentID
+	did := db.ReturnGameByID(g).Division.ID
+	db.AddTeam(tid, did, "C", "")
+	var third mydb.Team
+	for _, tm := range db.ReturnTeamsByDivisionID(did) {
+		if tm.ID != db.ReturnGameByID(g).HomeTeam.ID && tm.ID != db.ReturnGameByID(g).AwayTeam.ID {
+			third = tm
+		}
+	}
+	cur := db.ReturnGameByID(g)
+	db.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	db.SetGameScoreStatus(g, "reported")
+	db.UpdateGame(g, did, cur.HomeTeam.ID, cur.AwayTeam.ID, "Elsewhere", cur.Start, "")
+	if len(db.ScoreReportsForGame(g)) != 1 {
+		t.Fatal("same teams keep reports")
+	}
+	db.UpdateGame(g, did, third.ID, cur.AwayTeam.ID, "Elsewhere", cur.Start, "")
+	if len(db.ScoreReportsForGame(g)) != 0 || db.ReturnGameByID(g).ScoreStatus != "" {
+		t.Fatal("changed teams clear reports in every caller of UpdateGame")
+	}
+}

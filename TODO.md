@@ -14,6 +14,8 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Missing Features
 
+- **[P2/M]** Follow tournaments, levels and teams — regular users follow a tournament/level/team and get score notices for followed levels; followers rank first in the extra-role user search (split out of #20)
+- **[P3/S]** Pay report for extra roles — not built; the umpire pay report counts umpire slots only
 - **[P2/M]** Umpire travel limits — restrict which umpires are offered/available for a game based on distance (e.g. umpire home location or max travel radius vs. field location) so nobody drives hours for a single game. Follow-up to the umpire accounts/assignments feature.
 
 ---
@@ -29,6 +31,7 @@ Effort: **S** small (hours) · **M** medium (a day or two) · **L** large (sever
 
 ## Recently Completed
 
+- **Extra game roles** — directors define free-form roles per tournament (Manage → Extra Roles), set a count per role on each division's edit page, and fill the slots on each game by searching registered users or typing a name; assignees are notified and accept/decline like umpires, overlaps are blocked across umpire and role slots, and `/umpire` is now a combined "My assignments" page (#20)
 - **Coach and umpire score entry** — coaches report or confirm scores for their own games; matching reports confirm, differing ones mark the game disputed and notify the assigned umpires (directors, then admins, as fallback); umpires enter the final score; director/staff scores are always final; standings follow the first coach's score; brackets advance only on confirmed/final scores (#18)
 - **Umpire pay report** — per-division pay per game; report of each umpire's games by division with amounts, totals, per-game absent marks and CSV export (#19)
 - **Game-scored notices** — directors (admins as fallback) get an inbox entry and email when a game is scored or re-scored, except for whoever entered the score; a profile checkbox turns just these notices off; score forms now reject games from another tournament (#25)

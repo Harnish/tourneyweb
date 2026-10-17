@@ -312,6 +312,10 @@ func umpireConflict(q rowQuerier, userID int, start time.Time, excludeGameID int
 	err := q.QueryRow(`SELECT EXISTS (
 		SELECT 1 FROM game_umpires gu JOIN games g ON g.id = gu.game_id
 		WHERE gu.user_id=$1 AND gu.status <> 'declined' AND g.id <> $4
+		  AND g.start_time > $2 AND g.start_time < $3)
+		OR EXISTS (
+		SELECT 1 FROM game_role_slots gr JOIN games g ON g.id = gr.game_id
+		WHERE gr.user_id=$1 AND gr.status <> 'declined' AND g.id <> $4
 		  AND g.start_time > $2 AND g.start_time < $3)`,
 		userID, start.Add(-umpireWindow), start.Add(umpireWindow), excludeGameID).Scan(&found)
 	if err != nil {
@@ -349,7 +353,8 @@ func (me *MyDB) AssignUmpire(gameID, slot, userID int, freeName string) error {
 			return err
 		}
 		var dup bool
-		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM game_umpires WHERE game_id=$1 AND user_id=$2 AND slot <> $3)`,
+		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM game_umpires WHERE game_id=$1 AND user_id=$2 AND slot <> $3)
+			OR EXISTS (SELECT 1 FROM game_role_slots WHERE game_id=$1 AND user_id=$2 AND status<>'declined')`,
 			gameID, userID, slot).Scan(&dup); err != nil {
 			return err
 		}

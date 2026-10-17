@@ -23,6 +23,7 @@
   </td></tr>
   <tr><td>Date/Time</td><td><input type="datetime-local" name="datetime"></td></tr>
   <tr><td>Umpires</td><td>{{template "umpireSlots" .Ump}}</td></tr>
+  {{if .Roles.Roles}}<tr><td>Extra roles</td><td>{{template "roleSlots" .Roles}}</td></tr>{{end}}
   <tr><td></td><td><input type="submit" value="Add Game"></td></tr>
 </table>
 </form>
