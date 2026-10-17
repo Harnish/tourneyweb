@@ -1,0 +1,21 @@
+{{define "umpireScore"}}
+{{template "header" .}}
+<h2>Enter the final score</h2>
+<p>{{.Game.Division.Name}}: <strong>{{.Game.HomeTeam.Name}}</strong> (home) vs <strong>{{.Game.AwayTeam.Name}}</strong> (away){{if .Game.Location}} &middot; {{.Game.Location}}{{end}}{{if not .Game.Start.IsZero}} &middot; {{formatTime .Game.Start}}{{end}}</p>
+{{if eq .Status "disputed"}}<p style="color:#c60"><strong>The coaches reported different scores.</strong> Your score settles it.</p>{{end}}
+{{if .Reports}}<ul>{{range .Reports}}<li>{{.Team}} reported {{.Home}} &ndash; {{.Away}}</li>{{end}}</ul>{{end}}
+{{if .Locked}}
+<p>This score is {{.Status}} and can't be changed here; ask the tournament director.</p>
+{{else}}
+<form method="post">
+  {{.CSRFField}}
+  <table>
+    <tr><td>{{.Game.HomeTeam.Name}} (home)</td><td><select name="homescore">{{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}</select></td></tr>
+    <tr><td>{{.Game.AwayTeam.Name}} (away)</td><td><select name="awayscore">{{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}</select></td></tr>
+    <tr><td></td><td><input type="submit" value="Save final score"></td></tr>
+  </table>
+</form>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/games">Back to games</a></p>
+{{template "footer" .}}
+{{end}}
