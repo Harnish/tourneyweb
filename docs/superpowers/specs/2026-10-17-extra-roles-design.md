@@ -47,7 +47,7 @@ accept or decline, exactly like umpires.
 
 ## Builder's calls (mine, not confirmed — please check)
 
-- **Tables** (separate from umpires, which keep their own): `tournament_roles(id, tournament_id → tournaments ON DELETE CASCADE, name TEXT)` unique `(tournament_id, lower(name))`; `division_role_needs(division_id, role_id, needed INTEGER)` PK `(division_id, role_id)`; `game_role_slots(game_id, role_id, slot, user_id NULL, free_name, status, absent?)` PK `(game_id, role_id, slot)` mirroring `game_umpires` (`status`: `pending`, `accepted`, `declined`). I leave out `absent`; no pay report needs it.
+- **Tables** (separate from umpires, which keep their own): `extra_roles(id, tournament_id → tournaments ON DELETE CASCADE, name TEXT)` unique `(tournament_id, lower(name))`; `division_role_needs(division_id, role_id, needed INTEGER)` PK `(division_id, role_id)`; `game_role_slots(game_id, role_id, slot, user_id NULL, free_name, status, absent?)` PK `(game_id, role_id, slot)` mirroring `game_umpires` (`status`: `pending`, `accepted`, `declined`). I leave out `absent`; no pay report needs it.
 - **Count cap:** 0–5 per role per level (umpires use a clamp too).
 - **Role names:** trimmed, 1–40 chars, unique per tournament case-insensitively. Rename keeps slots. Delete removes its slots, needs and notifies assignees.
 - **Search:** `GET /tournaments/:tid/manage/users/search?q=` returns up to 10 matches by name or email substring as JSON `{id, name}`; the slot form uses a plain text input with a datalist-style JS dropdown (progressive: if JS is off, a typed name is stored as free-form). Result order: alphabetical (follow-based ordering is the later ticket).
