@@ -156,6 +156,11 @@ type DB interface {
 	ResetUmpireSlotsPending(gameID int) []UmpireSlot
 	UmpireSlotsForUser(userID int) []UmpireSlot
 
+	// Score reports
+	SaveScoreReport(gameID int, reporter string, userID, home, away int)
+	ScoreReportsForGame(gameID int) []ScoreReport
+	SetGameScoreStatus(gameID int, status string)
+
 	// Notifications
 	AddNotification(userID int, subject, message, link string) int
 	ListNotifications(userID, limit int) []Notification

@@ -1,0 +1,34 @@
+{{define "coachScore"}}
+{{template "header" .}}
+<h2>Report the score</h2>
+<p>{{.Game.Division.Name}}: <strong>{{.Game.HomeTeam.Name}}</strong> (home) vs <strong>{{.Game.AwayTeam.Name}}</strong> (away){{if .Game.Location}} &middot; {{.Game.Location}}{{end}}{{if not .Game.Start.IsZero}} &middot; {{formatTime .Game.Start}}{{end}}</p>
+{{if eq .Status "disputed"}}<p style="color:#c60"><strong>The coaches reported different scores.</strong> The umpire will enter the final score.</p>{{end}}
+{{if eq .Status "confirmed"}}<p>Both coaches agree: {{.Game.HomeTeam.Name}} {{.Game.HomeScore}}, {{.Game.AwayTeam.Name}} {{.Game.AwayScore}}. This score is locked.</p>{{end}}
+{{if eq .Status "final"}}<p>Final score: {{.Game.HomeTeam.Name}} {{.Game.HomeScore}}, {{.Game.AwayTeam.Name}} {{.Game.AwayScore}}. This score is locked; ask the tournament director to change it.</p>{{end}}
+{{if .Reports}}
+<ul>
+{{range .Reports}}<li>{{.Team}}{{if .Mine}} (you){{end}} reported {{.Home}} &ndash; {{.Away}}</li>{{end}}
+</ul>
+{{end}}
+{{if not .Locked}}
+{{if .HasOther}}
+<form method="post" style="margin-bottom:1em">
+  {{.CSRFField}}
+  <input type="hidden" name="homescore" value="{{.OtherHome}}">
+  <input type="hidden" name="awayscore" value="{{.OtherAway}}">
+  <input type="submit" value="Confirm {{.OtherHome}} &ndash; {{.OtherAway}}">
+</form>
+<p>Or enter a different score:</p>
+{{end}}
+<form method="post">
+  {{.CSRFField}}
+  <table>
+    <tr><td>{{.Game.HomeTeam.Name}} (home)</td><td><select name="homescore">{{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}</select></td></tr>
+    <tr><td>{{.Game.AwayTeam.Name}} (away)</td><td><select name="awayscore">{{range .ScoreOptions}}<option value="{{.}}">{{.}}</option>{{end}}</select></td></tr>
+    <tr><td></td><td><input type="submit" value="Save score"></td></tr>
+  </table>
+</form>
+{{end}}
+<p><a href="/tournaments/{{.Tournament.ID}}/games">Back to games</a></p>
+{{template "footer" .}}
+{{end}}

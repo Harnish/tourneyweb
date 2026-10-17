@@ -166,7 +166,8 @@ type rosterEditData struct {
 
 type gamesData struct {
 	baseData
-	Games []mydb.Game
+	Games       []mydb.Game
+	UmpireGames map[int]bool // games the logged-in user is assigned to umpire (not declined)
 }
 
 type calendarDay struct {

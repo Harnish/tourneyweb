@@ -36,6 +36,7 @@ type FakeDB struct {
 	notifications []Notification
 	muteScore     map[int]bool
 	payRate       map[int]int
+	scoreReports  []ScoreReport
 	availability  map[[2]int]Availability // {userID, tournamentID}
 }
 
@@ -525,6 +526,13 @@ func (f *FakeDB) DelGame(id int) {
 		}
 	}
 	f.umpSlots = kept
+	reports := f.scoreReports[:0]
+	for _, r := range f.scoreReports {
+		if r.GameID != id {
+			reports = append(reports, r)
+		}
+	}
+	f.scoreReports = reports
 }
 
 func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location string, startTime time.Time, umpire string) {

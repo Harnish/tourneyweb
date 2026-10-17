@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"sync"
 	"context"
 	"fmt"
 	"log/slog"
@@ -82,6 +83,9 @@ func userFromContext(ctx context.Context) TWUser {
 }
 
 type Env struct {
+	// scoreMu serializes score writes (coach, umpire and staff paths) so status/standings can't interleave.
+	// ponytail: global lock; SELECT ... FOR UPDATE in a transaction if we ever run more than one replica
+	scoreMu                  sync.Mutex
 	DB                       mydb.DB
 	Email                    *EmailService
 	DisableDelete            bool
@@ -327,9 +331,19 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 		http.Error(w, "Bad away score", http.StatusBadRequest)
 		return
 	}
+	me.scoreMu.Lock()
+	defer me.scoreMu.Unlock()
 	before := me.DB.ReturnGameByID(gid)
 	if before.ID == 0 || before.TournamentID != t.ID { // the game must belong to the tournament in the URL
 		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+	if !validScore(hscore, ascore) {
+		http.Error(w, ErrBadScore.Error(), http.StatusBadRequest)
+		return
+	}
+	if hscore == ascore && me.isBracketGame(gid) {
+		http.Error(w, ErrBracketTie.Error(), http.StatusBadRequest)
 		return
 	}
 	me.DB.ScoreGame(gid, hscore, ascore)
@@ -344,6 +358,7 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 			}
 			me.AdvanceBracket(gid, winnerID)
 		}
+		me.markFinal(game) // a director/staff score is final and clears any dispute
 		me.notifyGameScored(game, before.Scored, userFromContext(r.Context()).ID)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
@@ -354,10 +369,19 @@ func (me *Env) Games(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if !ok {
 		return
 	}
-	me.render(w, "games", gamesData{
-		baseData: newBaseWithTournament(r, t),
-		Games:    me.DB.AllGames(t.ID),
-	})
+	data := gamesData{
+		baseData:    newBaseWithTournament(r, t),
+		Games:       me.DB.AllGames(t.ID),
+		UmpireGames: map[int]bool{},
+	}
+	if user := userFromContext(r.Context()); user.LoggedIn() {
+		for _, s := range me.DB.UmpireSlotsForUser(user.ID) {
+			if s.Status != "declined" {
+				data.UmpireGames[s.GameID] = true
+			}
+		}
+	}
+	me.render(w, "games", data)
 }
 
 func (me *Env) AdminGames(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
