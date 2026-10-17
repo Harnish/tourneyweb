@@ -240,3 +240,36 @@ func TestGamesPageHidesLinkWhenLockedAndShowsDisputedBadge(t *testing.T) {
 		t.Fatal("umpire link hidden once final")
 	}
 }
+
+func TestEditGameTeamsClearsReports(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.db.AddTeam(f.tid, f.did, "C", "")
+	var third int
+	for _, tm := range f.db.ReturnTeamsByDivisionID(f.did) {
+		if tm.ID != f.game.HomeTeam.ID && tm.ID != f.game.AwayTeam.ID {
+			third = tm.ID
+		}
+	}
+	f.db.SaveScoreReport(f.game.ID, "coach_home", f.homeCoach.ID, 5, 3)
+	f.db.SetGameScoreStatus(f.game.ID, "reported")
+	director := TWUser{ID: f.director, Roles: []TournamentRole{{TournamentID: f.tid, Role: "director"}}}
+	post := func(away int) {
+		req := form("divisionid", strconv.Itoa(f.did), "hometeam", strconv.Itoa(f.game.HomeTeam.ID), "awayteam", strconv.Itoa(away),
+			"location", "Field 9", "datetime", "2026-07-10T10:00")
+		req = req.WithContext(ctxWithUser(req.Context(), director))
+		w := httptest.NewRecorder()
+		f.env.ManageEditGame(w, req, httprouter.Params{{Key: "tid", Value: strconv.Itoa(f.tid)}, {Key: "gid", Value: strconv.Itoa(f.game.ID)}})
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("got %d: %s", w.Code, w.Body.String())
+		}
+	}
+	post(f.game.AwayTeam.ID) // location only
+	if len(f.db.ScoreReportsForGame(f.game.ID)) != 1 {
+		t.Fatal("location change must keep reports")
+	}
+	post(third)
+	if len(f.db.ScoreReportsForGame(f.game.ID)) != 0 || f.cur().ScoreStatus != "" {
+		t.Fatalf("team change must clear reports: %+v", f.cur())
+	}
+}

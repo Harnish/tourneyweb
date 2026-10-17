@@ -199,6 +199,9 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 			return
 		}
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
+		if hid != game.HomeTeam.ID || aid != game.AwayTeam.ID {
+			me.DB.ClearScoreReports(gid) // reports belong to the old teams' coaches
+		}
 		updated := me.DB.ReturnGameByID(gid)
 		me.notifyGameChanged(game, updated)
 		if msg := me.applySlots(updated, choices); msg != "" {

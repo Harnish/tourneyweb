@@ -66,3 +66,20 @@ func TestDelGameRemovesReports(t *testing.T) {
 }
 
 var _ mydb.DB = (*mydb.FakeDB)(nil)
+
+func TestClearScoreReports(t *testing.T) {
+	db, g := reportFixture(t)
+	db.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	db.SaveScoreReport(g, "coach_away", 2, 4, 3)
+	db.SetGameScoreStatus(g, "disputed")
+	db.ClearScoreReports(g)
+	if len(db.ScoreReportsForGame(g)) != 0 || db.ReturnGameByID(g).ScoreStatus != "" {
+		t.Fatalf("reports and status must reset: %+v", db.ReturnGameByID(g))
+	}
+	db.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	db.SetGameScoreStatus(g, "final")
+	db.ClearScoreReports(g)
+	if len(db.ScoreReportsForGame(g)) != 0 || db.ReturnGameByID(g).ScoreStatus != "final" {
+		t.Fatalf("final status stays: %+v", db.ReturnGameByID(g))
+	}
+}

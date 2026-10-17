@@ -41,3 +41,22 @@ func (f *FakeDB) SetGameScoreStatus(gameID int, status string) {
 		f.games[gameID] = g
 	}
 }
+
+func (f *FakeDB) ClearScoreReports(gameID int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	kept := f.scoreReports[:0]
+	for _, r := range f.scoreReports {
+		if r.GameID != gameID {
+			kept = append(kept, r)
+		}
+	}
+	f.scoreReports = kept
+	if g, ok := f.games[gameID]; ok {
+		switch g.ScoreStatus {
+		case "reported", "confirmed", "disputed":
+			g.ScoreStatus = ""
+			f.games[gameID] = g
+		}
+	}
+}

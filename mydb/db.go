@@ -160,6 +160,7 @@ type DB interface {
 	SaveScoreReport(gameID int, reporter string, userID, home, away int)
 	ScoreReportsForGame(gameID int) []ScoreReport
 	SetGameScoreStatus(gameID int, status string)
+	ClearScoreReports(gameID int)
 
 	// Notifications
 	AddNotification(userID int, subject, message, link string) int
