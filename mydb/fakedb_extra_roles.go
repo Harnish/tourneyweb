@@ -141,7 +141,7 @@ func (f *FakeDB) SearchUsers(q string, limit int) []User {
 	defer f.mu.Unlock()
 	var out []User
 	for _, u := range f.users {
-		if strings.Contains(strings.ToLower(u.Name), q) || strings.Contains(strings.ToLower(u.Email), q) {
+		if strings.Contains(strings.ToLower(u.Name), q) {
 			out = append(out, u)
 		}
 	}

@@ -117,6 +117,7 @@ func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location 
 	if !startTime.IsZero() {
 		st = startTime
 	}
+	before := me.ReturnGameByID(id)
 	_, err := me.DB.Exec(
 		`UPDATE games SET division_id=$1, home_team_id=$2, away_team_id=$3, location=$4, start_time=$5, umpire=$6 WHERE id=$7`,
 		divisionID, homeTeamID, awayTeamID, location, st, umpire, id,
@@ -127,6 +128,9 @@ func (me *MyDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location 
 	}
 	// Re-fetch to get updated team/division references before re-syncing scores.
 	game := me.ReturnGameByID(id)
+	if before.ID != 0 && (before.HomeTeam.ID != game.HomeTeam.ID || before.AwayTeam.ID != game.AwayTeam.ID) {
+		me.ClearScoreReports(id) // coach reports belong to the old teams
+	}
 	if game.Scored {
 		me.DeleteTeamScore(id)
 		if game.ScrimmageTeamID != game.HomeTeam.ID {

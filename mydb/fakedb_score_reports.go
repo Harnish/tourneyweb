@@ -45,6 +45,10 @@ func (f *FakeDB) SetGameScoreStatus(gameID int, status string) {
 func (f *FakeDB) ClearScoreReports(gameID int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.clearScoreReportsLocked(gameID)
+}
+
+func (f *FakeDB) clearScoreReportsLocked(gameID int) {
 	kept := f.scoreReports[:0]
 	for _, r := range f.scoreReports {
 		if r.GameID != gameID {

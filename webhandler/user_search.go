@@ -19,6 +19,10 @@ func (me *Env) UserSearch(w http.ResponseWriter, r *http.Request, ps httprouter.
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
+	if t.Status == "draft" { // registered users can't be assigned in a draft, so there is nothing to search for
+		http.Error(w, "User search is available once the tournament is approved and published.", http.StatusForbidden)
+		return
+	}
 	type hit struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`

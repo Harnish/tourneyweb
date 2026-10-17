@@ -563,6 +563,7 @@ func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location
 	if !ok {
 		return
 	}
+	teamsChanged := g.HomeTeam.ID != homeTeamID || g.AwayTeam.ID != awayTeamID
 	g.Division = f.divisions[divisionID]
 	g.HomeTeam = f.teams[homeTeamID]
 	g.AwayTeam = f.teams[awayTeamID]
@@ -570,6 +571,9 @@ func (f *FakeDB) UpdateGame(id, divisionID, homeTeamID, awayTeamID int, location
 	g.Start = startTime
 	g.Umpire = umpire
 	f.games[id] = g
+	if teamsChanged {
+		f.clearScoreReportsLocked(id)
+	}
 	if g.Scored {
 		f.removeGamesByTeamLocked(id)
 		if g.ScrimmageTeamID != g.HomeTeam.ID {

@@ -128,14 +128,15 @@ func (me *MyDB) SetDivisionRoleNeeded(divisionID, roleID, n int) {
 
 var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 
-// SearchUsers finds users whose name or email contains q (at least 2 characters).
+// SearchUsers finds users whose name contains q (at least 2 characters). Email is deliberately not searchable:
+// matching on it would let a caller probe which addresses have accounts.
 func (me *MyDB) SearchUsers(q string, limit int) []User {
 	q = strings.TrimSpace(q)
 	if utf8.RuneCountInString(q) < 2 || limit <= 0 {
 		return nil
 	}
 	rows, err := me.DB.Query(`SELECT id, email, name FROM users
-		WHERE name ILIKE $1 OR email ILIKE $1 ORDER BY lower(name), id LIMIT $2`, "%"+likeEscaper.Replace(q)+"%", limit)
+		WHERE name ILIKE $1 ORDER BY lower(name), id LIMIT $2`, "%"+likeEscaper.Replace(q)+"%", limit)
 	if err != nil {
 		slog.Error("SearchUsers", "err", err)
 		return nil

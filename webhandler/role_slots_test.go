@@ -241,3 +241,31 @@ func TestUserSearch(t *testing.T) {
 		t.Fatalf("limit 10, got %d", len(got))
 	}
 }
+
+func TestMoveRoleHolderToUmpireSlotSameGame(t *testing.T) {
+	f := newRoleFx(t)
+	defer f.restore()
+	f.db.AssignRoleSlot(f.game.ID, f.rid, 1, f.ann, "")
+	if w := f.edit(sameTime, "ump_user_1", strconv.Itoa(f.ann)); w.Code != http.StatusSeeOther {
+		t.Fatalf("got %d: %s", w.Code, w.Body.String())
+	}
+	if len(f.db.GameRoleSlots(f.game.ID)) != 0 {
+		t.Fatal("role slot must be cleared")
+	}
+	if u := f.db.GameUmpires(f.game.ID); len(u) != 1 || u[0].UserID != f.ann {
+		t.Fatalf("umpire slot: %+v", u)
+	}
+}
+
+func TestUserSearchRefusedForDraftTournament(t *testing.T) {
+	f := newRoleFx(t)
+	defer f.restore()
+	td := f.db.AddTournament("Draft", "baseball", "L", "", time.Now(), "draft")
+	req := httptest.NewRequest("GET", "/x?q=an", nil)
+	req = req.WithContext(ctxWithUser(req.Context(), TWUser{ID: 9, IsAdmin: true}))
+	w := httptest.NewRecorder()
+	f.env.UserSearch(w, req, httprouter.Params{{Key: "tid", Value: strconv.Itoa(td)}})
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("got %d want 403", w.Code)
+	}
+}

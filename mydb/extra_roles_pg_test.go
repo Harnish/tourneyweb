@@ -99,3 +99,30 @@ func TestRoleSlotsPostgres(t *testing.T) {
 		t.Fatal("role delete cascades slots")
 	}
 }
+
+func TestUpdateGameTeamChangeClearsReportsPostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	tid := d.AddTournament("PGU "+sfx, "baseball", "L", "", time.Now(), "published")
+	did := d.AddDivision(tid, "10U")
+	for _, n := range []string{"A", "B", "C"} {
+		d.AddTeam(tid, did, n, "")
+	}
+	tm := d.ReturnTeamsByDivisionID(did)
+	start := time.Date(2026, 7, 10, 10, 0, 0, 0, time.UTC)
+	g := d.AddGame(tid, did, tm[0].ID, tm[1].ID, "F1", start, "")
+	d.SaveScoreReport(g, "coach_home", 1, 5, 3)
+	d.SetGameScoreStatus(g, "reported")
+	d.UpdateGame(g, did, tm[0].ID, tm[1].ID, "F9", start, "")
+	if len(d.ScoreReportsForGame(g)) != 1 {
+		t.Fatal("same teams keep reports")
+	}
+	d.UpdateGame(g, did, tm[2].ID, tm[1].ID, "F9", start, "")
+	if len(d.ScoreReportsForGame(g)) != 0 || d.ReturnGameByID(g).ScoreStatus != "" {
+		t.Fatal("team change clears reports")
+	}
+}

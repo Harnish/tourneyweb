@@ -146,22 +146,24 @@ func (me *Env) validateRoleChoices(t mydb.Tournament, choices []roleChoice, ump 
 	return ""
 }
 
-// applyRoleChoices writes the chosen role slots for g and notifies registered users who were assigned or removed,
-// following the same keep/clear/assign rules as applySlots.
-func (me *Env) applyRoleChoices(g mydb.Game, choices []roleChoice) string {
-	type key struct{ role, slot int }
-	byslot := map[key]roleChoice{}
+type roleKey struct{ role, slot int }
+
+// clearRoleChoices clears role slots whose holder changes or is blanked in the submission and tells removed users.
+// It returns the slots that stay. Callers run it before applySlots so a holder can move from a role to an umpire slot;
+// applyRoleChoices runs it again afterwards, which is then a no-op.
+func (me *Env) clearRoleChoices(g mydb.Game, choices []roleChoice) map[roleKey]mydb.RoleSlot {
+	byslot := map[roleKey]roleChoice{}
 	chosen := map[int]bool{}
 	for _, c := range choices {
-		byslot[key{c.RoleID, c.Slot}] = c
+		byslot[roleKey{c.RoleID, c.Slot}] = c
 		if c.UserID > 0 {
 			chosen[c.UserID] = true
 		}
 	}
 	line := gameLine(g)
-	old := map[key]mydb.RoleSlot{}
+	old := map[roleKey]mydb.RoleSlot{}
 	for _, s := range me.DB.GameRoleSlots(g.ID) {
-		k := key{s.RoleID, s.Slot}
+		k := roleKey{s.RoleID, s.Slot}
 		c, ok := byslot[k]
 		if !ok {
 			continue
@@ -185,12 +187,20 @@ func (me *Env) applyRoleChoices(g mydb.Game, choices []roleChoice) string {
 			me.notifyUser(s.UserID, "Removed from a game", "You are no longer assigned as "+s.RoleName+" to: "+line, "/umpire")
 		}
 	}
+	return old
+}
+
+// applyRoleChoices writes the chosen role slots for g and notifies registered users who were assigned or removed,
+// following the same keep/clear/assign rules as applySlots.
+func (me *Env) applyRoleChoices(g mydb.Game, choices []roleChoice) string {
+	old := me.clearRoleChoices(g, choices)
+	line := gameLine(g)
 	var failed []string
 	for _, c := range choices {
 		if c.UserID == 0 && c.Name == "" {
 			continue
 		}
-		if o, had := old[key{c.RoleID, c.Slot}]; had && ((c.UserID > 0 && o.UserID == c.UserID) || (c.UserID == 0 && o.UserID == 0 && o.FreeName == c.Name)) {
+		if o, had := old[roleKey{c.RoleID, c.Slot}]; had && ((c.UserID > 0 && o.UserID == c.UserID) || (c.UserID == 0 && o.UserID == 0 && o.FreeName == c.Name)) {
 			continue // unchanged
 		}
 		if err := me.DB.AssignRoleSlot(g.ID, c.RoleID, c.Slot, c.UserID, c.Name); err != nil {

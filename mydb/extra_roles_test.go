@@ -68,8 +68,8 @@ func TestSearchUsers(t *testing.T) {
 	if got := db.SearchUsers("an", 10); len(got) != 2 || got[0].Name != "Ann Lee" {
 		t.Fatalf("name match sorted: %+v", got)
 	}
-	if got := db.SearchUsers("BOB@", 10); len(got) != 1 {
-		t.Fatalf("email match: %+v", got)
+	if got := db.SearchUsers("bob@", 10); len(got) != 0 {
+		t.Fatalf("email must not be searchable (account-enumeration oracle): %+v", got)
 	}
 	if db.SearchUsers("a", 10) != nil {
 		t.Fatal("1 char returns nothing")
