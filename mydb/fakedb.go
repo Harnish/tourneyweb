@@ -540,6 +540,13 @@ func (f *FakeDB) DelGame(id int) {
 		}
 	}
 	f.umpSlots = kept
+	roleSlots := f.roleSlots[:0]
+	for _, s := range f.roleSlots {
+		if s.GameID != id {
+			roleSlots = append(roleSlots, s)
+		}
+	}
+	f.roleSlots = roleSlots
 	reports := f.scoreReports[:0]
 	for _, r := range f.scoreReports {
 		if r.GameID != id {

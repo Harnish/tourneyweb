@@ -181,6 +181,12 @@ type DB interface {
 	DivisionRoleNeeds(divisionID int) map[int]int
 	SetDivisionRoleNeeded(divisionID, roleID, n int)
 	SearchUsers(q string, limit int) []User
+	GameRoleSlots(gameID int) []RoleSlot
+	RoleSlotsForUser(userID int) []RoleSlot
+	AssignRoleSlot(gameID, roleID, slot, userID int, freeName string) error
+	ClearRoleSlot(gameID, roleID, slot int)
+	RespondRoleSlot(gameID, roleID, slot, userID int, accept bool) error
+	ResetRoleSlotsPending(gameID int) []RoleSlot
 
 	// Umpire availability
 	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)
