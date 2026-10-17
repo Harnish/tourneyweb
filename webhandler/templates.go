@@ -357,6 +357,13 @@ type manageDivisionEditData struct {
 	AllCriteria   []CriterionUIRow
 	UmpiresNeeded int
 	PayPerGame    string // e.g. "75.00"; empty = no rate
+	RoleNeeds     []roleNeedRow
+}
+
+type manageExtraRolesData struct {
+	baseData
+	Roles         []mydb.ExtraRole
+	DisableDelete bool
 }
 
 type manageUmpiresData struct {

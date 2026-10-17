@@ -7,6 +7,8 @@
 <table>
   <tr><td>Name</td><td><input type="text" name="name" value="{{.Division.Name}}" required></td></tr>
   <tr><td>Umpires per game</td><td><input type="number" name="umpires_needed" value="{{.UmpiresNeeded}}" min="1" max="4"></td></tr>
+  {{range .RoleNeeds}}<tr><td>{{.Role.Name}} per game</td><td><input type="number" name="role_need_{{.Role.ID}}" value="{{.N}}" min="0" max="5"></td></tr>
+  {{end}}
   <tr><td>Umpire pay per game ($)</td><td><input type="text" name="pay_per_game" value="{{.PayPerGame}}" size="8" placeholder="optional"> <small>used by the Umpire pay report; leave blank for no rate</small></td></tr>
 </table>
 <h3>Standings Ranking Order</h3>
