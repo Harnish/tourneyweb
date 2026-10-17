@@ -355,10 +355,19 @@ func (me *Env) Games(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if !ok {
 		return
 	}
-	me.render(w, "games", gamesData{
-		baseData: newBaseWithTournament(r, t),
-		Games:    me.DB.AllGames(t.ID),
-	})
+	data := gamesData{
+		baseData:    newBaseWithTournament(r, t),
+		Games:       me.DB.AllGames(t.ID),
+		UmpireGames: map[int]bool{},
+	}
+	if user := userFromContext(r.Context()); user.LoggedIn() {
+		for _, s := range me.DB.UmpireSlotsForUser(user.ID) {
+			if s.Status != "declined" {
+				data.UmpireGames[s.GameID] = true
+			}
+		}
+	}
+	me.render(w, "games", data)
 }
 
 func (me *Env) AdminGames(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

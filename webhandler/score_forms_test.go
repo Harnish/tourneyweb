@@ -192,3 +192,51 @@ func TestCoachFormEscapesNames(t *testing.T) {
 		t.Fatalf("team names must be escaped: %s", body)
 	}
 }
+
+func (f *entryFx) gamesPage(user TWUser) string {
+	req := form()
+	req.Method = "GET"
+	req = req.WithContext(ctxWithUser(req.Context(), user))
+	w := httptest.NewRecorder()
+	f.env.Games(w, req, httprouter.Params{{Key: "tid", Value: strconv.Itoa(f.tid)}})
+	return w.Body.String()
+}
+
+func TestGamesPageShowsScoreLinkToCoachAndUmpire(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	coachLink := "/tournaments/" + strconv.Itoa(f.tid) + "/coach/games/" + strconv.Itoa(f.game.ID) + "/score"
+	umpLink := "/tournaments/" + strconv.Itoa(f.tid) + "/umpire/games/" + strconv.Itoa(f.game.ID) + "/score"
+	if body := f.gamesPage(f.homeCoach); !strings.Contains(body, coachLink) || strings.Contains(body, umpLink) {
+		t.Fatalf("coach sees only the coach link: %s", body)
+	}
+	if body := f.gamesPage(TWUser{ID: f.ann, Name: "Ann"}); !strings.Contains(body, umpLink) || strings.Contains(body, coachLink) {
+		t.Fatalf("umpire sees only the umpire link: %s", body)
+	}
+	outsider := TWUser{ID: 99, Roles: []TournamentRole{{TournamentID: f.tid, Role: "coach", TeamID: 424242}}}
+	for name, u := range map[string]TWUser{"outsider": outsider, "unassigned umpire": {ID: f.bob}, "anonymous": {}} {
+		if body := f.gamesPage(u); strings.Contains(body, coachLink) || strings.Contains(body, umpLink) {
+			t.Errorf("%s must see no score link", name)
+		}
+	}
+}
+
+func TestGamesPageHidesLinkWhenLockedAndShowsDisputedBadge(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.db.AssignUmpire(f.game.ID, 1, f.ann, "")
+	f.call(f.env.CoachScore, "POST", f.homeCoach, f.game.ID, "homescore", "7", "awayscore", "3")
+	f.call(f.env.CoachScore, "POST", f.awayCoach, f.game.ID, "homescore", "7", "awayscore", "5")
+	if body := f.gamesPage(f.homeCoach); !strings.Contains(body, "disputed") || !strings.Contains(body, "/coach/games/") {
+		t.Fatalf("disputed game: badge and link expected: %s", body)
+	}
+	f.env.markFinal(f.cur())
+	body := f.gamesPage(f.homeCoach)
+	if strings.Contains(body, "/coach/games/") || strings.Contains(body, "disputed") {
+		t.Fatalf("final game: no link, no badge: %s", body)
+	}
+	if strings.Contains(f.gamesPage(TWUser{ID: f.ann}), "/umpire/games/") {
+		t.Fatal("umpire link hidden once final")
+	}
+}
