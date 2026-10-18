@@ -91,6 +91,7 @@ type Env struct {
 	DisableDelete            bool
 	DisableEmailVerification bool
 	BaseURL                  string
+	FollowSecret             []byte // signs emailed unfollow links; empty disables them
 }
 
 func New(db mydb.DB, email *EmailService, dd, disableEmailVerification bool, baseURL string) *Env {

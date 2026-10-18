@@ -41,5 +41,11 @@ func (me *Env) notifyFollowers(before, after mydb.Game, scorerID int) {
 	}
 }
 
-// unfollowLink is the emailed one-click unfollow URL; empty until the token secret is wired (Task 3).
-func (me *Env) unfollowLink(userID int, f mydb.Follow) string { return "" }
+// unfollowLink is the emailed one-click unfollow URL; empty when no signing secret is configured.
+func (me *Env) unfollowLink(userID int, f mydb.Follow) string {
+	t := me.followToken(userID, f.Kind, f.TargetID)
+	if t == "" {
+		return ""
+	}
+	return me.BaseURL + "/unfollow?t=" + t
+}
