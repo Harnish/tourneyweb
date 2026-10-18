@@ -8,9 +8,13 @@ Check out [TODO.md](TODO.md) if you want to help out.
 
 ## Screenshots
 
-**Tournament home**
+**Tournament and league list**
 
 ![Tournament home](docs/screenshots/home.png)
+
+**League page**
+
+![League page](docs/screenshots/league.png)
 
 **Division standings and games**
 
