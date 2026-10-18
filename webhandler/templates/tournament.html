@@ -1,6 +1,7 @@
 {{define "tournament"}}
 {{template "header" .}}
-<h1>{{.Tournament.Name}}</h1>
+<h1>{{.Tournament.Name}}{{if .Tournament.IsLeague}} <span class="badge badge-info">League</span>{{end}}</h1>
+{{if and .Tournament.IsLeague (not .Tournament.EndDate.IsZero)}}<p>Season: {{.Tournament.StartDate.Format "Jan 2, 2006"}} &ndash; {{.Tournament.EndDate.Format "Jan 2, 2006"}}</p>{{end}}
 <p>{{template "followButton" ($.Follow "tournament" .Tournament.ID)}}</p>
 <p>{{.Tournament.Sport}} | {{.Tournament.Location}} | {{.Tournament.StartDate.Format "Jan 2, 2006"}}</p>
 {{if .Tournament.Notes}}<p>{{.Tournament.Notes}}</p>{{end}}

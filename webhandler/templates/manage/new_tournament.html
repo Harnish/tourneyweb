@@ -1,13 +1,15 @@
 {{define "newTournament"}}
 {{template "header" .}}
-<h1>Create Tournament</h1>
+<h1>Create Tournament or League</h1>
 <form method="post" action="/create-tournament" id="new-tournament-form">
 {{.CSRFField}}
 <table>
+  <tr><td>Type</td><td><select name="kind"><option value="tournament">Tournament</option><option value="league">League (a season of scheduled games)</option></select></td></tr>
   <tr><td>Name</td><td><input type="text" name="name" required></td></tr>
   <tr><td>Sport</td><td><input type="text" name="sport" required></td></tr>
   <tr><td>Location/Venue</td><td><input type="text" name="location" required></td></tr>
   <tr><td>Start Date</td><td><input type="date" name="start_date" required></td></tr>
+  <tr><td>End Date</td><td><input type="date" name="end_date"> <small>(leagues only, optional)</small></td></tr>
   <tr><td>Notes</td><td><input type="text" name="notes"></td></tr>
 </table>
 <h3>Default Division Ranking Order</h3>

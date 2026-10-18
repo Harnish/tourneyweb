@@ -94,6 +94,7 @@ type divisionTeamRow struct {
 type indexData struct {
 	baseData
 	Q             string
+	Leagues       []mydb.Tournament
 	Results       []mydb.Tournament
 	ComingUp      []mydb.Tournament
 	Recent        []mydb.Tournament
