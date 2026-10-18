@@ -30,8 +30,7 @@ func (me *MyDB) AddTeam(tournamentID, divisionID int, name, coach string) {
 }
 
 func (me *MyDB) DelTeam(id int) {
-	me.DB.Exec(`DELETE FROM follows WHERE kind='team' AND target_id=$1`, id)
-	me.DB.Exec(`DELETE FROM teams WHERE id=$1`, id)
+	me.deleteWithFollows("DelTeam", `DELETE FROM follows WHERE kind='team' AND target_id=$1`, `DELETE FROM teams WHERE id=$1`, id)
 }
 
 func (me *MyDB) ReturnTeamsByTournamentID(tournamentID int) []Team {

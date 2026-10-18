@@ -158,8 +158,7 @@ func (me *MyDB) ReturnDraftTournaments() []Tournament {
 }
 
 func (me *MyDB) DelTournament(id int) {
-	me.delFollowsForTournament(id)
-	me.DB.Exec(`DELETE FROM tournaments WHERE id=$1`, id)
+	me.deleteWithFollows("DelTournament", delTournamentFollowsSQL, `DELETE FROM tournaments WHERE id=$1`, id)
 }
 
 func (me *MyDB) UpdateTournament(id int, name, sport, location, notes string, date time.Time) {

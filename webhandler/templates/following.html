@@ -25,11 +25,13 @@
 {{if .Done}}
 <h2>Unfollowed</h2>
 <p>You will no longer get alerts for {{if .Name}}{{.Name}}{{else}}this item{{end}}.</p>
+<p><small>Anything else you follow, such as the whole level, can still send alerts. See and change everything on <a href="/following">your Following page</a> (log in required).</small></p>
 {{else}}
 <h2>Stop these alerts?</h2>
 <form method="post" action="/unfollow/token">{{.CSRFField}}<input type="hidden" name="t" value="{{.Token}}">
 <p>Unfollow {{if .Name}}{{.Name}}{{else}}this item{{end}}?</p>
 <input type="submit" value="Unfollow"></form>
+<p><small>Anything else you follow, such as the whole level, can still send alerts. See and change everything on <a href="/following">your Following page</a> (log in required).</small></p>
 {{end}}
 {{template "footer" .}}
 {{end}}

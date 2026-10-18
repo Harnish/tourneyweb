@@ -226,3 +226,19 @@ func TestAlertEmailContainsUnfollowLink(t *testing.T) {
 }
 
 func mydbFollow(kind string, id int) mydb.Follow { return mydb.Follow{Kind: kind, TargetID: id} }
+
+func TestUnfollowPagesPointToOtherFollows(t *testing.T) {
+	f := entryFixture(t)
+	defer f.restore()
+	f.env.FollowSecret = []byte("0123456789abcdef0123456789abcdef")
+	a := fan(f, t)
+	f.db.AddFollow(a.ID, "team", f.game.HomeTeam.ID)
+	tok := f.env.followToken(a.ID, "team", f.game.HomeTeam.ID)
+	confirm := f.get(f.handler(f.env.UnfollowTokenPage), anon, "/unfollow?t="+url.QueryEscape(tok)).Body.String()
+	done := f.post(f.handler(f.env.UnfollowTokenDo), anon, "t", tok).Body.String()
+	for name, body := range map[string]string{"confirm": confirm, "done": done} {
+		if !strings.Contains(body, `href="/following"`) || !strings.Contains(body, "still") {
+			t.Errorf("%s page must say other follows can still alert and link /following: %s", name, body)
+		}
+	}
+}

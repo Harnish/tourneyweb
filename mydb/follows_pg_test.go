@@ -75,12 +75,53 @@ func TestFollowsPostgres(t *testing.T) {
 		t.Fatalf("SearchTournaments: %+v", s)
 	}
 
-	d.DelTeam(teams[0].ID)
-	if d.IsFollowing(ann, "team", teams[0].ID) {
+	d.AddTeam(tid, did, "Spare", "")
+	var spare int
+	for _, tm := range d.ReturnTeamsByDivisionID(did) {
+		if tm.Name == "Spare" {
+			spare = tm.ID
+		}
+	}
+	d.AddFollow(ann, "team", spare)
+	d.DelTeam(spare)
+	if d.IsFollowing(ann, "team", spare) {
 		t.Fatal("DelTeam keeps follow")
 	}
-	d.DelTournament(tid)
-	if d.IsFollowing(ann, "division", did) || d.IsFollowing(cy, "tournament", tid) || d.IsFollowing(bob, "team", teams[1].ID) {
+	// the database only deletes an empty tournament; its follows go with it
+	t2 := d.AddTournament("Gone "+sfx, "baseball", "L", "", time.Now(), "published")
+	d.AddFollow(cy, "tournament", t2)
+	d.DelTournament(t2)
+	if d.IsFollowing(cy, "tournament", t2) {
 		t.Fatal("DelTournament keeps follows")
+	}
+}
+
+// A delete the database refuses (team has games, division has teams) must not drop its followers' follows.
+func TestFollowsSurviveRefusedDeletePostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	tid := d.AddTournament("Refuse "+sfx, "baseball", "L", "", time.Now(), "published")
+	did := d.AddDivision(tid, "10U")
+	d.AddTeam(tid, did, "Hawks", "")
+	d.AddTeam(tid, did, "Bears", "")
+	teams := d.ReturnTeamsByDivisionID(did)
+	d.AddGame(tid, did, teams[0].ID, teams[1].ID, "F1", t10, "")
+	u, err := d.CreateUser("ref"+sfx+"@x.com", "Ref"+sfx, "h", "", true, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d.AddFollow(u.ID, "team", teams[0].ID)
+	d.AddFollow(u.ID, "division", did)
+	d.DelTeam(teams[0].ID)
+	d.DelDivision(did)
+	if len(d.ReturnTeamsByDivisionID(did)) != 2 {
+		t.Skip("database accepted the delete; nothing to prove here")
+	}
+	if !d.IsFollowing(u.ID, "team", teams[0].ID) || !d.IsFollowing(u.ID, "division", did) {
+		t.Fatal("follows were dropped although the team/division still exists")
 	}
 }

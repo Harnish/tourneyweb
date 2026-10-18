@@ -154,13 +154,29 @@ func (me *MyDB) SearchTournaments(q string) []Tournament {
 	return scanTournaments(rows)
 }
 
-// delFollowsFor removes follows of the given targets; callers run it before deleting the targets.
-func (me *MyDB) delFollowsForTournament(id int) {
-	_, err := me.DB.Exec(`DELETE FROM follows WHERE
-		(kind='tournament' AND target_id=$1)
-		OR (kind='division' AND target_id IN (SELECT id FROM divisions WHERE tournament_id=$1))
-		OR (kind='team' AND target_id IN (SELECT id FROM teams WHERE tournament_id=$1))`, id)
+// deleteWithFollows runs deleteSQL together with the follow cleanup in one transaction, so a delete the
+// database refuses (team with games, division with teams) leaves its followers' follows alone.
+func (me *MyDB) deleteWithFollows(name, followSQL, deleteSQL string, id int) {
+	tx, err := me.DB.Begin()
 	if err != nil {
-		slog.Error("delFollowsForTournament", "err", err)
+		slog.Error(name, "err", err)
+		return
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(followSQL, id); err != nil {
+		slog.Error(name, "err", err)
+		return
+	}
+	if _, err := tx.Exec(deleteSQL, id); err != nil {
+		slog.Error(name, "err", err)
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		slog.Error(name, "err", err)
 	}
 }
+
+const delTournamentFollowsSQL = `DELETE FROM follows WHERE
+	(kind='tournament' AND target_id=$1)
+	OR (kind='division' AND target_id IN (SELECT id FROM divisions WHERE tournament_id=$1))
+	OR (kind='team' AND target_id IN (SELECT id FROM teams WHERE tournament_id=$1))`
