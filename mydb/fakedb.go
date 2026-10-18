@@ -101,7 +101,7 @@ func (f *FakeDB) AddTournament(name, sport, location, notes string, date time.Ti
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.newID()
-	f.tournaments[id] = Tournament{ID: id, Name: name, Sport: sport, Location: location, Notes: notes, StartDate: date, Status: status}
+	f.tournaments[id] = Tournament{ID: id, Name: name, Sport: sport, Location: location, Notes: notes, StartDate: date, Status: status, Kind: "tournament"}
 	return id
 }
 
@@ -128,7 +128,7 @@ func (f *FakeDB) ReturnTournamentsComingUp() []Tournament {
 	cutoff := now.AddDate(0, 0, 7)
 	var out []Tournament
 	for _, t := range f.tournaments {
-		if t.Status == "published" && !t.StartDate.Before(now) && !t.StartDate.After(cutoff) {
+		if !t.IsLeague() && t.Status == "published" && !t.StartDate.Before(now) && !t.StartDate.After(cutoff) {
 			out = append(out, t)
 		}
 	}
@@ -142,7 +142,7 @@ func (f *FakeDB) ReturnTournamentsRecent() []Tournament {
 	cutoff := now.AddDate(0, 0, -7)
 	var out []Tournament
 	for _, t := range f.tournaments {
-		if t.Status == "published" && !t.StartDate.Before(cutoff) && t.StartDate.Before(now) {
+		if !t.IsLeague() && t.Status == "published" && !t.StartDate.Before(cutoff) && t.StartDate.Before(now) {
 			out = append(out, t)
 		}
 	}
@@ -155,7 +155,7 @@ func (f *FakeDB) ReturnTournamentsFuture(page int) ([]Tournament, int) {
 	cutoff := time.Now().AddDate(0, 0, 7)
 	var all []Tournament
 	for _, t := range f.tournaments {
-		if t.Status == "published" && t.StartDate.After(cutoff) {
+		if !t.IsLeague() && t.Status == "published" && t.StartDate.After(cutoff) {
 			all = append(all, t)
 		}
 	}
@@ -171,7 +171,7 @@ func (f *FakeDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 	cutoff := time.Now().AddDate(0, 0, -7)
 	var all []Tournament
 	for _, t := range f.tournaments {
-		if t.Status == "published" && t.StartDate.Before(cutoff) {
+		if !t.IsLeague() && t.Status == "published" && t.StartDate.Before(cutoff) {
 			all = append(all, t)
 		}
 	}

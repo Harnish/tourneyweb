@@ -188,6 +188,11 @@ type DB interface {
 	RespondRoleSlot(gameID, roleID, slot, userID int, accept bool) error
 	ResetRoleSlotsPending(gameID int) []RoleSlot
 
+	// Leagues
+	SetTournamentLeague(id int, kind string, endDate time.Time, leagueID int)
+	ReturnLeagues(today time.Time) []Tournament
+	LeaguePlayoffs(leagueID int) []Tournament
+
 	// Follows
 	AddFollow(userID int, kind string, targetID int) error
 	DelFollow(userID int, kind string, targetID int)
