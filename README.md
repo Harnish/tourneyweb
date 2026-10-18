@@ -8,9 +8,13 @@ Check out [TODO.md](TODO.md) if you want to help out.
 
 ## Screenshots
 
-**Tournament home**
+**Tournament and league list**
 
 ![Tournament home](docs/screenshots/home.png)
+
+**League page**
+
+![League page](docs/screenshots/league.png)
 
 **Division standings and games**
 
@@ -37,6 +41,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Extra game roles** — directors name roles per tournament (scorekeeper, scoreboard, safety...), set how many each level needs on the division edit page, and fill each game's slots by searching registered users or typing a name; assignees are notified and accept/decline, overlaps with umpire or other role assignments are blocked, and everyone sees their duties on the combined "My assignments" page
 - **Umpire pay report** — set an optional pay per game on each division; a director report counts each umpire's assigned games by division (declined and absent-marked games excluded), shows amounts and totals, and exports CSV
 - **Coach and umpire scoring** — coaches report scores for their own games (matching reports confirm; differing reports flag the game disputed and notify the assigned umpires), umpires enter the final score, and directors/staff can always overwrite; standings follow the first coach's score and brackets advance only on a confirmed or final score
+- **Leagues** — create a league from the same form as a tournament (choose the type, optional end date). A league is a long-running tournament with its own "Leagues" section on the home page: the same levels, teams, games, scoring, umpire and role slots, and following. Schedule the season up front and reschedule as needed; when a league game's time or field changes, both teams' coaches and followers of either team or the level are notified (umpires and role holders still get their re-confirm notices). Teams cannot be added once the season starts (a league director or site admin can use "Add late team"). A "Create playoff tournament" button on the league's manage page copies its levels and teams, in standings order, into a new linked tournament (a draft until approved unless an admin creates it)
 - **Following** — registered users follow a tournament, level or team from the tournament list (which has a name search) and from tournament, division and team pages; manage them on `/following`. A follower of a level or team gets an inbox and email alert with the final score when a game's result becomes official (coaches agree, or an umpire/director/staff enters it), and a correction alert if that score later changes. Following a tournament sends no alerts; it only lists you first in the director's slot user search along with followers of the game's level. Alert emails include a signed one-click unfollow link (signed with `csrfkey`, so rotating that key invalidates old links). A separate profile switch mutes follower alerts
 - **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
 - **Score notices** — directors (or site admins when a tournament has none) are notified when a game is scored or its score is corrected; anyone can turn these off on their profile page

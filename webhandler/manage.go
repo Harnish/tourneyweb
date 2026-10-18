@@ -53,6 +53,9 @@ func (me *Env) ManageDashboard(w http.ResponseWriter, r *http.Request, ps httpro
 	me.render(w, "manageDashboard", manageDashboardData{
 		baseData:     newBaseWithTournament(r, t),
 		IsDraft:      t.Status == "draft",
+		IsLeague:     t.IsLeague(),
+		CanPlayoff:   t.IsLeague() && canOverrideRoster(t, user),
+		Playoffs:     me.DB.LeaguePlayoffs(t.ID),
 		AllCriteria:  AllCriteriaForUI(active),
 		HasDivisions: len(divisions) > 0,
 	})

@@ -94,6 +94,7 @@ type divisionTeamRow struct {
 type indexData struct {
 	baseData
 	Q             string
+	Leagues       []mydb.Tournament
 	Results       []mydb.Tournament
 	ComingUp      []mydb.Tournament
 	Recent        []mydb.Tournament
@@ -112,6 +113,8 @@ type indexData struct {
 
 type tournamentData struct {
 	baseData
+	LeagueOf mydb.Tournament   // for a playoff: its published league
+	Playoffs []mydb.Tournament // for a league: its published playoff tournaments
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
 	News      []mydb.NewsItem
@@ -341,6 +344,9 @@ type errorData struct {
 type manageDashboardData struct {
 	baseData
 	IsDraft      bool
+	IsLeague     bool
+	CanPlayoff   bool
+	Playoffs     []mydb.Tournament
 	AllCriteria  []CriterionUIRow
 	HasDivisions bool
 }
@@ -406,6 +412,8 @@ type manageTeamsData struct {
 	Divisions       []mydb.Division
 	TeamsByDivision map[int][]mydb.Team
 	DisableDelete   bool
+	SeasonStarted   bool // a league whose season has started: teams can't be added
+	CanOverride     bool // admin or the league's director may add a late team anyway
 }
 
 type manageTeamEditData struct {

@@ -150,6 +150,7 @@ func main() {
 	router.GET("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/edit", wh.ManageEditGame)
 	router.POST("/tournaments/:tid/manage/games/:gid/delete", wh.ManageDeleteGame)
+	router.POST("/tournaments/:tid/manage/playoff", wh.CreatePlayoff)
 	router.GET("/tournaments/:tid/manage/extra-roles", wh.ManageExtraRoles)
 	router.POST("/tournaments/:tid/manage/extra-roles", wh.ManageExtraRoleCreate)
 	router.POST("/tournaments/:tid/manage/extra-roles/:rid/rename", wh.ManageExtraRoleRename)

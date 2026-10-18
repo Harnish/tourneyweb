@@ -44,9 +44,14 @@ func (me *Env) TournamentList(w http.ResponseWriter, r *http.Request, ps httprou
 	future, futureTotal := me.DB.ReturnTournamentsFuture(futurePage)
 	past, pastTotal := me.DB.ReturnTournamentsPast(pastPage)
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	var leagues []mydb.Tournament
+	if q == "" {
+		leagues = me.DB.ReturnLeagues(time.Now())
+	}
 	me.render(w, "index", indexData{
 		baseData:      me.followBase(newBase(r), r),
 		Q:             q,
+		Leagues:       leagues,
 		Results:       me.DB.SearchTournaments(q),
 		ComingUp:      me.DB.ReturnTournamentsComingUp(),
 		Recent:        me.DB.ReturnTournamentsRecent(),
@@ -74,7 +79,23 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 	for _, div := range divs {
 		teams[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
+	var leagueOf mydb.Tournament
+	if t.LeagueID != 0 {
+		if l := me.DB.ReturnTournamentByID(t.LeagueID); l.Status == "published" {
+			leagueOf = l
+		}
+	}
+	var playoffs []mydb.Tournament
+	if t.IsLeague() {
+		for _, p := range me.DB.LeaguePlayoffs(t.ID) {
+			if p.Status == "published" {
+				playoffs = append(playoffs, p)
+			}
+		}
+	}
 	me.render(w, "tournament", tournamentData{
+		LeagueOf:  leagueOf,
+		Playoffs:  playoffs,
 		baseData:  me.followBase(newBaseWithTournament(r, t), r),
 		Divisions: divs,
 		Teams:     teams,
@@ -178,11 +199,38 @@ func (me *Env) NewTournament(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, "Name, sport, and location are required", http.StatusBadRequest)
 		return
 	}
+	kind := r.FormValue("kind")
+	if kind == "" {
+		kind = "tournament"
+	}
+	var endDate time.Time
+	switch kind {
+	case "tournament":
+	case "league":
+		now := time.Now()
+		if date.Before(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)) {
+			http.Error(w, "A league's start date must be today or later", http.StatusBadRequest)
+			return
+		}
+		if es := r.FormValue("end_date"); es != "" {
+			endDate, err = time.Parse("2006-01-02", es)
+			if err != nil || endDate.Before(date) {
+				http.Error(w, "The end date must be a valid date on or after the start date", http.StatusBadRequest)
+				return
+			}
+		}
+	default:
+		http.Error(w, "Unknown type", http.StatusBadRequest)
+		return
+	}
 	status := "draft"
 	if user.IsAdmin {
 		status = "published"
 	}
 	id := me.DB.AddTournament(name, sport, location, notes, date, status)
+	if kind == "league" {
+		me.DB.SetTournamentLeague(id, kind, endDate, 0)
+	}
 	me.DB.AssignRole(user.ID, id, "director", 0)
 	criteriaStr := r.FormValue("default_ranking_criteria")
 	var criteria []string

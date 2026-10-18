@@ -11,7 +11,7 @@
 {{range .Results}}
 <div class="card mb-2">
   <div class="card-body">
-    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a> {{template "followButton" ($.Follow "tournament" .ID)}}</h5>
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a>{{if .IsLeague}} <span class="badge badge-info">League</span>{{end}} {{template "followButton" ($.Follow "tournament" .ID)}}</h5>
     <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
   </div>
 </div>
@@ -29,8 +29,20 @@
   </div>
 </form>
 
-{{if and (not .ComingUp) (not .Recent)}}
+{{if and (not .ComingUp) (not .Recent) (not .Leagues)}}
 <p>No active tournaments.</p>
+{{end}}
+
+{{if .Leagues}}
+<h2>Leagues</h2>
+{{range .Leagues}}
+<div class="card mb-2">
+  <div class="card-body">
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a> <span class="badge badge-info">League</span> {{template "followButton" ($.Follow "tournament" .ID)}}</h5>
+    <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}{{if not .EndDate.IsZero}} &ndash; {{.EndDate.Format "Jan 2, 2006"}}{{end}}</p>
+  </div>
+</div>
+{{end}}
 {{end}}
 
 {{if .ComingUp}}

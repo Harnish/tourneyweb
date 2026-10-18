@@ -90,7 +90,7 @@ func (me *MyDB) UmpireAvailabilityForTournament(tournamentID int) map[int]Availa
 // ReturnTournamentsOpenForUmpires lists non-draft tournaments starting on or after from's date, soonest first.
 func (me *MyDB) ReturnTournamentsOpenForUmpires(from time.Time) []Tournament {
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0)
 		 FROM tournaments WHERE status <> 'draft' AND start_date >= $1::date ORDER BY start_date ASC, id ASC`,
 		from.Format("2006-01-02"))
 	if err != nil {

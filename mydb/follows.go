@@ -145,7 +145,7 @@ func (me *MyDB) SearchTournaments(q string) []Tournament {
 	if q == "" {
 		return nil
 	}
-	rows, err := me.DB.Query(`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria
+	rows, err := me.DB.Query(`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0)
 		FROM tournaments WHERE status='published' AND name ILIKE $1 ORDER BY start_date DESC, id LIMIT 50`, "%"+likeEscaper.Replace(q)+"%")
 	if err != nil {
 		slog.Error("SearchTournaments", "err", err)
