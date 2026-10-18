@@ -21,6 +21,17 @@
   {{if .IsDraft}}<li><a href="/tournaments/{{.Tournament.ID}}/manage/publish">Publish Tournament</a></li>{{end}}
 </ul>
 
+{{if .IsLeague}}
+<h2>Playoffs</h2>
+{{if .Playoffs}}<ul>{{range .Playoffs}}<li><a href="/tournaments/{{.ID}}">{{.Name}}</a>{{if eq .Status "draft"}} (draft){{end}}</li>{{end}}</ul>{{end}}
+{{if .CanPlayoff}}
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/playoff" onsubmit="return confirm('Create a playoff tournament from this league\'s levels and teams, in standings order?');">
+{{.CSRFField}}<input type="submit" value="Create playoff tournament">
+</form>
+<p style="color:#888;font-size:0.9rem">Copies the levels and teams, ordered by the current standings, into a new linked tournament. Games, scores and assignments are not copied.</p>
+{{end}}
+{{end}}
+
 <h2>Default Division Ranking Order</h2>
 {{if eq .Tournament.Status "published"}}
 <p style="color:#888;font-size:0.9rem">Ranking order is locked after publishing.</p>

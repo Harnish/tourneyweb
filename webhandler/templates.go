@@ -113,6 +113,8 @@ type indexData struct {
 
 type tournamentData struct {
 	baseData
+	LeagueOf mydb.Tournament   // for a playoff: its published league
+	Playoffs []mydb.Tournament // for a league: its published playoff tournaments
 	Divisions []mydb.Division
 	Teams     map[int][]mydb.Team
 	News      []mydb.NewsItem
@@ -342,6 +344,9 @@ type errorData struct {
 type manageDashboardData struct {
 	baseData
 	IsDraft      bool
+	IsLeague     bool
+	CanPlayoff   bool
+	Playoffs     []mydb.Tournament
 	AllCriteria  []CriterionUIRow
 	HasDivisions bool
 }

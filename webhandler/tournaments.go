@@ -79,7 +79,23 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 	for _, div := range divs {
 		teams[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
+	var leagueOf mydb.Tournament
+	if t.LeagueID != 0 {
+		if l := me.DB.ReturnTournamentByID(t.LeagueID); l.Status == "published" {
+			leagueOf = l
+		}
+	}
+	var playoffs []mydb.Tournament
+	if t.IsLeague() {
+		for _, p := range me.DB.LeaguePlayoffs(t.ID) {
+			if p.Status == "published" {
+				playoffs = append(playoffs, p)
+			}
+		}
+	}
 	me.render(w, "tournament", tournamentData{
+		LeagueOf:  leagueOf,
+		Playoffs:  playoffs,
 		baseData:  me.followBase(newBaseWithTournament(r, t), r),
 		Divisions: divs,
 		Teams:     teams,
