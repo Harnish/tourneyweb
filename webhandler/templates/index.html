@@ -2,6 +2,25 @@
 {{template "header" .}}
 <h1>Tournaments</h1>
 
+<form method="get" action="/" class="form-inline mb-3">
+  <input name="q" type="search" value="{{.Q}}" placeholder="Search tournaments by name" class="form-control mr-2" style="width:260px">
+  <button type="submit" class="btn btn-secondary">Search</button>
+</form>
+{{if .Q}}
+<h2>Results for &ldquo;{{.Q}}&rdquo;</h2>
+{{range .Results}}
+<div class="card mb-2">
+  <div class="card-body">
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a> {{template "followButton" ($.Follow "tournament" .ID)}}</h5>
+    <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
+  </div>
+</div>
+{{else}}
+<p>No tournaments match.</p>
+{{end}}
+<p><a href="/">Back to all tournaments</a></p>
+{{else}}
+
 <form onsubmit="event.preventDefault(); var v=document.getElementById('jump-id').value.trim(); if(v) window.location='/tournaments/'+v;">
   <div class="form-inline mb-3">
     <label class="mr-2">Tournament ID:</label>
@@ -19,7 +38,7 @@
 {{range .ComingUp}}
 <div class="card mb-2">
   <div class="card-body">
-    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5> {{template "followButton" ($.Follow "tournament" .ID)}}
     <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
   </div>
 </div>
@@ -31,7 +50,7 @@
 {{range .Recent}}
 <div class="card mb-2">
   <div class="card-body">
-    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+    <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5> {{template "followButton" ($.Follow "tournament" .ID)}}
     <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
   </div>
 </div>
@@ -46,7 +65,7 @@
   {{range .Future}}
   <div class="card mb-2">
     <div class="card-body">
-      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5> {{template "followButton" ($.Follow "tournament" .ID)}}
       <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
     </div>
   </div>
@@ -65,7 +84,7 @@
   {{range .Past}}
   <div class="card mb-2">
     <div class="card-body">
-      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5>
+      <h5 class="card-title"><a href="/tournaments/{{.ID}}">{{.Name}}</a></h5> {{template "followButton" ($.Follow "tournament" .ID)}}
       <p class="card-text">{{.Sport}} | {{.Location}} | {{.StartDate.Format "Jan 2, 2006"}}</p>
     </div>
   </div>
@@ -88,5 +107,6 @@
 {{end}}
 {{end}}
 
+{{end}}
 {{template "footer" .}}
 {{end}}

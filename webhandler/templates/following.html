@@ -33,3 +33,5 @@
 {{end}}
 {{template "footer" .}}
 {{end}}
+
+{{define "followButton"}}{{if .LoggedIn}}<form method="post" action="{{if .Following}}/unfollow{{else}}/follow{{end}}" style="display:inline">{{.CSRFField}}<input type="hidden" name="kind" value="{{.Kind}}"><input type="hidden" name="target" value="{{.Target}}"><input type="hidden" name="next" value="{{.Next}}"><input type="submit" class="btn btn-sm btn-outline-primary" value="{{if .Following}}Following &#10003; (Unfollow){{else}}Follow{{end}}"></form>{{else}}<a href="/login">Log in to follow</a>{{end}}{{end}}

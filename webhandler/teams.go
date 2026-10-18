@@ -113,7 +113,7 @@ func (me *Env) ShowTeam(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 	me.render(w, "team", teamData{
-		baseData: newBaseWithTournament(r, t),
+		baseData: me.followBase(newBaseWithTournament(r, t), r),
 		Team:     team,
 		Games:    me.DB.AllGamesByTeam(teamID),
 		Players:  me.DB.GetPlayersByTeamID(teamID),

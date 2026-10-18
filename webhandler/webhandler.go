@@ -259,7 +259,7 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData:     newBaseWithTournament(r, t),
+		baseData:     me.followBase(newBaseWithTournament(r, t), r),
 		Division:     div,
 		Teams:        rows,
 		Games:        me.DB.AllGamesByDivision(did),

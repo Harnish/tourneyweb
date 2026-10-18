@@ -1,6 +1,6 @@
 {{define "team"}}
 {{template "header" .}}
-<br>{{.Team.Name}} {{.Team.Coach}} {{.Team.Division.Name}}<br>
+<br>{{.Team.Name}} {{.Team.Coach}} {{.Team.Division.Name}} {{template "followButton" ($.Follow "team" .Team.ID)}}<br>
 <table class="tw-sortable">
 <tr><th>Home</th><th>Away</th><th>Location</th><th>Start time</th><th>Umpire</th></tr>
 {{range .Games}}

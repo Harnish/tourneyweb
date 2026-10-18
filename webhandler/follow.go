@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
@@ -195,4 +196,32 @@ func (me *Env) UnfollowTokenDo(w http.ResponseWriter, r *http.Request, _ httprou
 	me.DB.DelFollow(uid, kind, target)
 	name, _ := me.followTargetName(kind, target, false)
 	me.render(w, "unfollowConfirm", unfollowData{baseData: newBase(r), Name: name, Done: true})
+}
+
+// FollowState is what the followButton template needs for one target.
+type FollowState struct {
+	CSRFField template.HTML
+	Kind      string
+	Target    int
+	Next      string
+	LoggedIn  bool
+	Following bool
+}
+
+// Follow is called from templates: {{template "followButton" ($.Follow "division" .ID)}}.
+func (b baseData) Follow(kind string, id int) FollowState {
+	return FollowState{CSRFField: b.CSRFField, Kind: kind, Target: id, Next: b.Here,
+		LoggedIn: b.User.LoggedIn(), Following: b.FollowSet[kind+":"+strconv.Itoa(id)]}
+}
+
+// followBase loads the viewer's follows and current URL so pages can render Follow / Unfollow buttons.
+func (me *Env) followBase(b baseData, r *http.Request) baseData {
+	b.Here = r.URL.RequestURI()
+	if b.User.LoggedIn() {
+		b.FollowSet = map[string]bool{}
+		for _, f := range me.DB.UserFollows(b.User.ID) {
+			b.FollowSet[f.Kind+":"+strconv.Itoa(f.TargetID)] = true
+		}
+	}
+	return b
 }

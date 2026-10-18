@@ -43,8 +43,11 @@ func (me *Env) TournamentList(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 	future, futureTotal := me.DB.ReturnTournamentsFuture(futurePage)
 	past, pastTotal := me.DB.ReturnTournamentsPast(pastPage)
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	me.render(w, "index", indexData{
-		baseData:      newBase(r),
+		baseData:      me.followBase(newBase(r), r),
+		Q:             q,
+		Results:       me.DB.SearchTournaments(q),
 		ComingUp:      me.DB.ReturnTournamentsComingUp(),
 		Recent:        me.DB.ReturnTournamentsRecent(),
 		Future:        future,
@@ -72,7 +75,7 @@ func (me *Env) TournamentHome(w http.ResponseWriter, r *http.Request, ps httprou
 		teams[div.ID] = me.DB.ReturnTeamsByDivisionID(div.ID)
 	}
 	me.render(w, "tournament", tournamentData{
-		baseData:  newBaseWithTournament(r, t),
+		baseData:  me.followBase(newBaseWithTournament(r, t), r),
 		Divisions: divs,
 		Teams:     teams,
 		News:      me.DB.GetTournamentNews(t.ID),
