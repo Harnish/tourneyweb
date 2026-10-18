@@ -37,6 +37,7 @@ Check out [TODO.md](TODO.md) if you want to help out.
 - **Extra game roles** — directors name roles per tournament (scorekeeper, scoreboard, safety...), set how many each level needs on the division edit page, and fill each game's slots by searching registered users or typing a name; assignees are notified and accept/decline, overlaps with umpire or other role assignments are blocked, and everyone sees their duties on the combined "My assignments" page
 - **Umpire pay report** — set an optional pay per game on each division; a director report counts each umpire's assigned games by division (declined and absent-marked games excluded), shows amounts and totals, and exports CSV
 - **Coach and umpire scoring** — coaches report scores for their own games (matching reports confirm; differing reports flag the game disputed and notify the assigned umpires), umpires enter the final score, and directors/staff can always overwrite; standings follow the first coach's score and brackets advance only on a confirmed or final score
+- **Following** — registered users follow a tournament, level or team from the tournament list (which has a name search) and from tournament, division and team pages; manage them on `/following`. A follower of a level or team gets an inbox and email alert with the final score when a game's result becomes official (coaches agree, or an umpire/director/staff enters it), and a correction alert if that score later changes. Following a tournament sends no alerts; it only lists you first in the director's slot user search along with followers of the game's level. Alert emails include a signed one-click unfollow link (signed with `csrfkey`, so rotating that key invalidates old links). A separate profile switch mutes follower alerts
 - **Notifications** — every user has an in-app inbox (unread count in the nav bar) and gets an email for the same event; umpire assignment, change, cancellation, removal, decline and volunteer notices all use it
 - **Score notices** — directors (or site admins when a tournament has none) are notified when a game is scored or its score is corrected; anyone can turn these off on their profile page
 - **Umpire availability** — umpires see upcoming tournaments and mark themselves available (with an optional note); directors are notified and see volunteers first on the manage umpires page
@@ -215,6 +216,7 @@ docker pull ghcr.io/harnish/tourneyweb:latest
 |---|---|
 | `/profile` | Edit profile; mark yourself an umpire, add certification link/image |
 | `/umpire` | My assignments (umpire games and extra roles) with accept/decline; upcoming tournaments with Available / Withdraw |
+| `/following` | Tournaments, levels and teams I follow, with Unfollow |
 | `/notifications` | My notifications; opening one marks it read and follows its link |
 | `/umpires/:uid/certificate` | Certificate image (owner, admins, directors of published tournaments) |
 
