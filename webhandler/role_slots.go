@@ -33,8 +33,9 @@ type roleSlotGroup struct {
 
 // roleSlotBlock is the data for the "roleSlots" template used by the manage game forms.
 type roleSlotBlock struct {
-	SearchURL string
-	Roles     []roleSlotGroup
+	SearchURL  string
+	DivisionID int // the game's level; lets the user search list its followers first
+	Roles      []roleSlotGroup
 }
 
 // roleSlotCounts is how many slots each role shows on a game form: the division's count, or more if the game already uses higher slots.
@@ -61,7 +62,7 @@ func (me *Env) roleSlotBlock(t mydb.Tournament, divisionID int, game *mydb.Game)
 		existing = me.DB.GameRoleSlots(gid)
 	}
 	counts := me.roleSlotCounts(divisionID, gid)
-	block := roleSlotBlock{SearchURL: fmt.Sprintf("/tournaments/%d/manage/users/search", t.ID)}
+	block := roleSlotBlock{SearchURL: fmt.Sprintf("/tournaments/%d/manage/users/search", t.ID), DivisionID: divisionID}
 	for _, role := range me.DB.TournamentExtraRoles(t.ID) {
 		n := counts[role.ID]
 		if n == 0 {
