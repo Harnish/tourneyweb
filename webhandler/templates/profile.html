@@ -7,6 +7,7 @@
 <tr><td>Name</td><td>{{.User.Name}}</td></tr>
 <tr><td>Email</td><td>{{.User.Email}}</td></tr>
 <tr><td>Game scores</td><td><label><input type="checkbox" name="mute_score_notices" {{if .MuteScoreNotices}}checked{{end}}> Don't notify me when games are scored</label> <small>(directors only; other notifications are unaffected)</small></td></tr>
+<tr><td>Followed games</td><td><label><input type="checkbox" name="mute_follow_alerts" {{if .MuteFollowAlerts}}checked{{end}}> Don't alert me when games I follow are scored</label></td></tr>
 <tr><td>I am an umpire</td><td><input type="checkbox" name="is_umpire" {{if .IsUmpire}}checked{{end}}></td></tr>
 <tr><td>Certification link</td><td><input type="url" name="cert_url" value="{{.CertURL}}" placeholder="https://..." size="50"></td></tr>
 <tr><td>Certificate image</td><td>

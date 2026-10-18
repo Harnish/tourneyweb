@@ -78,6 +78,7 @@ type profileData struct {
 	HasCertImage bool
 	Saved        bool
 	MuteScoreNotices bool
+	MuteFollowAlerts bool
 	LinkedOn     string // e.g. "Oct 16, 2026"; empty if nothing linked
 	ExpiresOn    string // yyyy-mm-dd for the date input
 	Expired      bool

@@ -359,7 +359,9 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 			me.AdvanceBracket(gid, winnerID)
 		}
 		me.markFinal(game) // a director/staff score is final and clears any dispute
-		me.notifyGameScored(game, before.Scored, userFromContext(r.Context()).ID)
+		scorer := userFromContext(r.Context()).ID
+		me.notifyGameScored(game, before.Scored, scorer)
+		me.notifyFollowers(before, me.DB.ReturnGameByID(gid), scorer)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }

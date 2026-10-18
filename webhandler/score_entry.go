@@ -117,6 +117,7 @@ func (me *Env) submitCoachScore(g mydb.Game, reporter string, user TWUser, home,
 	if changed {
 		me.notifyGameScored(updated, cur.Scored, user.ID)
 	}
+	me.notifyFollowers(cur, updated, user.ID)
 	return nil
 }
 
@@ -146,6 +147,7 @@ func (me *Env) submitUmpireScore(g mydb.Game, user TWUser, home, away int) error
 	updated := me.DB.ReturnGameByID(g.ID)
 	me.advanceBracketFor(updated)
 	me.notifyGameScored(updated, cur.Scored, user.ID)
+	me.notifyFollowers(cur, updated, user.ID)
 	return nil
 }
 
