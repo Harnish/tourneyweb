@@ -133,7 +133,7 @@ func (me *MyDB) ReturnTournamentsFuture(page int) ([]Tournament, int) {
 		slog.Error("ReturnTournamentsFuture count", "err", err)
 	}
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0) FROM tournaments WHERE status='published' AND start_date > CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC LIMIT 20 OFFSET $1`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0) FROM tournaments WHERE kind='tournament' AND status='published' AND start_date > CURRENT_DATE + INTERVAL '7 days' ORDER BY start_date ASC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
 	)
 	if err != nil {
@@ -152,7 +152,7 @@ func (me *MyDB) ReturnTournamentsPast(page int) ([]Tournament, int) {
 		slog.Error("ReturnTournamentsPast count", "err", err)
 	}
 	rows, err := me.DB.Query(
-		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0) FROM tournaments WHERE status='published' AND start_date < CURRENT_DATE - INTERVAL '7 days' ORDER BY start_date DESC LIMIT 20 OFFSET $1`,
+		`SELECT id, name, sport, location, start_date, notes, extras_html, rules_html, status, default_ranking_criteria, kind, end_date, COALESCE(league_id,0) FROM tournaments WHERE kind='tournament' AND status='published' AND start_date < CURRENT_DATE - INTERVAL '7 days' ORDER BY start_date DESC LIMIT 20 OFFSET $1`,
 		(page-1)*20,
 	)
 	if err != nil {

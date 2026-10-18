@@ -58,3 +58,48 @@ func TestLeaguesPostgres(t *testing.T) {
 		t.Fatalf("search finds leagues: %+v", s)
 	}
 }
+
+func TestLeaguesStayOutOfFutureAndPastListsPostgres(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	var d mydb.DB = mydb.New(url, false)
+	sfx := fmt.Sprint(time.Now().UnixNano())
+	future := d.AddTournament("Future League "+sfx, "baseball", "L", "", day(21), "published")
+	past := d.AddTournament("Past League "+sfx, "baseball", "L", "", day(-40), "published")
+	d.SetTournamentLeague(future, "league", day(90), 0)
+	d.SetTournamentLeague(past, "league", day(30), 0)
+	plain := d.AddTournament("Plain Future "+sfx, "baseball", "L", "", day(22), "published")
+	count := func(rows []mydb.Tournament, id int) int {
+		n := 0
+		for _, r := range rows {
+			if r.ID == id {
+				n++
+			}
+		}
+		return n
+	}
+	// 20 per page: walk every page so the check doesn't depend on how many tournaments the database holds
+	var futureRows, pastRows []mydb.Tournament
+	for p := 1; p < 50; p++ {
+		rows, total := d.ReturnTournamentsFuture(p)
+		futureRows = append(futureRows, rows...)
+		if p*20 >= total {
+			break
+		}
+	}
+	for p := 1; p < 50; p++ {
+		rows, total := d.ReturnTournamentsPast(p)
+		pastRows = append(pastRows, rows...)
+		if p*20 >= total {
+			break
+		}
+	}
+	if count(futureRows, future) != 0 || count(pastRows, past) != 0 {
+		t.Fatal("leagues leaked into the Future/Past tournament lists")
+	}
+	if count(futureRows, plain) != 1 {
+		t.Fatal("plain tournaments must still be listed")
+	}
+}
