@@ -140,6 +140,13 @@ var pgtables = []string{
 		UNIQUE(game_id, role_id, slot),
 		CHECK ((user_id IS NOT NULL) <> (free_name <> ''))
 	)`,
+	`CREATE TABLE IF NOT EXISTS follows (
+		user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		kind       TEXT NOT NULL CHECK (kind IN ('tournament','division','team')),
+		target_id  INTEGER NOT NULL,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		PRIMARY KEY (user_id, kind, target_id)
+	)`,
 	`CREATE TABLE IF NOT EXISTS umpire_expired_flags (
 		user_id       INTEGER NOT NULL REFERENCES users(id),
 		tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
@@ -297,6 +304,7 @@ var pgmigrations = []string{
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS pay_per_game_cents INTEGER NOT NULL DEFAULT 0`,
 	`ALTER TABLE game_umpires ADD COLUMN IF NOT EXISTS absent BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS mute_score_notices BOOLEAN NOT NULL DEFAULT false`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS mute_follow_alerts BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_linked_at TIMESTAMPTZ`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_expires_on DATE`,
 	`ALTER TABLE divisions ADD COLUMN IF NOT EXISTS umpires_needed INTEGER NOT NULL DEFAULT 1`,
