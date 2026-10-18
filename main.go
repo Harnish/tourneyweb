@@ -76,6 +76,11 @@ func main() {
 	router.GET("/profile", wh.Profile)
 	router.POST("/profile", wh.Profile)
 	router.GET("/umpires/:uid/certificate", wh.UmpireCertificate)
+	router.POST("/follow", wh.Follow)
+	router.POST("/unfollow", wh.Unfollow)
+	router.GET("/following", wh.Following)
+	router.GET("/unfollow", wh.UnfollowTokenPage)
+	router.POST("/unfollow/token", wh.UnfollowTokenDo)
 	router.GET("/umpire", wh.UmpireGames)
 	router.POST("/umpire/tournaments/:tid/available", wh.UmpireAvailable)
 	router.POST("/umpire/tournaments/:tid/withdraw", wh.UmpireWithdraw)
@@ -209,6 +214,7 @@ func main() {
 	router.POST("/admin/news/:nid/delete", wh.AdminNewsDelete)
 
 	csrfKey := decodeCSRFKey(cfg.CSRFKey)
+	wh.FollowSecret = csrfKey
 	csrfMiddleware := csrf.Protect(csrfKey, csrf.Secure(false))
 	plaintextHTTP := func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

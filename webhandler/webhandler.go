@@ -91,6 +91,7 @@ type Env struct {
 	DisableDelete            bool
 	DisableEmailVerification bool
 	BaseURL                  string
+	FollowSecret             []byte // signs emailed unfollow links; empty disables them
 }
 
 func New(db mydb.DB, email *EmailService, dd, disableEmailVerification bool, baseURL string) *Env {
@@ -258,7 +259,7 @@ func (me *Env) PrintDivision(w http.ResponseWriter, r *http.Request, ps httprout
 		rows[i] = divisionTeamRow{Team: team, GamesPlayed: me.DB.GamesPlayedByTeam(team.ID)}
 	}
 	me.render(w, "divisions", divisionData{
-		baseData:     newBaseWithTournament(r, t),
+		baseData:     me.followBase(newBaseWithTournament(r, t), r),
 		Division:     div,
 		Teams:        rows,
 		Games:        me.DB.AllGamesByDivision(did),
@@ -359,7 +360,9 @@ func (me *Env) RecordScore(w http.ResponseWriter, r *http.Request, ps httprouter
 			me.AdvanceBracket(gid, winnerID)
 		}
 		me.markFinal(game) // a director/staff score is final and clears any dispute
-		me.notifyGameScored(game, before.Scored, userFromContext(r.Context()).ID)
+		scorer := userFromContext(r.Context()).ID
+		me.notifyGameScored(game, before.Scored, scorer)
+		me.notifyFollowers(before, me.DB.ReturnGameByID(gid), scorer)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/games", t.ID), http.StatusSeeOther)
 }

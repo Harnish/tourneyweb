@@ -188,6 +188,17 @@ type DB interface {
 	RespondRoleSlot(gameID, roleID, slot, userID int, accept bool) error
 	ResetRoleSlotsPending(gameID int) []RoleSlot
 
+	// Follows
+	AddFollow(userID int, kind string, targetID int) error
+	DelFollow(userID int, kind string, targetID int)
+	IsFollowing(userID int, kind string, targetID int) bool
+	UserFollows(userID int) []Follow
+	GameFollowers(g Game) map[int]Follow
+	FollowersMatching(q string, tournamentID, divisionID, limit int) []User
+	SetMuteFollowAlerts(userID int, mute bool)
+	MutesFollowAlerts(userID int) bool
+	SearchTournaments(q string) []Tournament
+
 	// Umpire availability
 	SetUmpireAvailability(userID, tournamentID int, note string) (isNew bool)
 	ClearUmpireAvailability(userID, tournamentID int)

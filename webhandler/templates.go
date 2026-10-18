@@ -46,6 +46,8 @@ type baseData struct {
 	CSRFField  template.HTML
 	Tournament mydb.Tournament
 	User       TWUser
+	FollowSet  map[string]bool // "kind:id" the logged-in user follows; set by followBase
+	Here       string          // current path and query, used as the follow buttons' next=
 }
 
 // IsAdmin is callable from templates as {{if .IsAdmin}}.
@@ -78,6 +80,7 @@ type profileData struct {
 	HasCertImage bool
 	Saved        bool
 	MuteScoreNotices bool
+	MuteFollowAlerts bool
 	LinkedOn     string // e.g. "Oct 16, 2026"; empty if nothing linked
 	ExpiresOn    string // yyyy-mm-dd for the date input
 	Expired      bool
@@ -90,6 +93,8 @@ type divisionTeamRow struct {
 
 type indexData struct {
 	baseData
+	Q             string
+	Results       []mydb.Tournament
 	ComingUp      []mydb.Tournament
 	Recent        []mydb.Tournament
 	Future        []mydb.Tournament

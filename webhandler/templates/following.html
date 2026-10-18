@@ -1,0 +1,39 @@
+{{define "following"}}
+{{template "header" .}}
+<h2>Following</h2>
+<p>You get an inbox and email alert with the final score when a game in a level or team you follow is complete. Following a tournament only shows you are interested.</p>
+{{if .Rows}}
+<table>
+<tr><th>Type</th><th>Name</th><th></th></tr>
+{{range .Rows}}
+<tr>
+  <td>{{.Kind}}</td>
+  <td><a href="{{.URL}}">{{.Name}}</a></td>
+  <td><form method="post" action="/unfollow" style="display:inline">{{$.CSRFField}}<input type="hidden" name="kind" value="{{.Kind}}"><input type="hidden" name="target" value="{{.TargetID}}"><input type="hidden" name="next" value="/following"><input type="submit" value="Unfollow"></form></td>
+</tr>
+{{end}}
+</table>
+{{else}}
+<p>You are not following anything yet. Use the Follow buttons on a tournament, level or team page.</p>
+{{end}}
+<p><a href="/profile">Alert settings</a></p>
+{{template "footer" .}}
+{{end}}
+
+{{define "unfollowConfirm"}}
+{{template "header" .}}
+{{if .Done}}
+<h2>Unfollowed</h2>
+<p>You will no longer get alerts for {{if .Name}}{{.Name}}{{else}}this item{{end}}.</p>
+<p><small>Anything else you follow, such as the whole level, can still send alerts. See and change everything on <a href="/following">your Following page</a> (log in required).</small></p>
+{{else}}
+<h2>Stop these alerts?</h2>
+<form method="post" action="/unfollow/token">{{.CSRFField}}<input type="hidden" name="t" value="{{.Token}}">
+<p>Unfollow {{if .Name}}{{.Name}}{{else}}this item{{end}}?</p>
+<input type="submit" value="Unfollow"></form>
+<p><small>Anything else you follow, such as the whole level, can still send alerts. See and change everything on <a href="/following">your Following page</a> (log in required).</small></p>
+{{end}}
+{{template "footer" .}}
+{{end}}
+
+{{define "followButton"}}{{if .LoggedIn}}<form method="post" action="{{if .Following}}/unfollow{{else}}/follow{{end}}" style="display:inline">{{.CSRFField}}<input type="hidden" name="kind" value="{{.Kind}}"><input type="hidden" name="target" value="{{.Target}}"><input type="hidden" name="next" value="{{.Next}}"><input type="submit" class="btn btn-sm btn-outline-primary" value="{{if .Following}}Following &#10003; (Unfollow){{else}}Follow{{end}}"></form>{{else}}<a href="/login">Log in to follow</a>{{end}}{{end}}

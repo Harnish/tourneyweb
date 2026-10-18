@@ -43,7 +43,7 @@ func (me *MyDB) AddDivision(tournamentID int, name string) int {
 }
 
 func (me *MyDB) DelDivision(id int) {
-	me.DB.Exec(`DELETE FROM divisions WHERE id=$1`, id)
+	me.deleteWithFollows("DelDivision", `DELETE FROM follows WHERE kind='division' AND target_id=$1`, `DELETE FROM divisions WHERE id=$1`, id)
 }
 
 func (me *MyDB) UpdateDivision(id int, name string, criteria []string) {

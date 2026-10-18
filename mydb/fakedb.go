@@ -38,6 +38,8 @@ type FakeDB struct {
 	roleSlots     []RoleSlot
 	notifications []Notification
 	muteScore     map[int]bool
+	muteFollow    map[int]bool
+	follows       []Follow
 	payRate       map[int]int
 	scoreReports  []ScoreReport
 	availability  map[[2]int]Availability // {userID, tournamentID}
@@ -80,6 +82,7 @@ func NewFakeDB() *FakeDB {
 		umpExpired:    make(map[[2]int]time.Time),
 		availability:  make(map[[2]int]Availability),
 		muteScore:     make(map[int]bool),
+		muteFollow:    make(map[int]bool),
 		payRate:       make(map[int]int),
 		umpNeeded:     make(map[int]int),
 		roleNeeds:     make(map[[2]int]int),
@@ -207,6 +210,17 @@ func (f *FakeDB) DelTournament(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.tournaments, id)
+	f.delFollowsLocked(func(x Follow) bool {
+		switch x.Kind {
+		case "tournament":
+			return x.TargetID == id
+		case "division":
+			return f.divisions[x.TargetID].TournamentID == id
+		case "team":
+			return f.teams[x.TargetID].TournamentID == id
+		}
+		return false
+	})
 	for _, r := range append([]ExtraRole(nil), f.extraRoles...) {
 		if r.TournamentID == id {
 			f.delRoleLocked(r.ID)
@@ -273,6 +287,7 @@ func (f *FakeDB) DelDivision(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.divisions, id)
+	f.delFollowsLocked(func(x Follow) bool { return x.Kind == "division" && x.TargetID == id })
 	for k := range f.roleNeeds {
 		if k[0] == id {
 			delete(f.roleNeeds, k)
@@ -341,6 +356,7 @@ func (f *FakeDB) DelTeam(id int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.teams, id)
+	f.delFollowsLocked(func(x Follow) bool { return x.Kind == "team" && x.TargetID == id })
 }
 
 func (f *FakeDB) ReturnTeamsByTournamentID(tournamentID int) []Team {
