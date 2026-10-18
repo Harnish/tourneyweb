@@ -407,6 +407,8 @@ type manageTeamsData struct {
 	Divisions       []mydb.Division
 	TeamsByDivision map[int][]mydb.Team
 	DisableDelete   bool
+	SeasonStarted   bool // a league whose season has started: teams can't be added
+	CanOverride     bool // admin or the league's director may add a late team anyway
 }
 
 type manageTeamEditData struct {

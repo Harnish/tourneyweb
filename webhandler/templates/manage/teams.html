@@ -1,6 +1,27 @@
 {{define "manageTeams"}}
 {{template "header" .}}
 <h1>Teams — {{.Tournament.Name}}</h1>
+{{if .SeasonStarted}}
+<h2>Add Team</h2>
+<p>This league's season has started, so teams can no longer be added.</p>
+{{if .CanOverride}}
+<h3>Add late team</h3>
+<form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams" onsubmit="return confirm('The season has started. Add this team anyway?');">
+{{.CSRFField}}
+<input type="hidden" name="late_team" value="1">
+<table>
+  <tr><td>Division</td><td>
+    <select name="division">
+      {{range .Divisions}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+    </select>
+  </td></tr>
+  <tr><td>Team Name</td><td><input type="text" name="teamname" required></td></tr>
+  <tr><td>Coach</td><td><input type="text" name="teamcoach"></td></tr>
+  <tr><td></td><td><input type="submit" value="Add late team"></td></tr>
+</table>
+</form>
+{{end}}
+{{else}}
 <h2>Add Team</h2>
 <form method="post" action="/tournaments/{{.Tournament.ID}}/manage/teams">
 {{.CSRFField}}
@@ -15,6 +36,7 @@
   <tr><td></td><td><input type="submit" value="Add Team"></td></tr>
 </table>
 </form>
+{{end}}
 <h2>Existing Teams</h2>
 {{range .Divisions}}
   <h3>{{.Name}}</h3>

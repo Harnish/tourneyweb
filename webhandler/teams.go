@@ -23,6 +23,10 @@ func (me *Env) Teams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 			http.Error(w, "Name and valid division required", http.StatusBadRequest)
 			return
 		}
+		if blocked, msg := me.teamAddBlocked(t, userFromContext(r.Context()), false); blocked {
+			http.Error(w, msg, http.StatusForbidden)
+			return
+		}
 		me.DB.AddTeam(t.ID, divisionID, name, coach)
 		http.Redirect(w, r, fmt.Sprintf("/admin/tournaments/%d/teams", t.ID), http.StatusSeeOther)
 		return

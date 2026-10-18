@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/Harnish/tourneyweb/mydb"
@@ -28,6 +29,12 @@ func (me *Env) ManageTeams(w http.ResponseWriter, r *http.Request, ps httprouter
 			http.Error(w, "Division does not belong to this tournament", http.StatusBadRequest)
 			return
 		}
+		user := userFromContext(r.Context())
+		if blocked, msg := me.teamAddBlocked(t, user, r.FormValue("late_team") != ""); blocked {
+			http.Error(w, msg, http.StatusForbidden)
+			return
+		}
+		logLateTeam(t, user, name)
 		me.DB.AddTeam(t.ID, divisionID, name, coach)
 		http.Redirect(w, r, fmt.Sprintf("/tournaments/%d/manage/teams", t.ID), http.StatusSeeOther)
 		return
@@ -42,6 +49,8 @@ func (me *Env) ManageTeams(w http.ResponseWriter, r *http.Request, ps httprouter
 		Divisions:       divs,
 		TeamsByDivision: byDiv,
 		DisableDelete:   me.DisableDelete,
+		SeasonStarted:   t.IsLeague() && t.Started(time.Now()),
+		CanOverride:     canOverrideRoster(t, userFromContext(r.Context())),
 	})
 }
 
