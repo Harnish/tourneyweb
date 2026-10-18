@@ -218,6 +218,7 @@ func (me *Env) ManageEditGame(w http.ResponseWriter, r *http.Request, ps httprou
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
 		updated := me.DB.ReturnGameByID(gid)
 		me.notifyGameChanged(game, updated)
+		me.notifyLeagueReschedule(game, updated, userFromContext(r.Context()).ID)
 		me.clearRoleChoices(updated, roleChoices) // free role slots first so a holder can move to an umpire slot
 		if msg := me.applySlots(updated, choices); msg != "" {
 			http.Error(w, msg, http.StatusConflict)

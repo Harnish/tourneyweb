@@ -518,6 +518,7 @@ func (me *Env) EditGame(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		me.DB.UpdateGame(gid, did, hid, aid, r.FormValue("location"), startTime, game.Umpire)
 		updated := me.DB.ReturnGameByID(gid)
 		me.notifyGameChanged(game, updated)
+		me.notifyLeagueReschedule(game, updated, userFromContext(r.Context()).ID)
 		if msg := me.applySlots(updated, choices); msg != "" {
 			http.Error(w, msg, http.StatusConflict)
 			return
